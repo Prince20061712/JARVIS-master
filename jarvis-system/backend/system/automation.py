@@ -10,7 +10,7 @@ logger = logging.getLogger("AutomationEngine")
 class AutomationEngine:
     def __init__(self):
         if pyautogui:
-            pyautogui.FAILSAFE = True # Move mouse to corner to abort
+            pyautogui.FAILSAFE = True # Movee mouse to corner to abort
             # Set a default pause
             pyautogui.PAUSE = 0.5 
 
