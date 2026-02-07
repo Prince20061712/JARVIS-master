@@ -3,7 +3,7 @@
 JARVIS - SUPER ENHANCED COMPLETE VERSION
 Complete AI Assistant with ALL macOS Applications & Features
 Just A Rather Very Intelligent System
-Enhanced with Local Ollama AI - ALL RESPONSES SPOKEN VIA SPEAKERS
+Enhanced with Local Ollama AI - ALL RESPONSES SPOKEN VIA SPEAKERS.
 
 FEATURES:
 ✅ Auto-starts Ollama server
