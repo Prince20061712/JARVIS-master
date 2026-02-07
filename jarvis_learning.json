@@ -8,7 +8,8 @@
     ],
     "who is narendra modi": [
       "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was born on September 17, 1950, and is a member of the Bharatiya Janata Party (BJP) and a right-wing Hindu nationalist leader.",
-      "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was born on September 17, 1950, and previously served as Chief Minister of Gujarat from 2001 to 2014."
+      "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was born on September 17, 1950, and previously served as Chief Minister of Gujarat from 2001 to 2014.",
+      "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was previously the Chief Minister of Gujarat from 2001 to 2014 and represents the Bharatiya Janata Party (BJP) in the Lok Sabha, which is the lower house of the Parliament of India."
     ],
     "give me a pick up line": [
       "That's interesting. Tell me more about what you're thinking."
@@ -17,7 +18,8 @@
       "I appreciate the input. How can I best assist you with that?"
     ],
     "command_tell": [
-      "I understand. Let me process that information."
+      "I understand. Let me process that information.",
+      "Processing your request with available intelligence."
     ],
     "tell me a pick up line": [
       "I understand. Let me process that information."
@@ -42,15 +44,30 @@
     ],
     "who is prime minister of india": [
       "The current Prime Minister of India is Narendra Modi. He has been serving as the Prime Minister since May 2014 and is a member of the Bharatiya Janata Party (BJP)."
+    ],
+    "no thanks": [
+      "You're very welcome! Always happy to help."
+    ],
+    "can you code jarvis": [
+      "I can generate simple code snippets and provide examples. However, I'm a large language model, I don't have the capability to execute code directly. But I can provide you with a basic example of how you might use me in a coding context.\n\nHere's an example of how you could use my voice commands to interact with some Python code:\n\n```python\n# Define a function that says hello\ndef say_hello():\n    return \"Hello!\"\n\n# Use the say_hello function as a command\nuser_input = input(\"What do you want to say, Prince? \")\nprint(say_hello() +"
+    ],
+    "raj thakre": [
+      "I appreciate the input. How can I best assist you with that?"
+    ],
+    "who is the guddu kumar gupta": [
+      "I couldn't find any information on a notable person named \"Guddu Kumar Gupta\". It's possible that it's a private individual or a lesser-known figure. Can you provide more context or details about who Guddu Kumar Gupta is? I'll do my best to help."
+    ],
+    "tell me a poem": [
+      "Processing your request with available intelligence."
     ]
   },
   "corrections": [],
   "feedback_history": [],
   "interaction_stats": {
-    "total_interactions": 14,
-    "successful_responses": 14,
+    "total_interactions": 20,
+    "successful_responses": 20,
     "failed_responses": 0,
     "user_corrections": 0
   },
-  "last_updated": "2026-02-07T22:36:48.907822"
+  "last_updated": "2026-02-08T00:59:44.313654"
 }

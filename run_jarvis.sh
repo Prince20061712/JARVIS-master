@@ -5,8 +5,12 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Check for venv first
+if [ -d ".venv" ]; then
+    echo "Found .venv, using it."
+    PYTHON_CMD=".venv/bin/python"
 # Check for Python 3
-if command_exists python3; then
+elif command_exists python3; then
     PYTHON_CMD="python3"
 elif command_exists python; then
     # Check if python is actually python 3
