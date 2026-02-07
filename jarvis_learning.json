@@ -5,15 +5,52 @@
     ],
     "on speaker": [
       "That's interesting. Tell me more about what you're thinking."
+    ],
+    "who is narendra modi": [
+      "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was born on September 17, 1950, and is a member of the Bharatiya Janata Party (BJP) and a right-wing Hindu nationalist leader.",
+      "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was born on September 17, 1950, and previously served as Chief Minister of Gujarat from 2001 to 2014."
+    ],
+    "give me a pick up line": [
+      "That's interesting. Tell me more about what you're thinking."
+    ],
+    "love pick up line": [
+      "I appreciate the input. How can I best assist you with that?"
+    ],
+    "command_tell": [
+      "I understand. Let me process that information."
+    ],
+    "tell me a pick up line": [
+      "I understand. Let me process that information."
+    ],
+    "jar": [
+      "Let me consider that from multiple perspectives."
+    ],
+    "narendra damodardas modi is an indian politician who has served as the prime minister of india since 2014": [
+      "That's close enough! Narendra Modi is indeed a prominent Indian politician, and his leadership since 2014 has been marked by significant economic growth, infrastructure development, and social welfare initiatives."
+    ],
+    "switch off the world": [
+      "I understand. Let me process that information."
+    ],
+    "seven wonders of the world": [
+      "I appreciate the input. How can I best assist you with that?"
+    ],
+    "how can i best assist you with that": [
+      "I'm here to help answer any questions or provide information on various topics, including Narendra Modi and India's recent developments. What would you like to know?"
+    ],
+    "prime minister of india": [
+      "Let me consider that from multiple perspectives."
+    ],
+    "who is prime minister of india": [
+      "The current Prime Minister of India is Narendra Modi. He has been serving as the Prime Minister since May 2014 and is a member of the Bharatiya Janata Party (BJP)."
     ]
   },
   "corrections": [],
   "feedback_history": [],
   "interaction_stats": {
-    "total_interactions": 2,
-    "successful_responses": 2,
+    "total_interactions": 14,
+    "successful_responses": 14,
     "failed_responses": 0,
     "user_corrections": 0
   },
-  "last_updated": "2026-02-07T18:38:40.653320"
+  "last_updated": "2026-02-07T22:36:48.907822"
 }

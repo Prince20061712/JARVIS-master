@@ -2,43 +2,135 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS Interface</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS Interface</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>J.A.R.V.I.S</h1>
-            <div id="status-indicator" class="status-offline">Offline</div>
-        </header>
+<div class="container">
+<header>
+<h1>J.A.R.V.I.S</h1>
+<div id="status-indicator" class="status-offline">Offline</div>
+</header>
 
-        <div id="chat-history" class="chat-history">
-            <div class="message system">
-                <div class="bubble">System initialized. Waiting for connection...</div>
-            </div>
-        </div>
+<div class="main-content">
+<!-- Left Side: Robot Interface -->
+<div class="robot-interface">
+<div class="robot-container">
+<!-- Robot Head -->
+<div class="robot-head">
+<div class="robot-face">
+<!-- Eyes -->
+<div class="eyes-container">
+<div class="eye left-eye"></div>
+<div class="eye right-eye"></div>
+</div>
+<!-- Mouth -->
+<div class="mouth" id="mouth"></div>
+<!-- Antenna -->
+<div class="antenna"></div>
+</div>
+</div>
 
-        <div class="input-area">
-            <button id="mic-btn" class="icon-btn" title="Toggle Voice">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path fill="currentColor"
-                        d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.66 9 5v6c0 1.66 1.34 3 3 3z" />
-                    <path fill="currentColor"
-                        d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-                </svg>
-            </button>
-            <input type="text" id="message-input" placeholder="Type a command..." autocomplete="off">
-            <button id="send-btn" class="icon-btn" title="Send">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
-            </button>
-        </div>
-    </div>
-    <script src="script.js"></script>
+<!-- Robot Body -->
+<div class="robot-body">
+<!-- Shoulders -->
+<div class="shoulders">
+<div class="shoulder left-shoulder">
+<div class="arm upper-arm left-upper-arm">
+<div class="arm lower-arm left-lower-arm">
+<div class="hand left-hand"></div>
+</div>
+</div>
+</div>
+<div class="shoulder right-shoulder">
+<div class="arm upper-arm right-upper-arm">
+<div class="arm lower-arm right-lower-arm">
+<div class="hand right-hand"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Chest Display -->
+<div class="chest-display">
+<div class="display-screen" id="robot-display">
+<div class="display-text">J.A.R.V.I.S</div>
+<div class="display-pulse"></div>
+</div>
+</div>
+
+<!-- Status LEDs -->
+<div class="status-leds">
+<div class="led led-blue" id="led-processing"></div>
+<div class="led led-green" id="led-listening"></div>
+<div class="led led-red" id="led-error"></div>
+</div>
+</div>
+
+<!-- Robot Base -->
+<div class="robot-base">
+<div class="wheel left-wheel"></div>
+<div class="wheel right-wheel"></div>
+</div>
+</div>
+
+<!-- Speech Bubble -->
+<div class="speech-bubble" id="speech-bubble">
+<div class="bubble-content" id="bubble-text"></div>
+</div>
+</div>
+
+<!-- Right Side: Chat Interface -->
+<div class="chat-interface">
+<div id="chat-history" class="chat-history">
+<div class="message system">
+<div class="bubble">System initialized. Waiting for connection...</div>
+</div>
+</div>
+
+<div class="input-area">
+<button id="mic-btn" class="icon-btn" title="Toggle Voice">
+<svg viewBox="0 0 24 24" width="24" height="24">
+<path fill="currentColor"
+d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+<path fill="currentColor"
+d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+</svg>
+</button>
+<input type="text" id="message-input" placeholder="Type a command..." autocomplete="off">
+<button id="send-btn" class="icon-btn" title="Send">
+<svg viewBox="0 0 24 24" width="24" height="24">
+<path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+</svg>
+</button>
+</div>
+</div>
+</div>
+
+<!-- Voice Controls -->
+<div class="voice-controls">
+<button id="talk-btn" class="control-btn">
+<i class="fas fa-robot"></i> Talk
+</button>
+<button id="dance-btn" class="control-btn">
+<i class="fas fa-music"></i> Dance
+</button>
+<button id="reset-btn" class="control-btn">
+<i class="fas fa-redo"></i> Reset
+</button>
+</div>
+</div>
+
+<!-- Audio Elements -->
+<audio id="speech-audio" preload="auto"></audio>
+<audio id="robot-sound" preload="auto"></audio>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="script.js"></script>
 </body>
 
 </html>

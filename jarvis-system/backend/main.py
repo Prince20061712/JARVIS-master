@@ -68,9 +68,10 @@ import sqlite3
 import csv
 import xml.etree.ElementTree as ET
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 
 import uvicorn
 from core.ai_brain import EnhancedAIBrain
@@ -85,6 +86,7 @@ CONTINUOUS_MODE = True
 WAKE_WORD = "jarvis"
 ENABLE_LOCAL_AI = True
 OLLAMA_MODEL = "llama3.2:1b"
+ENABLE_TERMINAL_VOICE = False # Set to False to prevent backend from speaking (prevents feedback loop)
 
 # ========== FASTAPI & WEBSOCKET SETUP ==========
 app = FastAPI()
@@ -240,12 +242,18 @@ class AudioSystem:
             self.play_beep("response")
             time.sleep(0.1)
         
+        # Check if terminal voice is enabled
+        if not ENABLE_TERMINAL_VOICE:
+            return
+
         if self.engine:
             try:
                 current_rate = self.engine.getProperty('rate')
                 if rate:
                     self.engine.setProperty('rate', rate)
                 
+                if self.engine._inLoop:
+                    self.engine.endLoop()
                 self.engine.say(text)
                 self.engine.runAndWait()
                 
@@ -881,6 +889,7 @@ class JarvisAI:
         self.is_listening = CONTINUOUS_MODE
         self.is_running = True
         self.voice_enabled = False # Start with voice disabled
+        self.is_client_speaking = False # Track if client is speaking
         
         print(f"\n{Fore.CYAN}🤖 Loading Enhanced AI Brain (Modular)...")
         try:
@@ -964,8 +973,39 @@ class JarvisAI:
         if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'save_state'):
             self.ai_brain.save_state()
     
+    def set_client_speaking(self, speaking):
+        """Set client speaking status to prevent feedback loop"""
+        self.is_client_speaking = speaking
+        if speaking:
+            print(f"{Fore.MAGENTA}🔇 Client speaking - Pausing backend listening...")
+        else:
+            print(f"{Fore.MAGENTA}👂 Client finished speaking - Resuming listening...")
+
     def speak(self, text, play_beep=False, rate=None):
         """Wrapper for audio system speak"""
+        if ENABLE_TERMINAL_VOICE:
+            self.audio.speak(text, play_beep, rate)
+        elif self.audio.websocket_manager and self.loop:
+            # If terminal voice disabled, still send to frontend
+            print(f"{Fore.GREEN}{JARVIS_NAME} (Silent): {text}")
+            try:
+                # Basic check to avoid double sending if AudioSystem also sends it
+                # But AudioSystem.speak handles the broadcast. 
+                # We need to bypass the local engine.say but keep the broadcast.
+                # It's cleaner to let AudioSystem handle the logic if we modify it, 
+                # but essentially we want the 'text' to go to the frontend.
+                
+                # Let's use the existing audio.speak but force it to skip local TTS if config is set
+                # Actually, easier to modify AudioSystem.speak or just manually broadcast here if needed.
+                # Analyzing AudioSystem.speak: it broadcasts first, then speaks.
+                # So we can just call audio.speak but we need to prevent it from using pyttsx3.
+                # Let's modify AudioSystem.speak instead of this wrapper to be cleaner.
+                pass
+            except:
+                pass
+        
+        # We will modify AudioSystem.speak to respect ENABLE_TERMINAL_VOICE global 
+        # or pass it as an arg. For now, let's just call it, and we'll patch AudioSystem.
         self.audio.speak(text, play_beep, rate)
     
     def toggle_voice_input(self):
@@ -996,6 +1036,10 @@ class JarvisAI:
             return ""
 
         with self.microphone as source:
+            # Wait if client is speaking to avoid feedback loop
+            while self.is_client_speaking:
+                time.sleep(0.1)
+                
             if timeout is None:
                 print(f"{Fore.CYAN}🎤 Listening continuously...")
             else:
@@ -1462,16 +1506,33 @@ async def websocket_endpoint(websocket: WebSocket):
                 # Handle voice toggle preference if needed
                 if jarvis:
                     jarvis.toggle_voice_input()
+            
+            elif data.get("type") == "speech_state":
+                status = data.get("status")
+                if jarvis:
+                    if status == "started":
+                        jarvis.set_client_speaking(True)
+                    elif status == "finished":
+                        jarvis.set_client_speaking(False)
                 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
-# Mount frontend directory to serve static files
-import os
-current_dir = os.path.dirname(os.path.abspath(__file__))
-frontend_dir = os.path.join(current_dir, "../frontend")
-app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+# Mount static files (React build output)
+app.mount("/static", StaticFiles(directory="jarvis-system/frontend/Talking AI Robot Interface/dist/assets"), name="static")
 
+# Serve React App
+@app.get("/")
+async def read_root():
+    return FileResponse("jarvis-system/frontend/Talking AI Robot Interface/dist/index.html")
+
+# Serve other static assets if needed (e.g. manifest, etc)
+@app.get("/{full_path:path}")
+async def serve_static(full_path: str):
+    file_path = f"jarvis-system/frontend/Talking AI Robot Interface/dist/{full_path}"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return FileResponse("jarvis-system/frontend/Talking AI Robot Interface/dist/index.html")
 
 
 # ========== MAIN EXECUTION ==========
