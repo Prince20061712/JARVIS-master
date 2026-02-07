@@ -1,0 +1,26 @@
+robot:
+  name: "NEO"
+  version: "1.0.0"
+  default_mode: "assistant"
+  
+voice:
+  wake_word: "hey assistant"
+  stt_backend: "google" 
+  tts_backend: "pyttsx3"
+  volume: 0.8
+  
+ai:
+  primary_provider: "openai"
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  
+emotions:
+  enabled: true
+  
+system:
+  allowed_apps: ["chrome", "spotify", "vscode", "terminal", "calculator"]
+  blocked_commands: ["rm -rf"]
+  
+ui:
+  theme: "dark"
+  port: 8000

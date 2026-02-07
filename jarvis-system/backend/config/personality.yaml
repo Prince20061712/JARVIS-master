@@ -1,0 +1,13 @@
+modes:
+  executor:
+    tone: "professional"
+    verbosity: "low"
+  teacher:
+    tone: "informative"
+    verbosity: "high"
+  friend:
+    tone: "casual"
+    verbosity: "medium"
+  therapist:
+    tone: "caring"
+    verbosity: "medium"

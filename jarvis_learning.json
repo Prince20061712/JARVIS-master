@@ -1,0 +1,19 @@
+{
+  "response_patterns": {
+    "final check": [
+      "That's interesting. Tell me more about what you're thinking."
+    ],
+    "on speaker": [
+      "That's interesting. Tell me more about what you're thinking."
+    ]
+  },
+  "corrections": [],
+  "feedback_history": [],
+  "interaction_stats": {
+    "total_interactions": 2,
+    "successful_responses": 2,
+    "failed_responses": 0,
+    "user_corrections": 0
+  },
+  "last_updated": "2026-02-07T18:38:40.653320"
+}

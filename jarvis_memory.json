@@ -1,0 +1,23 @@
+{
+  "conversations": [
+    {
+      "id": "d22f071b",
+      "timestamp": "2026-02-07T18:28:43.814829",
+      "user_input": "final check",
+      "jarvis_response": "That's interesting. Tell me more about what you're thinking.",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "ea470e1b",
+      "timestamp": "2026-02-07T18:36:22.760344",
+      "user_input": "on speaker",
+      "jarvis_response": "That's interesting. Tell me more about what you're thinking.",
+      "importance": 1,
+      "tags": []
+    }
+  ],
+  "important_memories": [],
+  "user_preferences": {},
+  "last_updated": "2026-02-07T18:38:40.652687"
+}

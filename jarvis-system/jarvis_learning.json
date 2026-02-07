@@ -1,0 +1,43 @@
+{
+  "response_patterns": {
+    "what is 4888888 x": [
+      "I'm not familiar with the calculation for this number, but I can suggest a calculator or a programming language that might be able to help. Would you like me to provide an alternative solution?"
+    ],
+    "who is narendra modi": [
+      "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was previously the Chief Minister of Gujarat from 2001 to 2014 and is a member of the Bharatiya Janata Party (BJP) and the Rashtriya Swayamsevak Sangh (RSS), a right-wing Hindu nationalist organization."
+    ],
+    "who is barack obama": [
+      "Barack Hussein Obama II is an American politician who served as the 44th President of the United States from 2009 to 2017. He was a member of the Democratic Party and previously served as a U.S. Senator representing Illinois from 2005 to 2008 and as an Illinois state senator from 1997 to 2004."
+    ],
+    "who is yogi adityanath": [
+      "Yogi Adityanath is an Indian Hindu monk and politician who has served as the Chief Minister of Uttar Pradesh, a state in India since 2017. He belongs to the Bharatiya Janata Party (BJP) and has been serving two consecutive terms as chief minister."
+    ],
+    "achcha lag raha hai ki bahut jyada": [
+      "The conversation is going well! I'll keep it brief."
+    ],
+    "emotion_sad": [
+      "It can be tough to feel sad. Would you like to talk about what's on your mind or something that's making you feel this way?"
+    ],
+    "i am feeling sad": [
+      "It can be tough to feel sad. Would you like to talk about what's on your mind or something that's making you feel this way?"
+    ],
+    "i didn't got expected marks in exams": [
+      "It can be frustrating when things don't go as planned. Did you discuss your concerns with your teacher before the exam?"
+    ],
+    "no": [
+      "Let me consider that from multiple perspectives."
+    ],
+    "off the mic": [
+      "I understand. Let me process that information."
+    ]
+  },
+  "corrections": [],
+  "feedback_history": [],
+  "interaction_stats": {
+    "total_interactions": 9,
+    "successful_responses": 9,
+    "failed_responses": 0,
+    "user_corrections": 0
+  },
+  "last_updated": "2026-02-07T19:30:14.313322"
+}

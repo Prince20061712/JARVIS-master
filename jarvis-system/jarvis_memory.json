@@ -1,0 +1,79 @@
+{
+  "conversations": [
+    {
+      "id": "6ad00507",
+      "timestamp": "2026-02-07T19:23:15.294658",
+      "user_input": "what is 4888888 x",
+      "jarvis_response": "I'm not familiar with the calculation for this number, but I can suggest a calculator or a programming language that might be able to help. Would you like me to provide an alternative solution?",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "f41d4c2a",
+      "timestamp": "2026-02-07T19:23:46.341191",
+      "user_input": "who is narendra modi",
+      "jarvis_response": "Narendra Damodardas Modi is an Indian politician who has served as the Prime Minister of India since 2014. He was previously the Chief Minister of Gujarat from 2001 to 2014 and is a member of the Bharatiya Janata Party (BJP) and the Rashtriya Swayamsevak Sangh (RSS), a right-wing Hindu nationalist organization.",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "05e4e3fa",
+      "timestamp": "2026-02-07T19:24:45.895897",
+      "user_input": "who is barack obama",
+      "jarvis_response": "Barack Hussein Obama II is an American politician who served as the 44th President of the United States from 2009 to 2017. He was a member of the Democratic Party and previously served as a U.S. Senator representing Illinois from 2005 to 2008 and as an Illinois state senator from 1997 to 2004.",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "0ab50a54",
+      "timestamp": "2026-02-07T19:27:11.448648",
+      "user_input": "who is yogi adityanath",
+      "jarvis_response": "Yogi Adityanath is an Indian Hindu monk and politician who has served as the Chief Minister of Uttar Pradesh, a state in India since 2017. He belongs to the Bharatiya Janata Party (BJP) and has been serving two consecutive terms as chief minister.",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "aa4b61f4",
+      "timestamp": "2026-02-07T19:28:32.146256",
+      "user_input": "achcha lag raha hai ki bahut jyada",
+      "jarvis_response": "The conversation is going well! I'll keep it brief.",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "811a258e",
+      "timestamp": "2026-02-07T19:28:52.295661",
+      "user_input": "i am feeling sad",
+      "jarvis_response": "It can be tough to feel sad. Would you like to talk about what's on your mind or something that's making you feel this way?",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "91e7eb2b",
+      "timestamp": "2026-02-07T19:29:15.014990",
+      "user_input": "i didn't got expected marks in exams",
+      "jarvis_response": "It can be frustrating when things don't go as planned. Did you discuss your concerns with your teacher before the exam?",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "26ea1b6b",
+      "timestamp": "2026-02-07T19:29:24.339774",
+      "user_input": "no",
+      "jarvis_response": "Let me consider that from multiple perspectives.",
+      "importance": 1,
+      "tags": []
+    },
+    {
+      "id": "85df29df",
+      "timestamp": "2026-02-07T19:30:14.314286",
+      "user_input": "off the mic",
+      "jarvis_response": "I understand. Let me process that information.",
+      "importance": 1,
+      "tags": []
+    }
+  ],
+  "important_memories": [],
+  "user_preferences": {},
+  "last_updated": "2026-02-07T19:30:14.314314"
+}
