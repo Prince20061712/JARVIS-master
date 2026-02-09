@@ -5,7 +5,7 @@
  * PostCSS plugins — you do NOT need to include `tailwindcss` or `autoprefixer` here.
  *
  * This file only exists for adding additional PostCSS plugins, if needed.
- * For example.:
+ * For example:
  *
  * import postcssNested from 'postcss-nested'
  * export default { plugins: [postcssNested()] }
