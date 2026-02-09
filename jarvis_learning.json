@@ -71,15 +71,24 @@
     ],
     "safari jar": [
       "I understand. Let me process that information."
+    ],
+    "who is narendra modi jarvis": [
+      "Narendra Damodardas Modi is an Indian politician and the current Prime Minister of India. He has served as the Chief Minister of Gujarat since 2014 and was previously the Deputy Chief Minister."
+    ],
+    "who is barack obama": [
+      "Barack Hussein Obama II is a former United States President, serving from 2009 to 2017. He was the first African American president of the United States."
+    ],
+    "who is narendra modi jarv": [
+      "Narendra Damodardas Modi is an Indian politician who has been serving as the Prime Minister of India since May 2014. He previously held the office from 2001 to 2014 and again since 2019."
     ]
   },
   "corrections": [],
   "feedback_history": [],
   "interaction_stats": {
-    "total_interactions": 23,
-    "successful_responses": 23,
+    "total_interactions": 26,
+    "successful_responses": 26,
     "failed_responses": 0,
     "user_corrections": 0
   },
-  "last_updated": "2026-02-08T10:06:59.414988"
+  "last_updated": "2026-02-08T20:03:13.786558"
 }

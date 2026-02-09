@@ -1519,20 +1519,20 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 # Mount static files (React build output)
-app.mount("/static", StaticFiles(directory="jarvis-system/frontend/Talking AI Robot Interface/dist/assets"), name="static")
+app.mount("/static", StaticFiles(directory="jarvis-system/frontend/dist/assets"), name="static")
 
 # Serve React App
 @app.get("/")
 async def read_root():
-    return FileResponse("jarvis-system/frontend/Talking AI Robot Interface/dist/index.html")
+    return FileResponse("jarvis-system/frontend/dist/index.html")
 
 # Serve other static assets if needed (e.g. manifest, etc)
 @app.get("/{full_path:path}")
 async def serve_static(full_path: str):
-    file_path = f"jarvis-system/frontend/Talking AI Robot Interface/dist/{full_path}"
+    file_path = f"jarvis-system/frontend/dist/{full_path}"
     if os.path.exists(file_path):
         return FileResponse(file_path)
-    return FileResponse("jarvis-system/frontend/Talking AI Robot Interface/dist/index.html")
+    return FileResponse("jarvis-system/frontend/dist/index.html")
 
 
 # ========== MAIN EXECUTION ==========
