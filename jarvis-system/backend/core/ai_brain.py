@@ -14,7 +14,7 @@ import threading
 import sys
 import os
 from typing import Dict, List, Optional, Any, Tuple, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
 import hashlib
 from collections import defaultdict, deque
@@ -72,6 +72,31 @@ class ConversationContext:
     relationship_depth: float
     temporal_context: Dict[str, Any]
     spatial_context: Dict[str, Any]
+
+def sanitize_for_json(obj):
+    """Recursively sanitize an object for JSON serialization.
+    Handles Enum keys, dataclass values, and other non-serializable types."""
+    if obj is None:
+        return None
+    if isinstance(obj, (str, int, float, bool)):
+        return obj
+    if isinstance(obj, Enum):
+        return obj.value
+    if isinstance(obj, dict):
+        return {
+            (k.value if isinstance(k, Enum) else str(k) if not isinstance(k, (str, int, float, bool)) else k): sanitize_for_json(v)
+            for k, v in obj.items()
+        }
+    if isinstance(obj, (list, tuple)):
+        return [sanitize_for_json(item) for item in obj]
+    if hasattr(obj, '__dataclass_fields__'):
+        try:
+            return sanitize_for_json(asdict(obj))
+        except Exception:
+            return str(obj)
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()
+    return str(obj)
 
 class OllamaEnhancedManager:
     """Enhanced Ollama manager with multiple models, streaming, and better management"""
@@ -308,7 +333,7 @@ class OllamaEnhancedManager:
         
         # Add context information
         if context:
-            system_prompt += f"\n\nCurrent Context:\n{json.dumps(context, indent=2)}"
+            system_prompt += f"\n\nCurrent Context:\n{json.dumps(sanitize_for_json(context), indent=2)}"
         
         # Add conversation history
         if self.conversation_history:
@@ -734,45 +759,71 @@ class FullFledgedAIBrain:
         
         # LAYER 2: COGNITIVE (Understanding, knowledge)
         print(f"[Layer 2] Cognitive processing...")
-        layer2_result = self._process_layer2_cognitive(user_input, layer1_result)
+        try:
+            layer2_result = self._process_layer2_cognitive(user_input, layer1_result)
+        except Exception as e:
+            print(f"⚠️ Layer 2 error: {e}")
+            layer2_result = {"emotion_analysis": {"primary_emotion": "neutral"}, "topic_identified": "general"}
         thought_process.layers_activated.append(ProcessingLayer.LAYER_2_COGNITIVE)
         thought_process.intermediate_results["layer2"] = layer2_result
         
         # LAYER 3: METACOGNITIVE (Self-awareness, reflection)
         print(f"[Layer 3] Metacognitive processing...")
-        layer3_result = self._process_layer3_metacognitive(user_input, layer2_result)
+        try:
+            layer3_result = self._process_layer3_metacognitive(user_input, layer2_result)
+        except Exception as e:
+            print(f"⚠️ Layer 3 error: {e}")
+            layer3_result = {}
         thought_process.layers_activated.append(ProcessingLayer.LAYER_3_METACOGNITIVE)
         thought_process.intermediate_results["layer3"] = layer3_result
         
         # LAYER 4: PROACTIVE (Anticipation, planning)
         print(f"[Layer 4] Proactive processing...")
-        layer4_result = self._process_layer4_proactive(user_input, layer3_result)
+        try:
+            layer4_result = self._process_layer4_proactive(user_input, layer3_result)
+        except Exception as e:
+            print(f"⚠️ Layer 4 error: {e}")
+            layer4_result = {}
         thought_process.layers_activated.append(ProcessingLayer.LAYER_4_PROACTIVE)
         thought_process.intermediate_results["layer4"] = layer4_result
         
         # LAYER 5: CREATIVE (Generation, innovation)
         print(f"[Layer 5] Creative processing...")
-        layer5_result = self._process_layer5_creative(user_input, layer4_result)
+        try:
+            layer5_result = self._process_layer5_creative(user_input, layer4_result)
+        except Exception as e:
+            print(f"⚠️ Layer 5 error: {e}")
+            layer5_result = {}
         thought_process.layers_activated.append(ProcessingLayer.LAYER_5_CREATIVE)
         thought_process.intermediate_results["layer5"] = layer5_result
         
         # FINAL DECISION
-        thought_process.final_decision = self._make_final_decision(
-            layer1_result, layer2_result, layer3_result, layer4_result, layer5_result
-        )
+        try:
+            thought_process.final_decision = self._make_final_decision(
+                layer1_result, layer2_result, layer3_result, layer4_result, layer5_result
+            )
+        except Exception as e:
+            print(f"⚠️ Final decision error: {e}")
+            thought_process.final_decision = {"use_ai": True, "priority": 1}
         
         thought_process.processing_time = time.time() - start_time
-        thought_process.cognitive_load = self._calculate_cognitive_load(thought_process)
+        try:
+            thought_process.cognitive_load = self._calculate_cognitive_load(thought_process)
+        except Exception:
+            thought_process.cognitive_load = 0.5
         
         # Store thought process
         self.thought_processes.append(thought_process)
         
-        # Publish event
-        asyncio.create_task(self.event_bus.publish(
-            "brain.thought_complete",
-            thought_process.__dict__,
-            priority=EventPriority.HIGH
-        ))
+        # Publish event (non-blocking, don't crash if it fails)
+        try:
+            asyncio.create_task(self.event_bus.publish(
+                "brain.thought_complete",
+                thought_process.__dict__,
+                priority=EventPriority.HIGH
+            ))
+        except Exception:
+            pass
         
         self.state = AIState.RESPONDING
         return self._format_response(thought_process, layer5_result)
@@ -832,7 +883,9 @@ class FullFledgedAIBrain:
         # External knowledge check
         knowledge_result = None
         if self._needs_external_knowledge(user_input):
-            knowledge_result = self.knowledge.get_comprehensive_knowledge(user_input)
+            kr = self.knowledge.get_comprehensive_knowledge(user_input)
+            if kr:
+                knowledge_result = asdict(kr)
         
         # Memory recall
         similar_memories = self.memory.recall_memories(
@@ -957,7 +1010,7 @@ class FullFledgedAIBrain:
         
         return decision
     
-    def generate_response(self, analysis: Dict[str, Any]) -> str:
+    async def generate_response(self, analysis: Dict[str, Any]) -> str:
         """Generate final response based on complete analysis"""
         thought_process = analysis.get("thought_process", {})
         final_decision = thought_process.get("final_decision", {})
@@ -972,17 +1025,33 @@ class FullFledgedAIBrain:
             return self._generate_basic_command_response(layer1_result)
         
         # Use AI if available and appropriate
+        print(f"DEBUG: use_ai={final_decision.get('use_ai', False)}, ollama_available={self.ollama.is_available}")
+        
         if final_decision.get("use_ai", False) and self.ollama.is_available:
-            ai_context = self._prepare_ai_context(
-                thought_process["user_input"],
-                layer2_result,
-                layer5_result
-            )
+            print("DEBUG: Preparing AI context...")
+            try:
+                ai_context = self._prepare_ai_context(
+                    thought_process["user_input"],
+                    layer2_result,
+                    layer5_result
+                )
+                print(f"DEBUG: Context prepared. Keys: {ai_context.keys()}")
+            except Exception as e:
+                print(f"DEBUG: CRITICAL ERROR in _prepare_ai_context: {e}")
+                import traceback
+                traceback.print_exc()
+                ai_context = {}
             
-            ai_response = self.ollama.generate_response(
-                prompt=thought_process["user_input"],
-                context=ai_context
-            )
+            print("DEBUG: Calling Ollama generation...")
+            try:
+                ai_response = self.ollama.generate_response(
+                    prompt=thought_process["user_input"],
+                    context=ai_context
+                )
+                print(f"DEBUG: Ollama response: {ai_response[:100] if ai_response else 'None'}")
+            except Exception as e:
+                print(f"DEBUG: Ollama error: {e}")
+                ai_response = None
             
             if ai_response:
                 # Enhance AI response
@@ -993,13 +1062,18 @@ class FullFledgedAIBrain:
                 )
                 
                 # Learn from this interaction
-                self._learn_from_interaction(
-                    thought_process["user_input"],
-                    enhanced_response,
-                    analysis
-                )
+                try:
+                    await self._learn_from_interaction(
+                        thought_process["user_input"],
+                        enhanced_response,
+                        analysis
+                    )
+                except Exception as e:
+                    print(f"⚠️ Learning error (non-fatal): {e}")
                 
                 return enhanced_response
+        
+        print("DEBUG: Falling back to intelligent response logic")
         
         # Fallback to intelligent response generation
         response = self._generate_intelligent_fallback(
@@ -1008,21 +1082,32 @@ class FullFledgedAIBrain:
             layer5_result
         )
         
-        # Learn from fallback interaction
-        self._learn_from_interaction(
-            thought_process["user_input"],
-            response,
-            analysis
-        )
+        # Learn from fallback interaction (non-blocking)
+        try:
+            await self._learn_from_interaction(
+                thought_process["user_input"],
+                response,
+                analysis
+            )
+        except Exception as e:
+            print(f"⚠️ Learning error (non-fatal): {e}")
         
         return response
     
     def _prepare_ai_context(self, user_input: str, layer2_result: Dict, layer5_result: Dict) -> Dict[str, Any]:
         """Prepare comprehensive context for AI"""
+        # Get emotional state safely
+        emotion = layer2_result.get("emotion_analysis", {})
+        suggested_tone = "neutral"
+        if isinstance(emotion, dict):
+            suggested_tone = emotion.get("suggested_tone", "neutral")
+        elif hasattr(emotion, 'suggested_tone'):
+            suggested_tone = str(emotion.suggested_tone)
+
         context = {
             "user": self.user_name,
             "timestamp": datetime.datetime.now().isoformat(),
-            "emotional_state": layer2_result.get("emotion_analysis", {}),
+            "emotional_state": emotion,
             "external_knowledge": layer2_result.get("knowledge_result"),
             "similar_past_conversations": layer2_result.get("similar_memories", []),
             "study_context": layer2_result.get("study_context"),
@@ -1030,23 +1115,35 @@ class FullFledgedAIBrain:
             "personalized_elements": layer5_result.get("personalized_elements", {}),
             "ai_persona": layer5_result.get("ai_persona", "helpful_assistant"),
             "response_guidelines": {
-                "tone": layer2_result["emotion_analysis"].get("suggested_tone", "neutral"),
+                "tone": suggested_tone,
                 "depth": "detailed" if layer2_result.get("requires_deep_processing") else "concise",
                 "include_humor": bool(layer5_result.get("humor_element")),
                 "be_creative": bool(layer5_result.get("creative_options"))
             }
         }
         
-        return context
+        # Sanitize entire context for JSON safety
+        return sanitize_for_json(context)
     
     def _enhance_ai_response(self, ai_response: str, layer2_result: Dict, layer5_result: Dict) -> str:
         """Enhance AI response with personalization and creativity"""
         enhanced = ai_response
         
         # Add emotional empathy
-        emotion = layer2_result.get("emotion_analysis", {})
-        if emotion.get("primary_emotion") != "neutral":
-            empathy = self.emotion.get_empathetic_response(emotion)
+        # Add emotional empathy
+        emotion_data = layer2_result.get("emotion_analysis", {})
+        primary_emotion = emotion_data.get("primary_emotion")
+        
+        # Check if not neutral (handling both Enum and string)
+        is_neutral = False
+        if hasattr(primary_emotion, 'name'):  # Enum
+            is_neutral = (primary_emotion.name == "NEUTRAL")
+        else:
+            is_neutral = (str(primary_emotion).lower() == "neutral")
+
+        if not is_neutral and primary_emotion:
+            # get_empathetic_response expects the Enum (primary_emotion), not the dict (emotion_data)
+            empathy = self.emotion.get_empathetic_response(primary_emotion)
             if empathy and empathy not in enhanced:
                 enhanced = f"{empathy} {enhanced}"
         
@@ -1070,21 +1167,20 @@ class FullFledgedAIBrain:
     
     def _generate_intelligent_fallback(self, user_input: str, layer2_result: Dict, layer5_result: Dict) -> str:
         """Generate intelligent fallback response"""
-        # This would use the pattern recognition and learning system
-        # to generate appropriate responses
-        
-        # Check for learned responses
-        learned_response, confidence = self.learning.get_learned_response(
-            user_input,
-            user_id="default"
-        )
-        
-        if learned_response and confidence > 0.7:
-            return learned_response
+        # Note: Learned response matching disabled — broad pattern matching
+        # (e.g. intent:question) causes cross-query response contamination.
+        # Ollama should handle knowledge queries; this fallback is for
+        # when Ollama is unavailable.
         
         # Generate based on patterns
         topic = layer2_result.get("topic_identified", "general")
-        emotion = layer2_result["emotion_analysis"].get("primary_emotion", "neutral")
+        emotion_data = layer2_result.get("emotion_analysis", {})
+        if hasattr(emotion_data, '__dict__'):
+            emotion = getattr(emotion_data, 'primary_emotion', 'neutral')
+        elif isinstance(emotion_data, dict):
+            emotion = emotion_data.get("primary_emotion", "neutral")
+        else:
+            emotion = "neutral"
         
         # Create contextually appropriate response
         response_templates = {
@@ -1118,8 +1214,19 @@ class FullFledgedAIBrain:
         
         # Add knowledge if available
         knowledge = layer2_result.get("knowledge_result")
-        if knowledge and knowledge.get("found"):
-            knowledge_snippet = knowledge.get("content", "").split(". ")[0] + "."
+        knowledge_content = ""
+        knowledge_found = False
+        
+        if knowledge:
+            if hasattr(knowledge, 'found'):
+                knowledge_found = knowledge.found
+                knowledge_content = knowledge.content
+            elif isinstance(knowledge, dict):
+                knowledge_found = knowledge.get("found")
+                knowledge_content = knowledge.get("content", "")
+                
+        if knowledge_found and knowledge_content:
+            knowledge_snippet = knowledge_content.split(". ")[0] + "."
             base_response += f" {knowledge_snippet}"
         
         # Add creative element
@@ -1129,7 +1236,7 @@ class FullFledgedAIBrain:
         
         return base_response
     
-    def _learn_from_interaction(self, user_input: str, response: str, analysis: Dict):
+    async def _learn_from_interaction(self, user_input: str, response: str, analysis: Dict):
         """Learn from the interaction"""
         # Store in memory
         memory_id = self.memory.remember_conversation(
@@ -1146,7 +1253,7 @@ class FullFledgedAIBrain:
         self.metrics["total_interactions"] += 1
         
         # Publish learning event
-        asyncio.create_task(self.event_bus.publish(
+        await self.event_bus.publish(
             "interaction.completed",
             {
                 "user_input": user_input,
@@ -1155,7 +1262,7 @@ class FullFledgedAIBrain:
                 "analysis": analysis
             },
             priority=EventPriority.NORMAL
-        ))
+        )
     
     # Helper methods for layer processing (simplified implementations)
     def _is_timer_command(self, text):
@@ -1516,10 +1623,12 @@ class FullFledgedAIBrain:
             "timestamp": datetime.datetime.now().isoformat(),
             "user_input": thought_process.user_input,
             "thought_process": {
+                "user_input": thought_process.user_input,
                 "layers_activated": [layer.value for layer in thought_process.layers_activated],
                 "processing_time": round(thought_process.processing_time, 2),
                 "cognitive_load": round(thought_process.cognitive_load, 2),
-                "confidence_scores": thought_process.confidence_scores,
+                "confidence_scores": {k.value if hasattr(k, 'value') else str(k): v for k, v in thought_process.confidence_scores.items()},
+                "intermediate_results": thought_process.intermediate_results,
                 "final_decision": thought_process.final_decision
             },
             "analysis_summary": {
@@ -1650,9 +1759,33 @@ class FullFledgedAIBrain:
         
         # Save thought processes
         thoughts_file = os.path.join(self.data_dir, "thought_processes.json")
-        with open(thoughts_file, 'w') as f:
-            thoughts_data = [t.__dict__ for t in self.thought_processes]
-            json.dump(thoughts_data, f, indent=2)
+        try:
+            with open(thoughts_file, 'w') as f:
+                # Custom serialization for objects containing Enums
+                serialized_thoughts = []
+                for thought in self.thought_processes:
+                    # Convert to dict
+                    if hasattr(thought, '__dict__'):
+                        t_dict = thought.__dict__.copy()
+                    else:
+                        t_dict = asdict(thought)
+                    
+                    # Serialize layers list
+                    if 'layers_activated' in t_dict:
+                        t_dict['layers_activated'] = [l.value if hasattr(l, 'value') else str(l) for l in t_dict['layers_activated']]
+                    
+                    # Serialize confidence scores (keys must be strings)
+                    if 'confidence_scores' in t_dict:
+                        t_dict['confidence_scores'] = {
+                            (l.value if hasattr(l, 'value') else str(l)): s 
+                            for l, s in t_dict['confidence_scores'].items()
+                        }
+                    
+                    serialized_thoughts.append(t_dict)
+                
+                json.dump(serialized_thoughts, f, indent=2)
+        except Exception as e:
+            print(f"⚠️ Error saving thought processes: {e}")
         
         # Save metrics
         metrics_file = os.path.join(self.data_dir, "metrics.json")

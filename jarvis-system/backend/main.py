@@ -890,6 +890,7 @@ class JarvisAI:
         self.is_running = True
         self.voice_enabled = False # Start with voice disabled
         self.is_client_speaking = False # Track if client is speaking
+        self.is_jarvis_speaking = False # Track if JARVIS is speaking
         
         print(f"\n{Fore.CYAN}🤖 Loading Enhanced AI Brain (Modular)...")
         try:
@@ -898,11 +899,13 @@ class JarvisAI:
         except Exception as e:
             print(f"{Fore.RED}❌ Error loading AI Brain: {e}")
             # Fallback mock object
-            self.ai_brain = type('obj', (object,), {
-                'process_input': lambda x: {"user_input": x},
-                'generate_response': lambda x: "AI Brain offline. Using basic responses.",
-                'get_brain_status': lambda: {"local_ai": {"available": False}}
-            })()
+            class DummyBrain:
+                def process_input(self, x): return {"user_input": x}
+                async def generate_response(self, x): return "AI Brain offline. Using basic responses."
+                def get_brain_status(self): return {"local_ai": {"available": False}}
+                def save_state(self): pass
+            
+            self.ai_brain = DummyBrain()
         
         ai_status = self.ai_brain.get_brain_status()
         if ai_status.get("local_ai", {}).get("available", False):
@@ -1006,7 +1009,11 @@ class JarvisAI:
         
         # We will modify AudioSystem.speak to respect ENABLE_TERMINAL_VOICE global 
         # or pass it as an arg. For now, let's just call it, and we'll patch AudioSystem.
-        self.audio.speak(text, play_beep, rate)
+        self.is_jarvis_speaking = True
+        try:
+            self.audio.speak(text, play_beep, rate)
+        finally:
+            self.is_jarvis_speaking = False
     
     def toggle_voice_input(self):
         """Toggle voice input on/off"""
@@ -1037,7 +1044,7 @@ class JarvisAI:
 
         with self.microphone as source:
             # Wait if client is speaking to avoid feedback loop
-            while self.is_client_speaking:
+            while self.is_client_speaking or self.is_jarvis_speaking:
                 time.sleep(0.1)
                 
             if timeout is None:
@@ -1096,7 +1103,7 @@ class JarvisAI:
                         self.loop
                     )
     
-    def process_command(self, command):
+    async def process_command(self, command):
         """Process and execute commands"""
         if not command or not command.strip():
             self.speak("I didn't catch that. Could you please repeat?")
@@ -1278,16 +1285,18 @@ class JarvisAI:
             return
         
         # ========== BASIC COMMANDS ==========
-        if "hello" in command_lower or "hi" in command_lower:
+        # ========== BASIC COMMANDS ==========
+        words = set(command_lower.split())
+        if "hello" in words or "hi" in words:
             self.speak(f"Hello {USER_NAME}! How can I assist you?")
             return
         
-        if "time" in command_lower:
+        if "time" in words:
             current_time = datetime.datetime.now().strftime("%I:%M %p")
             self.speak(f"The current time is {current_time}")
             return
         
-        if "date" in command_lower:
+        if "date" in words:
             current_date = datetime.datetime.now().strftime("%A, %B %d, %Y")
             self.speak(f"Today is {current_date}")
             return
@@ -1311,16 +1320,18 @@ class JarvisAI:
             return
         
         # ========== AI RESPONSE FOR OTHER QUERIES ==========
-        self.handle_ai_response(command_lower)
+        await self.handle_ai_response(command_lower)
     
-    def handle_ai_response(self, query):
+    async def handle_ai_response(self, query):
         """Handle queries with AI Brain intelligence"""
-        if any(op in query for op in ['+', '-', '*', '/', 'plus', 'minus', 'times', 'divided']):
+        if any(op in query for op in ['+', '-', '*', '/', 'plus', 'minus', 'times', 'divided', 'multiplied', 'multiply']):
             try:
                 expression = query.lower()
                 replacements = {
+                    'multiplied by': '*', 'multiply by': '*', 'multiply': '*',
                     'plus': '+', 'minus': '-', 'times': '*', 'x': '*',
-                    'divided by': '/', 'over': '/'
+                    'divided by': '/', 'over': '/',
+                    ' and ': ' '
                 }
                 
                 for word, symbol in replacements.items():
@@ -1339,14 +1350,31 @@ class JarvisAI:
             except:
                 pass
         
-        analysis = self.ai_brain.process_input(query)
+        try:
+            analysis = self.ai_brain.process_input(query)
+        except Exception as e:
+            print(f"⚠️ AI Brain process_input error: {e}")
+            import traceback
+            traceback.print_exc()
+            self.speak("I encountered an issue processing that. Could you try rephrasing?")
+            return
         
         if analysis.get("ai_available", False):
             print(f"{Fore.CYAN}🤖 Processing with local AI...")
             self.audio.play_beep("ai_processing")
         
-        response = self.ai_brain.generate_response(analysis)
-        self.speak(response)
+        try:
+            response = await self.ai_brain.generate_response(analysis)
+        except Exception as e:
+            print(f"⚠️ AI Brain generate_response error: {e}")
+            import traceback
+            traceback.print_exc()
+            response = None
+        
+        if response:
+            self.speak(response)
+        else:
+            self.speak("I'm having trouble generating a response right now. Please try again.")
     
     def show_help(self):
         """Show help menu"""
@@ -1450,14 +1478,14 @@ class JarvisAI:
                         if "exit" in command or "quit" in command or "goodbye" in command:
                             self.speak("Goodbye! Have a great day.")
                             break
-                        self.process_command(command)
+                        asyncio.run_coroutine_threadsafe(self.process_command(command), self.loop)
                 else:
                     command = self.listen(timeout=1, phrase_time_limit=5)
                     if command and WAKE_WORD in command:
                         self.speak("Yes, I'm listening.")
                         command = self.listen(timeout=10, phrase_time_limit=15)
                         if command:
-                            self.process_command(command)
+                            asyncio.run_coroutine_threadsafe(self.process_command(command), self.loop)
                 
                 time.sleep(0.1)
                 
@@ -1499,8 +1527,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 content = data.get("content")
                 if jarvis and content:
                     print(f"Received command from Web UI: {content}")
-                    # Process command in a separate thread to avoid blocking WebSocket
-                    threading.Thread(target=jarvis.process_command, args=(content,)).start()
+                    # Process command using threadsafe execution on the main loop
+                    asyncio.run_coroutine_threadsafe(jarvis.process_command(content), jarvis.loop)
             
             elif data.get("type") == "toggle_voice":
                 # Handle voice toggle preference if needed
@@ -1519,21 +1547,39 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 # Mount static files (React build output)
+# Resolve absolute path to frontend dist
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIST = os.path.join(BACKEND_DIR, "../frontend/dist")
+FRONTEND_ASSETS = os.path.join(FRONTEND_DIST, "assets")
+
+# Ensure directories exist before mounting
+if not os.path.exists(FRONTEND_ASSETS):
+    print(f"⚠️ Warning: Frontend assets not found at {FRONTEND_ASSETS}")
+    # Create dummy if missing to prevent crash, user needs to build frontend
+    os.makedirs(FRONTEND_ASSETS, exist_ok=True)
+
 # Mount static files (React build output)
-app.mount("/static", StaticFiles(directory="../frontend/dist/assets"), name="static")
+app.mount("/static", StaticFiles(directory=FRONTEND_ASSETS), name="static")
 
 # Serve React App
 @app.get("/")
 async def read_root():
-    return FileResponse("../frontend/dist/index.html")
+    index_path = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return HTMLResponse("<h1>Frontend not built</h1><p>Please run 'npm run build' in frontend directory</p>")
 
 # Serve other static assets if needed (e.g. manifest, etc)
 @app.get("/{full_path:path}")
 async def serve_static(full_path: str):
-    file_path = f"../frontend/dist/{full_path}"
+    file_path = os.path.join(FRONTEND_DIST, full_path)
     if os.path.exists(file_path):
         return FileResponse(file_path)
-    return FileResponse("../frontend/dist/index.html")
+    
+    index_path = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return HTMLResponse("Not Found")
 
 
 # ========== MAIN EXECUTION ==========

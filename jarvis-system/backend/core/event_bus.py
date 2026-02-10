@@ -145,7 +145,10 @@ class AdvancedEventBus:
             self.middlewares: List[EventMiddleware] = []
             self.event_history: deque = deque(maxlen=10000)
             self.dead_letter_queue: List[Tuple[Event, str, Exception]] = []
-            self.metrics: Dict[str, Any] = defaultdict(lambda: defaultdict(int))
+            self.metrics: Dict[str, Any] = defaultdict(int)
+            self.metrics['events_published'] = defaultdict(int)
+            self.metrics['events_processed'] = defaultdict(int)
+            self.metrics['event_errors'] = defaultdict(int)
             self._processing_lock = asyncio.Lock()
             self._subscription_lock = asyncio.Lock()
             

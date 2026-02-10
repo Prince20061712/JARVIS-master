@@ -100,8 +100,8 @@ class EnhancedLearningSystem:
             try:
                 with open(self.patterns_file, 'rb') as f:
                     patterns_data = pickle.load(f)
-                    self.response_patterns = patterns_data.get('response_patterns', defaultdict(list))
-                    self.context_patterns = patterns_data.get('context_patterns', defaultdict(list))
+                    self.response_patterns = defaultdict(list, patterns_data.get('response_patterns', {}))
+                    self.context_patterns = defaultdict(list, patterns_data.get('context_patterns', {}))
             except:
                 pass
         

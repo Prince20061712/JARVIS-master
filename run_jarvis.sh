@@ -1,57 +1,45 @@
 #!/bin/bash
 
-# Function to check if a command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
+# Navigate to script directory (project root)
+cd "$(dirname "$0")"
 
-# Check for venv first
-if [ -d ".venv" ]; then
-    echo "Found .venv, using it."
-    PYTHON_CMD=".venv/bin/python"
-# Check for Python 3
-elif command_exists python3; then
-    PYTHON_CMD="python3"
-elif command_exists python; then
-    # Check if python is actually python 3
-    if python --version 2>&1 | grep -q "Python 3"; then
-        PYTHON_CMD="python"
+# Check if frontend is built
+if [ ! -d "jarvis-system/frontend/dist" ]; then
+    echo "Frontend build missing. Building frontend..."
+    
+    # Check if npm is installed
+    if ! command -v npm &> /dev/null; then
+        echo "Error: npm is not installed. Please install Node.js/npm to build the frontend."
+        # Don't exit, just warn, maybe user doesn't need frontend immediately
     else
-        echo "Error: Python 3 is required but not found."
-        exit 1
+        cd jarvis-system/frontend
+        
+        # Install dependencies if missing
+        if [ ! -d "node_modules" ]; then
+            echo "Installing frontend dependencies..."
+            npm install
+        fi
+        
+        # Build frontend
+        echo "Building React app..."
+        npm run build
+        
+        # Go back to root
+        cd ../..
     fi
-else
-    echo "Error: Python 3 is required but not found."
-    exit 1
 fi
 
-echo "Using Python: $PYTHON_CMD"
+# Navigate to backend
+cd jarvis-system/backend
 
-# Install dependencies
-echo "Installing dependencies..."
-if [ -f "jarvis-system/backend/requirements.txt" ]; then
-    $PYTHON_CMD -m pip install -r jarvis-system/backend/requirements.txt
-else
-    echo "Warning: requirements.txt not found in jarvis-system/backend/"
-fi
+# Install/Update backend dependencies (quietly)
+echo "Checking backend dependencies..."
+python3 -m pip install -r requirements.txt --quiet
 
-# Run the application
+# Download NLP data (TextBlob corpora)
+echo "Checking NLP data..."
+python3 -m textblob.download_corpora
+
+# Run the main application
 echo "Starting JARVIS..."
-if [ -f "jarvis-system/backend/main.py" ]; then
-    # We need to run main.py from the jarvis-system/backend directory context or
-    # ensure it can find its modules.
-    # The import `from core.ai_brain import EnhancedAIBrain` inside main.py suggests
-    # that `main.py` expects `core` to be importable.
-    # `main.py` is in `backend/`. `core/` should be in `backend/` too (based on `from core...`).
-    # Let's check if `core` exists in `backend`.
-    
-    # Wait, I should check if `core` exists.
-    # Assuming standard structure, let's run it.
-    # Setting PYTHONPATH to include the backend directory might be needed if running fro root.
-    
-    export PYTHONPATH=$PYTHONPATH:$(pwd)/jarvis-system/backend
-    $PYTHON_CMD jarvis-system/backend/main.py
-else
-    echo "Error: main.py not found in jarvis-system/backend/"
-    exit 1
-fi
+python3 main.py
