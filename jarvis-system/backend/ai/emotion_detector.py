@@ -1,11 +1,7 @@
-from dataclasses import dataclass
-from typing import Dict, List, Optional
+from dataclasses import dataclass, field
+from typing import Dict, Any, Optional
 import logging
-
-try:
-    from textblob import TextBlob
-except ImportError:
-    TextBlob = None
+from ..core.emotional_intelligence import EmotionalIntelligence, EmotionalState
 
 logger = logging.getLogger("EmotionDetector")
 
@@ -14,42 +10,31 @@ class EmotionData:
     primary_emotion: str 
     confidence: float
     sentiment_score: float # -1.0 to 1.0
+    details: Dict[str, Any] = field(default_factory=dict)
 
 class EmotionDetector:
     def __init__(self):
-        # In a real scenario, load a transformer model here (e.g., 'bhadresh-savani/distilbert-base-uncased-emotion')
-        # For prototype speed, using TextBlob sentiment + keyword mapping
-        pass
+        self.engine = EmotionalIntelligence()
 
     def detect(self, text: str) -> EmotionData:
         """
-        Detects emotion from text.
+        Detects emotion using the advanced EmotionalIntelligence engine.
         """
         if not text:
             return EmotionData("neutral", 1.0, 0.0)
 
-        sentiment = 0.0
-        if TextBlob:
-            blob = TextBlob(text)
-            sentiment = blob.sentiment.polarity
-
-        # Simple heuristic mapping based on sentiment and keywords
-        # This is a placeholder for a real ML model
-        text_lower = text.lower()
+        # Use the advanced human-like detection
+        analysis = self.engine.detect_emotion_humanlike(text)
         
-        if "sad" in text_lower or "unhappy" in text_lower or "depressed" in text_lower:
-            return EmotionData("sad", 0.8, sentiment)
-        elif "happy" in text_lower or "great" in text_lower or "joy" in text_lower:
-            return EmotionData("happy", 0.8, sentiment)
-        elif "angry" in text_lower or "mad" in text_lower or "hates" in text_lower:
-            return EmotionData("angry", 0.8, sentiment)
-        elif "fear" in text_lower or "scared" in text_lower or "afraid" in text_lower:
-            return EmotionData("fear", 0.8, sentiment)
+        primary_emotion = analysis.get("primary_emotion", "neutral")
+        if hasattr(primary_emotion, "value"):
+            primary_emotion = primary_emotion.value
             
-        # Fallback to sentiment
-        if sentiment > 0.5:
-            return EmotionData("happy", 0.6, sentiment)
-        elif sentiment < -0.5:
-            return EmotionData("sad", 0.6, sentiment)
+        confidence = analysis.get("confidence", 0.0)
         
-        return EmotionData("neutral", 0.5, sentiment)
+        # Extract sentiment from the linguistic analysis if available
+        sentiment = 0.0
+        if "linguistic_analysis" in analysis and "sentiment" in analysis["linguistic_analysis"]:
+            sentiment = analysis["linguistic_analysis"]["sentiment"].get("polarity", 0.0)
+
+        return EmotionData(primary_emotion, confidence, sentiment, details=analysis)

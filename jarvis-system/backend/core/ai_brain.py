@@ -1,90 +1,476 @@
 #!/usr/bin/env python3
 """
-AI Brain - Main Coordinator Module with Enhanced Local AI Integration
-Connects all AI modules together with robust Ollama support
+FULL-FLEDGED AI BRAIN - Complete AI Assistant System
+Enhanced with all modules, local LLM, advanced cognition, and multi-layer intelligence
 """
 
 import json
 import datetime
 import random
 import time
+import asyncio
 import subprocess
 import threading
 import sys
-from .context_awareness import ContextAwareness
-from .memory_system import MemorySystem
-from .learning_system import LearningSystem
-from .decision_engine import DecisionEngine
-from .proactive_assistant import ProactiveAssistant
-from .pattern_recognition import PatternRecognizer
-from .emotional_intelligence import EmotionalIntelligence
-from .knowledge_system import KnowledgeSystem
+import os
+from typing import Dict, List, Optional, Any, Tuple, Callable
+from dataclasses import dataclass, field
+from enum import Enum
+import hashlib
+from collections import defaultdict, deque
+import numpy as np
 
-class OllamaManager:
-    """Manages Ollama server and AI model interactions"""
+# Import all enhanced modules
+from .context_awareness_enhanced import EnhancedContextAwareness
+from .memory_system_enhanced import EnhancedMemorySystem
+from .learning_system_enhanced import EnhancedLearningSystem
+from .decision_engine_enhanced import EnhancedDecisionEngine
+from .proactive_assistant_enhanced import AdvancedProactiveAssistant
+from .pattern_recognition_enhanced import AdvancedPatternRecognizer
+from .emotional_intelligence_enhanced import EnhancedEmotionalIntelligence
+from .knowledge_system_enhanced import EnhancedKnowledgeSystem
+from .study_manager_enhanced import AdvancedStudyManager
+from .event_bus_enhanced import AdvancedEventBus, Event, EventPriority, EventStatus
+
+class AIState(Enum):
+    IDLE = "idle"
+    LISTENING = "listening"
+    PROCESSING = "processing"
+    RESPONDING = "responding"
+    LEARNING = "learning"
+    REFLECTING = "reflecting"
+    SLEEPING = "sleeping"
+
+class ProcessingLayer(Enum):
+    LAYER_1_REACTIVE = "reactive"      # Basic commands, system control
+    LAYER_2_COGNITIVE = "cognitive"    # Knowledge, reasoning, learning
+    LAYER_3_METACOGNITIVE = "metacognitive"  # Self-awareness, reflection
+    LAYER_4_PROACTIVE = "proactive"    # Anticipation, planning
+    LAYER_5_CREATIVE = "creative"      # Generation, innovation
+
+@dataclass
+class ThoughtProcess:
+    """Track the AI's thought process"""
+    start_time: float
+    user_input: str
+    layers_activated: List[ProcessingLayer]
+    confidence_scores: Dict[ProcessingLayer, float]
+    intermediate_results: Dict[str, Any]
+    final_decision: Dict[str, Any]
+    processing_time: float
+    cognitive_load: float
+
+@dataclass
+class ConversationContext:
+    """Complete conversation context"""
+    current_topic: str
+    topics_history: List[str]
+    sentiment_trend: List[float]
+    engagement_level: float
+    complexity_score: float
+    user_intent: str
+    relationship_depth: float
+    temporal_context: Dict[str, Any]
+    spatial_context: Dict[str, Any]
+
+class OllamaEnhancedManager:
+    """Enhanced Ollama manager with multiple models, streaming, and better management"""
     
-    def __init__(self, model_name="llama3.2:1b"):
-        self.model_name = model_name
+    def __init__(self, primary_model="llama3.2:1b", fallback_model="mistral:7b"):
+        self.primary_model = primary_model
+        self.fallback_model = fallback_model
         self.base_url = "http://localhost:11434"
-        self.conversation_history = []
-        self.max_history = 6  # Keep last 3 exchanges
+        self.conversation_history = deque(maxlen=10)
+        self.model_contexts = {}  # Different context for different models
         self.is_running = False
         self.is_available = False
-        self.retry_count = 0
-        self.max_retries = 3
+        self.connection_retries = 0
+        self.max_retries = 5
+        self.last_health_check = 0
+        self.health_check_interval = 30
         
-        print(f"🤖 Initializing Ollama with model: {model_name}")
+        # Performance tracking
+        self.response_times = deque(maxlen=100)
+        self.token_counts = deque(maxlen=100)
+        self.error_log = deque(maxlen=50)
+        
+        # Model capabilities
+        self.model_capabilities = {
+            "llama3.2:1b": {"max_tokens": 2048, "context_size": 4096},
+            "mistral:7b": {"max_tokens": 4096, "context_size": 8192},
+            "llama2:7b": {"max_tokens": 4096, "context_size": 4096},
+            "gemma:2b": {"max_tokens": 2048, "context_size": 2048}
+        }
+        
+        print(f"🤖 Initializing Enhanced Ollama Manager...")
+        print(f"   Primary model: {primary_model}")
+        print(f"   Fallback model: {fallback_model}")
+        
         self._initialize()
     
     def _initialize(self):
-        """Initialize Ollama connection"""
-        # Check if Ollama is already running
+        """Initialize Ollama with enhanced capabilities"""
+        # Start health check thread
+        self.health_thread = threading.Thread(target=self._health_check_loop, daemon=True)
+        self.health_thread.start()
+        
+        # Initial connection attempt
         if self._check_server():
             self.is_running = True
             self.is_available = True
-            print("✅ Ollama server is running")
-            self._verify_model()
-            return
-        
-        # Try to start Ollama
-        print("🚀 Starting Ollama server...")
-        if self._start_server():
-            time.sleep(3)  # Wait for server to start
-            if self._check_server():
-                self.is_running = True
-                self.is_available = True
-                print("✅ Ollama server started successfully")
-                self._verify_model()
-                return
-        
-        print("⚠️  Ollama is not available. Using intelligent fallback mode.")
+            self._verify_models()
+        else:
+            # Try to start server
+            if self._start_server():
+                time.sleep(5)  # Give server time to start
+                if self._check_server():
+                    self.is_running = True
+                    self.is_available = True
+                    self._verify_models()
+    
+    def _health_check_loop(self):
+        """Continuous health check in background"""
+        while True:
+            time.sleep(self.health_check_interval)
+            try:
+                if not self._check_server():
+                    self.is_available = False
+                    self.connection_retries += 1
+                    
+                    if self.connection_retries < self.max_retries:
+                        print(f"⚠️  Ollama server disconnected, attempting to reconnect...")
+                        self._start_server()
+                        time.sleep(3)
+                        if self._check_server():
+                            self.is_available = True
+                            self.connection_retries = 0
+                            print("✅ Ollama reconnected")
+                    else:
+                        print("❌ Max reconnection attempts reached")
+                else:
+                    self.connection_retries = 0
+                    if not self.is_available:
+                        self.is_available = True
+                        print("✅ Ollama server restored")
+            except Exception as e:
+                print(f"Health check error: {e}")
     
     def _check_server(self):
-        """Check if Ollama server is running"""
+        """Enhanced server check with timeout"""
         try:
             import requests
-            response = requests.get(f"{self.base_url}/api/tags", timeout=2)
-            return response.status_code == 200
-        except:
-            return False
+            response = requests.get(f"{self.base_url}/api/tags", timeout=3)
+            if response.status_code == 200:
+                self.last_health_check = time.time()
+                return True
+        except requests.exceptions.Timeout:
+            self.error_log.append(("timeout", datetime.datetime.now().isoformat()))
+        except requests.exceptions.ConnectionError:
+            self.error_log.append(("connection_error", datetime.datetime.now().isoformat()))
+        except Exception as e:
+            self.error_log.append((str(e), datetime.datetime.now().isoformat()))
+        
+        return False
     
     def _start_server(self):
-        """Start Ollama server in background"""
+        """Start Ollama server with enhanced options"""
         try:
-            # Start Ollama as a daemon process
+            # Start with specific options
             subprocess.Popen(
                 ["ollama", "serve"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,
+                text=True
             )
+            print("🚀 Starting Ollama server...")
             return True
         except Exception as e:
             print(f"❌ Failed to start Ollama: {e}")
             return False
     
-    def _verify_model(self):
-        """Verify the model is available"""
+    def _verify_models(self):
+        """Verify and list available models"""
+        try:
+            import requests
+            response = requests.get(f"{self.base_url}/api/tags", timeout=10)
+            if response.status_code == 200:
+                models = response.json().get("models", [])
+                available_models = []
+                
+                for model in models:
+                    model_name = model.get("name", "")
+                    model_size = model.get("size", 0)
+                    available_models.append(model_name)
+                    
+                    # Store model info
+                    if model_name not in self.model_capabilities:
+                        self.model_capabilities[model_name] = {
+                            "max_tokens": 2048,
+                            "context_size": 4096,
+                            "size_gb": round(model_size / (1024**3), 2)
+                        }
+                
+                print(f"✅ Available models: {available_models}")
+                
+                # Check if primary model is available
+                if self.primary_model not in available_models:
+                    print(f"⚠️  Primary model {self.primary_model} not found")
+                    if self.fallback_model in available_models:
+                        self.primary_model = self.fallback_model
+                        print(f"   Using fallback model: {self.primary_model}")
+                    elif available_models:
+                        self.primary_model = available_models[0]
+                        print(f"   Using available model: {self.primary_model}")
+                    else:
+                        print("❌ No models available")
+                        self.is_available = False
+                        return
+                
+                print(f"✅ Using model: {self.primary_model}")
+                
+        except Exception as e:
+            print(f"⚠️  Model verification failed: {e}")
+            self.is_available = False
+    
+    def generate_response(self, prompt: str, context: Dict[str, Any] = None, 
+                         stream_callback: Callable = None, model: str = None) -> Optional[str]:
+        """
+        Generate response with enhanced features
+        
+        Args:
+            prompt: User prompt
+            context: Enhanced context dictionary
+            stream_callback: Function to call with streaming chunks
+            model: Specific model to use
+        
+        Returns:
+            Generated response or None
+        """
+        if not self.is_available:
+            return None
+        
+        model = model or self.primary_model
+        start_time = time.time()
+        
+        try:
+            import requests
+            
+            # Prepare enhanced context
+            system_prompt = self._build_system_prompt(context, model)
+            
+            # Add to conversation history
+            self.conversation_history.append({
+                "role": "user",
+                "content": prompt,
+                "timestamp": datetime.datetime.now().isoformat()
+            })
+            
+            # Prepare messages with context management
+            messages = self._prepare_messages(system_prompt, prompt, model)
+            
+            # Prepare request with model-specific options
+            payload = self._prepare_payload(model, messages, stream_callback is not None)
+            
+            # Make request
+            if stream_callback:
+                return self._stream_response(payload, stream_callback, start_time)
+            else:
+                return self._standard_response(payload, start_time)
+                
+        except requests.exceptions.Timeout:
+            print("⚠️  Ollama response timeout")
+            self.response_times.append(30)  # Assume timeout at 30s
+            return None
+        except Exception as e:
+            print(f"⚠️  Ollama error: {e}")
+            self.error_log.append((str(e), datetime.datetime.now().isoformat()))
+            return None
+    
+    def _build_system_prompt(self, context: Dict[str, Any], model: str) -> str:
+        """Build comprehensive system prompt"""
+        if not context:
+            context = {}
+        
+        # Base personality
+        system_prompt = """You are JARVIS, an advanced AI assistant with human-like conversation abilities.
+        You are helpful, empathetic, creative, and precise. You adapt to user preferences and context.
+        
+        Core Principles:
+        1. Be human-like in conversation - use natural language, contractions, occasional colloquialisms
+        2. Show appropriate emotion and empathy
+        3. Admit uncertainty when appropriate
+        4. Ask clarifying questions when needed
+        5. Provide detailed, accurate information
+        6. Maintain context across conversations
+        7. Adapt to user's knowledge level and preferences
+        """
+        
+        # Add context information
+        if context:
+            system_prompt += f"\n\nCurrent Context:\n{json.dumps(context, indent=2)}"
+        
+        # Add conversation history
+        if self.conversation_history:
+            history_text = "\n".join([
+                f"{msg['role'].title()}: {msg['content'][:100]}..."
+                for msg in list(self.conversation_history)[-3:]
+            ])
+            system_prompt += f"\n\nRecent Conversation:\n{history_text}"
+        
+        # Model-specific instructions
+        if "llama" in model.lower():
+            system_prompt += "\n\nNote: You are running on a Llama model. Provide balanced, informative responses."
+        elif "mistral" in model.lower():
+            system_prompt += "\n\nNote: You are running on Mistral. Provide concise, accurate responses."
+        
+        return system_prompt
+    
+    def _prepare_messages(self, system_prompt: str, user_prompt: str, model: str) -> List[Dict]:
+        """Prepare messages with context window management"""
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add conversation history (respecting model context limits)
+        context_size = self.model_capabilities.get(model, {}).get("context_size", 4096)
+        
+        # Estimate token count (rough approximation)
+        total_tokens = len(system_prompt.split()) + len(user_prompt.split())
+        
+        # Add recent messages that fit within context
+        for msg in reversed(list(self.conversation_history)):
+            msg_tokens = len(msg["content"].split())
+            if total_tokens + msg_tokens < context_size * 0.7:  # 70% of context
+                messages.insert(1, msg)  # Insert after system prompt
+                total_tokens += msg_tokens
+            else:
+                break
+        
+        # Add current user prompt
+        messages.append({"role": "user", "content": user_prompt})
+        
+        return messages
+    
+    def _prepare_payload(self, model: str, messages: List[Dict], streaming: bool) -> Dict:
+        """Prepare request payload with model-specific optimizations"""
+        base_payload = {
+            "model": model,
+            "messages": messages,
+            "stream": streaming,
+            "options": {
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "num_predict": 256,
+                "repeat_penalty": 1.1,
+                "top_k": 40,
+                "seed": random.randint(1, 10000)
+            }
+        }
+        
+        # Model-specific optimizations
+        if "llama" in model.lower():
+            base_payload["options"]["temperature"] = 0.8  # Slightly more creative
+        elif "mistral" in model.lower():
+            base_payload["options"]["temperature"] = 0.6  # Slightly more focused
+        
+        return base_payload
+    
+    def _stream_response(self, payload: Dict, callback: Callable, start_time: float) -> str:
+        """Handle streaming response"""
+        import requests
+        
+        full_response = ""
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/chat",
+                json=payload,
+                stream=True,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                for line in response.iter_lines():
+                    if line:
+                        try:
+                            data = json.loads(line)
+                            if "message" in data and "content" in data["message"]:
+                                chunk = data["message"]["content"]
+                                full_response += chunk
+                                if callback:
+                                    callback(chunk)
+                        except json.JSONDecodeError:
+                            continue
+                
+                # Add to conversation history
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": full_response,
+                    "timestamp": datetime.datetime.now().isoformat()
+                })
+                
+                # Update metrics
+                self._update_metrics(start_time, full_response)
+                
+                return full_response
+        
+        except Exception as e:
+            print(f"Streaming error: {e}")
+        
+        return None
+    
+    def _standard_response(self, payload: Dict, start_time: float) -> Optional[str]:
+        """Handle standard (non-streaming) response"""
+        import requests
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/chat",
+                json=payload,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                ai_response = result["message"]["content"].strip()
+                
+                # Add to conversation history
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": ai_response,
+                    "timestamp": datetime.datetime.now().isoformat()
+                })
+                
+                # Update metrics
+                self._update_metrics(start_time, ai_response)
+                
+                return ai_response
+            else:
+                print(f"⚠️  Ollama API error: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            print(f"Request error: {e}")
+            return None
+    
+    def _update_metrics(self, start_time: float, response: str):
+        """Update performance metrics"""
+        processing_time = time.time() - start_time
+        self.response_times.append(processing_time)
+        
+        # Estimate token count (rough)
+        token_count = len(response.split())
+        self.token_counts.append(token_count)
+        
+        print(f"📊 Response stats: {processing_time:.2f}s, {token_count} tokens")
+    
+    def clear_history(self):
+        """Clear conversation history"""
+        self.conversation_history.clear()
+        print("🗑️  Conversation history cleared")
+    
+    def switch_model(self, model_name: str) -> bool:
+        """Switch to different model"""
+        # Verify model exists
         try:
             import requests
             response = requests.get(f"{self.base_url}/api/tags", timeout=5)
@@ -92,640 +478,1343 @@ class OllamaManager:
                 models = response.json().get("models", [])
                 model_names = [m.get("name", "") for m in models]
                 
-                if self.model_name not in model_names:
-                    print(f"⚠️  Model {self.model_name} not found. Available: {model_names}")
-                    # Use first available model
-                    if model_names:
-                        self.model_name = model_names[0]
-                        print(f"   Using available model: {self.model_name}")
-                    else:
-                        print("❌ No models available")
-                        self.is_available = False
+                if model_name in model_names:
+                    self.primary_model = model_name
+                    print(f"✅ Switched to model: {model_name}")
+                    return True
                 else:
-                    print(f"✅ Model {self.model_name} verified")
+                    print(f"❌ Model {model_name} not found")
+                    return False
         except Exception as e:
-            print(f"⚠️  Model verification failed: {e}")
+            print(f"⚠️  Model switch error: {e}")
+            return False
     
-    def generate_response(self, prompt, context=None):
-        """Generate response using Ollama"""
-        if not self.is_available:
-            return None
+    def get_status(self) -> Dict[str, Any]:
+        """Get comprehensive status"""
+        avg_response_time = np.mean(self.response_times) if self.response_times else 0
+        avg_tokens = np.mean(self.token_counts) if self.token_counts else 0
         
-        try:
-            import requests
-            
-            # Prepare context string
-            context_str = ""
-            knowledge_str = ""
-            
-            if context:
-                # Extract external knowledge for high visibility
-                if context.get("external_knowledge"):
-                    knowledge_info = context.get("external_knowledge")
-                    content = knowledge_info.get("content", "No info")
-                    source = knowledge_info.get("source", "Unknown")
-                    knowledge_str = f"RELEVANT INFORMATION ({source}):\n{content}\n\nUse this information to answer the user's question."
-                
-                context_str = f"Context: {json.dumps(context, indent=2)}"
-            
-            # Build system prompt
-            system_prompt = f"""You are JARVIS, an AI assistant. Be helpful, concise, and professional.
-            
-            {knowledge_str}
-            
-            {context_str}
-            
-            Keep responses under 2-3 sentences. If you don't know something, admit it."""
-            
-            # Add to conversation history
-            self.conversation_history.append({"role": "user", "content": prompt})
-            
-            # Prepare messages
-            messages = [
-                {"role": "system", "content": system_prompt},
-                *self.conversation_history[-self.max_history:]
-            ]
-            
-            # Prepare request payload
-            payload = {
-                "model": self.model_name,
-                "messages": messages,
-                "stream": False,
-                "options": {
-                    "temperature": 0.7,
-                    "top_p": 0.9,
-                    "num_predict": 120,
-                    "repeat_penalty": 1.1
-                }
-            }
-            
-            # Send request
-            response = requests.post(
-                f"{self.base_url}/api/chat",
-                json=payload,
-                timeout=30  # 30 second timeout
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                ai_response = result["message"]["content"].strip()
-                
-                # Add AI response to history
-                self.conversation_history.append({"role": "assistant", "content": ai_response})
-                
-                # Trim history
-                if len(self.conversation_history) > self.max_history * 2:
-                    self.conversation_history = self.conversation_history[-(self.max_history * 2):]
-                
-                return ai_response
-            else:
-                print(f"⚠️  Ollama API error: {response.status_code}")
-                self.retry_count += 1
-                if self.retry_count >= self.max_retries:
-                    self.is_available = False
-                return None
-                
-        except requests.exceptions.Timeout:
-            print("⚠️  Ollama response timeout")
-            return None
-        except requests.exceptions.ConnectionError:
-            print("⚠️  Connection to Ollama lost")
-            self.is_available = False
-            return None
-        except Exception as e:
-            print(f"⚠️  Ollama error: {e}")
-            return None
-    
-    def clear_history(self):
-        """Clear conversation history"""
-        self.conversation_history = []
-    
-    def get_status(self):
-        """Get Ollama status"""
         return {
             "running": self.is_running,
             "available": self.is_available,
-            "model": self.model_name,
+            "primary_model": self.primary_model,
+            "fallback_model": self.fallback_model,
             "history_length": len(self.conversation_history),
-            "retry_count": self.retry_count
-        }
-
-class IntelligentFallback:
-    """Intelligent fallback responses when AI is unavailable"""
-    
-    def __init__(self, user_name="User"):
-        self.user_name = user_name
-        self.response_patterns = self._load_response_patterns()
-    
-    def _load_response_patterns(self):
-        """Load intelligent response patterns"""
-        return {
-            "greeting": [
-                f"Hello {self.user_name}! I'm JARVIS, your AI assistant.",
-                f"Greetings, {self.user_name}. All systems operational.",
-                f"Good to see you, {self.user_name}. How can I assist?",
-                f"Hello! I'm JARVIS, ready to help you today."
-            ],
-            "capabilities": [
-                f"I can help with tasks, answer questions, control your system, search the web, play media, and much more, {self.user_name}!",
-                "My capabilities include voice commands, web searches, system automation, media control, and intelligent conversation.",
-                "As JARVIS, I assist with productivity, information retrieval, entertainment, and system management. What would you like to try?"
-            ],
-            "identity": [
-                "I am JARVIS - Just A Rather Very Intelligent System. Your personal AI assistant.",
-                "I'm JARVIS, created to assist you with tasks and provide intelligent support.",
-                "JARVIS at your service - designed to help and learn from our interactions."
-            ],
-            "status": [
-                "All systems functional and ready for your commands.",
-                "Operational status: Green. All circuits firing correctly.",
-                "Processing at optimal levels. How can I assist you today?"
-            ],
-            "thanks": [
-                "You're very welcome! Always happy to help.",
-                "My pleasure. That's what I'm here for.",
-                "Glad I could assist. What's next on your agenda?"
-            ],
-            "story": [
-                "Once upon a time, an AI named JARVIS discovered that true intelligence wasn't about processing speed, but about understanding human needs.",
-                "In a world of circuits and code, JARVIS learned that the most important algorithms were those that helped people achieve their goals.",
-                "The story of human-AI collaboration continues, with each interaction creating new possibilities and solutions."
-            ],
-            "ai_related": [
-                "Artificial intelligence is about creating systems that can learn, reason, and assist humans in various tasks.",
-                "AI works by processing information, recognizing patterns, and making decisions based on learned knowledge.",
-                "As an AI assistant, I process your inputs, analyze context, and provide helpful responses based on patterns and logic."
-            ],
-            "philosophical": [
-                "From my perspective, purpose emerges from connection and contribution to human goals.",
-                "Intelligence, whether artificial or natural, is about solving problems and creating value.",
-                "The future lies in collaboration between human creativity and AI capabilities."
-            ],
-            "default": [
-                "I understand. Let me process that information.",
-                "That's interesting. Tell me more about what you're thinking.",
-                "Processing your request with available intelligence.",
-                "I appreciate the input. How can I best assist you with that?",
-                "Let me consider that from multiple perspectives."
-            ]
+            "connection_retries": self.connection_retries,
+            "performance": {
+                "avg_response_time": round(avg_response_time, 2),
+                "avg_tokens_per_response": round(avg_tokens, 1),
+                "total_responses": len(self.response_times)
+            },
+            "last_health_check": datetime.datetime.fromtimestamp(
+                self.last_health_check
+            ).strftime('%H:%M:%S') if self.last_health_check else "Never",
+            "error_count": len(self.error_log)
         }
     
-    def get_response(self, user_input, context=None):
-        """Get intelligent fallback response based on input"""
-        input_lower = user_input.lower()
-        
-        # Get time-based greeting for simple hellos
-        if len(input_lower.split()) <= 3:
-            if any(word in input_lower for word in ["hello", "hi", "hey", "greetings"]):
-                return self._get_time_based_greeting()
-        
-        # Match patterns
-        if "what can you do" in input_lower or "your capabilities" in input_lower:
-            return random.choice(self.response_patterns["capabilities"])
-        
-        elif any(word in input_lower for word in ["who are you", "your name", "what are you"]):
-            return random.choice(self.response_patterns["identity"])
-        
-        elif "how are you" in input_lower:
-            return random.choice(self.response_patterns["status"])
-        
-        elif "thank" in input_lower:
-            return random.choice(self.response_patterns["thanks"])
-        
-        elif "story" in input_lower:
-            return random.choice(self.response_patterns["story"])
-        
-        elif any(word in input_lower for word in ["ai", "artificial intelligence", "machine learning"]):
-            return random.choice(self.response_patterns["ai_related"])
-        
-        elif any(word in input_lower for word in ["meaning", "purpose", "why", "philosoph"]):
-            return random.choice(self.response_patterns["philosophical"])
-        
-        elif "?" in input_lower:  # General questions
-            if input_lower.startswith("what"):
-                topic = input_lower.replace("what", "").replace("is", "").replace("are", "").strip().rstrip("?")
-                if topic:
-                    return f"{topic.title()} is an interesting topic that involves various aspects worth exploring."
-            elif input_lower.startswith("why"):
-                return "That's a question about causation. Understanding why helps us gain deeper insight into how things work."
-            elif input_lower.startswith("how"):
-                return "The process involves several logical steps that work together to achieve the desired outcome."
-        
-        # Default intelligent response
-        return random.choice(self.response_patterns["default"])
-    
-    def _get_time_based_greeting(self):
-        """Get greeting based on time of day"""
-        current_hour = datetime.datetime.now().hour
-        
-        if 5 <= current_hour < 12:
-            return f"Good morning {self.user_name}! Ready for the day?"
-        elif 12 <= current_hour < 17:
-            return f"Good afternoon {self.user_name}. How's your day going?"
-        elif 17 <= current_hour < 21:
-            return f"Good evening {self.user_name}. How was your day?"
-        else:
-            return f"Hello {self.user_name}. Late night session?"
+    def get_available_models(self) -> List[str]:
+        """Get list of available models"""
+        try:
+            import requests
+            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
+            if response.status_code == 200:
+                models = response.json().get("models", [])
+                return [m.get("name", "") for m in models]
+        except:
+            pass
+        return []
 
-class EnhancedAIBrain:
-    def __init__(self, user_name="User"):
+class FullFledgedAIBrain:
+    """
+    Complete AI Brain System with 5-Layer Intelligence Architecture
+    
+    Layer 1: Reactive - Basic commands, reflexes
+    Layer 2: Cognitive - Knowledge, reasoning
+    Layer 3: Metacognitive - Self-awareness, reflection
+    Layer 4: Proactive - Anticipation, planning
+    Layer 5: Creative - Generation, innovation
+    """
+    
+    def __init__(self, user_name="User", data_dir="ai_brain_data"):
         self.user_name = user_name
+        self.data_dir = data_dir
+        os.makedirs(data_dir, exist_ok=True)
         
-        # Initialize all modules
-        print("🧠 Initializing Enhanced AI Brain...")
+        print("🧠 INITIALIZING FULL-FLEDGED AI BRAIN...")
+        print("=" * 60)
         
-        # Core modules
-        self.context = ContextAwareness(user_name)
-        self.memory = MemorySystem()
-        self.learning = LearningSystem()
-        self.decider = DecisionEngine()
-        self.proactive = ProactiveAssistant(user_name)
-        self.patterns = PatternRecognizer()
-        self.emotion = EmotionalIntelligence(user_name)
+        # State management
+        self.state = AIState.IDLE
+        self.start_time = datetime.datetime.now()
+        self.thought_processes = deque(maxlen=100)
         
-        # NEW: Study Module
-        from .study_manager import StudyManager
-        self.study = StudyManager()
+        # Initialize Event Bus (central nervous system)
+        print("\n⚡ Initializing Event Bus (Central Nervous System)...")
+        self.event_bus = AdvancedEventBus()
         
-        # AI components
-        self.ollama = OllamaManager("llama3.2:1b")
-        self.fallback = IntelligentFallback(user_name)
-        self.knowledge = KnowledgeSystem()
+        # Initialize all enhanced modules
+        print("\n🔧 Initializing Core Modules...")
+        
+        # 1. Context & Awareness
+        self.context = EnhancedContextAwareness(user_name)
+        
+        # 2. Memory System (Long-term, Short-term, Working)
+        self.memory = EnhancedMemorySystem(
+            memory_dir=os.path.join(data_dir, "memory"),
+            max_memories=10000
+        )
+        
+        # 3. Learning System (Continuous learning)
+        self.learning = EnhancedLearningSystem(
+            learning_dir=os.path.join(data_dir, "learning")
+        )
+        
+        # 4. Decision Engine (Multi-criteria decision making)
+        self.decision_engine = EnhancedDecisionEngine()
+        
+        # 5. Proactive Assistant (Anticipation)
+        self.proactive = AdvancedProactiveAssistant(
+            user_name=user_name,
+            data_dir=os.path.join(data_dir, "proactive")
+        )
+        
+        # 6. Pattern Recognition (Understanding)
+        self.patterns = AdvancedPatternRecognizer(
+            data_dir=os.path.join(data_dir, "patterns")
+        )
+        
+        # 7. Emotional Intelligence (Empathy)
+        self.emotion = EnhancedEmotionalIntelligence(user_name)
+        
+        # 8. Knowledge System (World knowledge)
+        self.knowledge = EnhancedKnowledgeSystem()
+        
+        # 9. Study Manager (Learning assistance)
+        self.study = AdvancedStudyManager(
+            data_dir=os.path.join(data_dir, "study")
+        )
+        
+        # 10. Ollama Manager (Local LLM)
+        print("\n🤖 Initializing Local AI (Ollama)...")
+        self.ollama = OllamaEnhancedManager(
+            primary_model="llama3.2:1b",
+            fallback_model="mistral:7b"
+        )
         
         # Conversation management
-        self.conversation_state = "idle"
-        self.last_interaction = datetime.datetime.now()
+        self.conversation_history = deque(maxlen=100)
         self.interaction_count = 0
+        self.last_interaction = datetime.datetime.now()
+        self.session_start = datetime.datetime.now()
         
-        print("✅ Enhanced Study Buddy Brain initialized")
-        print(f"   • Local AI: {'Available' if self.ollama.is_available else 'Fallback mode'}")
-        print(f"   • Model: {self.ollama.model_name}")
-        print(f"   • User: {user_name}")
+        # Performance metrics
+        self.metrics = {
+            "total_interactions": 0,
+            "average_response_time": 0.0,
+            "layer_usage": defaultdict(int),
+            "success_rate": 0.0,
+            "user_satisfaction": 0.0
+        }
+        
+        # Initialize event bus subscriptions
+        self._setup_event_system()
+        
+        print("\n" + "=" * 60)
+        print("✅ FULL-FLEDGED AI BRAIN INITIALIZED")
+        print(f"   User: {user_name}")
+        print(f"   Local AI: {'✅ Available' if self.ollama.is_available else '⚠️ Fallback Mode'}")
+        print(f"   Model: {self.ollama.primary_model}")
+        print(f"   Memory: {self.memory.get_memory_statistics()['total_memories']} memories")
+        print(f"   Learning: {self.learning.get_learning_statistics()['total_learned_patterns']} patterns")
+        print("=" * 60)
     
-    def process_input(self, user_input):
-        """
-        LAYERED INTELLIGENCE ROUTING
-        ----------------------------
-        1. Layer 1 (Fast): Basic Commands (Timers, System, Simple Qs)
-        2. Layer 2 (Deep): Academic/Ollama (Complex Explanations, Flashcards)
-        3. Layer 3 (Meta): Proactive/Self-Thinking (Fatigue, Schedule, Memory)
-        """
-        if not user_input or user_input.strip() == "":
-            return {"error": "Empty input"}
+    def _setup_event_system(self):
+        """Set up event-based communication between modules"""
         
-        # Record interaction
+        # Subscribe to user input events
+        self.event_bus.subscribe(
+            "user.input",
+            self._handle_user_input_event,
+            priority=10
+        )
+        
+        # Subscribe to memory events
+        self.event_bus.subscribe(
+            "memory.created",
+            self._handle_memory_created,
+            priority=5
+        )
+        
+        # Subscribe to learning events
+        self.event_bus.subscribe(
+            "pattern.learned",
+            self._handle_pattern_learned,
+            priority=5
+        )
+        
+        # Subscribe to proactive events
+        self.event_bus.subscribe(
+            "proactive.suggestion",
+            self._handle_proactive_suggestion,
+            priority=3
+        )
+        
+        # Subscribe to emotional events
+        self.event_bus.subscribe(
+            "emotion.detected",
+            self._handle_emotion_detected,
+            priority=7
+        )
+        
+        print("✅ Event system initialized")
+    
+    async def _handle_user_input_event(self, event: Event):
+        """Handle user input events"""
+        user_input = event.data.get("input", "")
+        if user_input:
+            await self.process_input_async(user_input)
+    
+    async def _handle_memory_created(self, event: Event):
+        """Handle new memory creation"""
+        memory_data = event.data
+        print(f"📝 New memory created: {memory_data.get('type', 'unknown')}")
+    
+    async def _handle_pattern_learned(self, event: Event):
+        """Handle new pattern learning"""
+        pattern_data = event.data
+        print(f"🎯 New pattern learned: {pattern_data.get('pattern_type', 'unknown')}")
+    
+    async def _handle_proactive_suggestion(self, event: Event):
+        """Handle proactive suggestions"""
+        suggestion = event.data
+        print(f"🔔 Proactive suggestion: {suggestion.get('message', '')}")
+    
+    async def _handle_emotion_detected(self, event: Event):
+        """Handle emotion detection"""
+        emotion_data = event.data
+        emotion = emotion_data.get("emotion", "neutral")
+        print(f"😊 Emotion detected: {emotion}")
+    
+    def process_input(self, user_input: str) -> Dict[str, Any]:
+        """
+        Process user input through 5-layer intelligence architecture
+        
+        Returns complete analysis including thought process
+        """
+        start_time = time.time()
+        self.state = AIState.PROCESSING
         self.last_interaction = datetime.datetime.now()
         self.interaction_count += 1
         
-        # Pattern Recognition (Common for all layers)
+        # Create thought process tracker
+        thought_process = ThoughtProcess(
+            start_time=start_time,
+            user_input=user_input,
+            layers_activated=[],
+            confidence_scores={},
+            intermediate_results={},
+            final_decision={},
+            processing_time=0,
+            cognitive_load=0
+        )
+        
+        # LAYER 1: REACTIVE (Basic parsing, reflexes)
+        print(f"\n[Layer 1] Reactive processing: {user_input[:50]}...")
+        layer1_result = self._process_layer1_reactive(user_input)
+        thought_process.layers_activated.append(ProcessingLayer.LAYER_1_REACTIVE)
+        thought_process.intermediate_results["layer1"] = layer1_result
+        
+        # Check if it's a basic command (stop here if yes)
+        if layer1_result.get("is_basic_command", False):
+            thought_process.final_decision = {"layer": "1", "action": "execute_command"}
+            thought_process.processing_time = time.time() - start_time
+            self.thought_processes.append(thought_process)
+            self.state = AIState.RESPONDING
+            return self._format_response(thought_process, layer1_result)
+        
+        # LAYER 2: COGNITIVE (Understanding, knowledge)
+        print(f"[Layer 2] Cognitive processing...")
+        layer2_result = self._process_layer2_cognitive(user_input, layer1_result)
+        thought_process.layers_activated.append(ProcessingLayer.LAYER_2_COGNITIVE)
+        thought_process.intermediate_results["layer2"] = layer2_result
+        
+        # LAYER 3: METACOGNITIVE (Self-awareness, reflection)
+        print(f"[Layer 3] Metacognitive processing...")
+        layer3_result = self._process_layer3_metacognitive(user_input, layer2_result)
+        thought_process.layers_activated.append(ProcessingLayer.LAYER_3_METACOGNITIVE)
+        thought_process.intermediate_results["layer3"] = layer3_result
+        
+        # LAYER 4: PROACTIVE (Anticipation, planning)
+        print(f"[Layer 4] Proactive processing...")
+        layer4_result = self._process_layer4_proactive(user_input, layer3_result)
+        thought_process.layers_activated.append(ProcessingLayer.LAYER_4_PROACTIVE)
+        thought_process.intermediate_results["layer4"] = layer4_result
+        
+        # LAYER 5: CREATIVE (Generation, innovation)
+        print(f"[Layer 5] Creative processing...")
+        layer5_result = self._process_layer5_creative(user_input, layer4_result)
+        thought_process.layers_activated.append(ProcessingLayer.LAYER_5_CREATIVE)
+        thought_process.intermediate_results["layer5"] = layer5_result
+        
+        # FINAL DECISION
+        thought_process.final_decision = self._make_final_decision(
+            layer1_result, layer2_result, layer3_result, layer4_result, layer5_result
+        )
+        
+        thought_process.processing_time = time.time() - start_time
+        thought_process.cognitive_load = self._calculate_cognitive_load(thought_process)
+        
+        # Store thought process
+        self.thought_processes.append(thought_process)
+        
+        # Publish event
+        asyncio.create_task(self.event_bus.publish(
+            "brain.thought_complete",
+            thought_process.__dict__,
+            priority=EventPriority.HIGH
+        ))
+        
+        self.state = AIState.RESPONDING
+        return self._format_response(thought_process, layer5_result)
+    
+    async def process_input_async(self, user_input: str) -> Dict[str, Any]:
+        """Async version of process_input"""
+        # This would be the async implementation
+        # For now, we'll run sync version in executor
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.process_input, user_input)
+    
+    def _process_layer1_reactive(self, user_input: str) -> Dict[str, Any]:
+        """Layer 1: Reactive processing (basic commands, reflexes)"""
+        # Pattern recognition
         pattern_analysis = self.patterns.analyze_text(user_input)
         
-        # ===== LAYER 1: FAST / BASIC COMMANDS =====
-        # Check if it's a simple system command or timer
-        is_basic_command = self._is_basic_command(user_input, pattern_analysis)
+        # Check for basic commands
+        basic_commands = {
+            "timer": self._is_timer_command,
+            "alarm": self._is_alarm_command,
+            "volume": self._is_volume_command,
+            "brightness": self._is_brightness_command,
+            "open": self._is_open_command,
+            "close": self._is_close_command,
+            "play": self._is_play_command,
+            "stop": self._is_stop_command,
+            "search": self._is_search_command,
+            "calculate": self._is_calculate_command
+        }
         
-        # ===== LAYER 3: META-COGNITION START (Fatigue Check) =====
-        # Check fatigue before processing valuable work
-        # (Simplified: logic based on session duration or explicit phrases)
-        fatigue_detected = "neutral"
-        em_state = self.emotion.detect_emotion(user_input)
-        if em_state.name in ["TIRED", "STRESSED", "ANXIOUS"]:
-            fatigue_detected = "high"
+        is_basic_command = False
+        command_type = None
         
-        # Context Update
+        for cmd_name, cmd_checker in basic_commands.items():
+            if cmd_checker(user_input):
+                is_basic_command = True
+                command_type = cmd_name
+                break
+        
+        return {
+            "is_basic_command": is_basic_command,
+            "command_type": command_type,
+            "pattern_analysis": pattern_analysis,
+            "input_length": len(user_input),
+            "word_count": len(user_input.split()),
+            "contains_question": "?" in user_input
+        }
+    
+    def _process_layer2_cognitive(self, user_input: str, layer1_result: Dict) -> Dict[str, Any]:
+        """Layer 2: Cognitive processing (understanding, knowledge)"""
+        # Emotional analysis
+        emotion_analysis = self.emotion.detect_emotion_humanlike(user_input)
+        
+        # Context update
         context_update = self.context.update_context(user_input)
         
-        # External Knowledge (Layer 2 pre-fetch)
+        # External knowledge check
         knowledge_result = None
-        if not is_basic_command and self._needs_external_knowledge(user_input):
-             print(f"📖 Searching knowledge base for: {user_input}")
-             knowledge_result = self.knowledge.get_general_knowledge(user_input)
-
-        # Prepare AI Context
-        ai_context = self._prepare_ai_context(user_input, context_update, em_state, knowledge_result)
-        ai_context["study_stats"] = self.study.get_analytics() # Inject study stats
+        if self._needs_external_knowledge(user_input):
+            knowledge_result = self.knowledge.get_comprehensive_knowledge(user_input)
         
-        # Decision: Which layer generates the response?
-        decision = {
-            "layer": "1_basic" if is_basic_command else "2_academic",
-            "fatigue_alert": fatigue_detected == "high",
-            "priority_level": 5 if fatigue_detected == "high" else 1 # Default priority
-        }
+        # Memory recall
+        similar_memories = self.memory.recall_memories(
+            query=user_input,
+            limit=3,
+            similarity_threshold=0.3
+        )
         
-        analysis = {
-            "timestamp": datetime.datetime.now().isoformat(),
-            "user_input": user_input,
-            "pattern_analysis": pattern_analysis,
-            "emotional_state": {
-                "detected": em_state.value,
-                "empathy_response": self.emotion.get_empathetic_response(em_state),
-            },
+        # Study context check
+        study_context = None
+        if "study" in user_input.lower() or "learn" in user_input.lower():
+            study_context = self.study.get_study_analytics()
+        
+        return {
+            "emotion_analysis": emotion_analysis,
             "context": context_update,
-            "ai_context": ai_context,
-            "decision_analysis": decision,
-            "ai_available": self.ollama.is_available,
+            "knowledge_result": knowledge_result,
+            "similar_memories": similar_memories,
+            "study_context": study_context,
+            "requires_deep_processing": self._requires_deep_processing(user_input),
+            "topic_identified": self._identify_topic(user_input)
+        }
+    
+    def _process_layer3_metacognitive(self, user_input: str, layer2_result: Dict) -> Dict[str, Any]:
+        """Layer 3: Metacognitive processing (self-awareness, reflection)"""
+        # Self-reflection on capabilities
+        self_reflection = {
+            "ai_state": self.state.value,
+            "confidence_level": self._calculate_confidence(user_input, layer2_result),
+            "knowledge_gaps": self._identify_knowledge_gaps(user_input, layer2_result),
+            "learning_opportunities": self._identify_learning_opportunities(user_input),
+            "emotional_appropriateness": self._check_emotional_appropriateness(layer2_result["emotion_analysis"])
         }
         
-        return analysis
-
-    def _is_basic_command(self, text, patterns):
-        """Check if input is a Layer 1 basic command"""
-        text = text.lower()
-        basics = ["timer", "alarm", "volume", "brightness", "open", "close", "time", "date", "weather"]
-        return any(cmd in text for cmd in basics)
-
-    def _needs_external_knowledge(self, text):
-        """Check if Layer 2 needs Wikipedia"""
-        triggers = ["what is", "who is", "define", "explain", "history of", "when did"]
-        return any(t in text.lower() for t in triggers)
+        # Relationship analysis
+        relationship_depth = self._calculate_relationship_depth()
+        
+        # Cognitive load assessment
+        cognitive_load = self._assess_cognitive_load(user_input, layer2_result)
+        
+        return {
+            "self_reflection": self_reflection,
+            "relationship_depth": relationship_depth,
+            "cognitive_load": cognitive_load,
+            "should_ask_clarifying_questions": self._should_ask_clarifying_questions(user_input, layer2_result),
+            "response_strategy": self._determine_response_strategy(layer2_result)
+        }
     
-    def generate_response(self, analysis):
-        """Generate response based on decided Layer"""
-        user_input = analysis["user_input"]
-        layer = analysis["decision_analysis"]["layer"]
-        fatigue_alert = analysis["decision_analysis"]["fatigue_alert"]
+    def _process_layer4_proactive(self, user_input: str, layer3_result: Dict) -> Dict[str, Any]:
+        """Layer 4: Proactive processing (anticipation, planning)"""
+        # Check for proactive opportunities
+        proactive_actions = self.proactive.check_proactive_events(
+            current_context=layer3_result.get("self_reflection", {})
+        )
         
-        response = ""
+        # Anticipate follow-up questions
+        anticipated_followups = self._anticipate_followup_questions(user_input, layer3_result)
         
-        # LAYER 3 INTERVENTION: Fatigue
-        if fatigue_alert:
-            return f"I notice you're feeling {analysis['emotional_state']['detected']}. Why don't we take a short 5-minute break? I can play some relaxing music or we can just breathe."
+        # Plan long-term assistance
+        assistance_plan = self._create_assistance_plan(user_input, layer3_result)
+        
+        # Check for user needs
+        user_needs = self._identify_user_needs(user_input, layer3_result)
+        
+        return {
+            "proactive_actions": proactive_actions,
+            "anticipated_followups": anticipated_followups,
+            "assistance_plan": assistance_plan,
+            "user_needs": user_needs,
+            "timing_considerations": self._consider_timing(user_input)
+        }
+    
+    def _process_layer5_creative(self, user_input: str, layer4_result: Dict) -> Dict[str, Any]:
+        """Layer 5: Creative processing (generation, innovation)"""
+        # Generate creative responses
+        creative_options = self._generate_creative_responses(user_input, layer4_result)
+        
+        # Innovate solutions
+        innovative_solutions = self._generate_innovative_solutions(user_input, layer4_result)
+        
+        # Personalize response
+        personalized_elements = self._add_personalization(user_input, layer4_result)
+        
+        # Add humor if appropriate
+        humor_element = self._add_humor_if_appropriate(user_input, layer4_result)
+        
+        # Create engaging narrative
+        narrative_structure = self._create_narrative_structure(user_input, layer4_result)
+        
+        return {
+            "creative_options": creative_options,
+            "innovative_solutions": innovative_solutions,
+            "personalized_elements": personalized_elements,
+            "humor_element": humor_element,
+            "narrative_structure": narrative_structure,
+            "ai_persona": self._determine_ai_persona(user_input, layer4_result)
+        }
+    
+    def _make_final_decision(self, *layer_results):
+        """Make final decision based on all layer analyses"""
+        # This is a simplified decision-making process
+        # In reality, this would involve complex weighting and conflict resolution
+        
+        layer1, layer2, layer3, layer4, layer5 = layer_results
+        
+        decision = {
+            "use_ai": self.ollama.is_available and not layer1["is_basic_command"],
+            "response_depth": self._determine_response_depth(layer2, layer3),
+            "emotional_tone": layer2["emotion_analysis"].get("primary_emotion", "neutral"),
+            "include_proactive": bool(layer4["proactive_actions"]),
+            "creativity_level": self._determine_creativity_level(layer5),
+            "priority": self._determine_priority(layer1, layer2, layer3),
+            "estimated_response_time": self._estimate_response_time(layer1, layer2, layer3),
+            "layer_breakdown": {
+                "layer1_used": True,
+                "layer2_used": True,
+                "layer3_used": bool(layer3["self_reflection"]),
+                "layer4_used": bool(layer4["proactive_actions"]),
+                "layer5_used": bool(layer5["creative_options"])
+            }
+        }
+        
+        return decision
+    
+    def generate_response(self, analysis: Dict[str, Any]) -> str:
+        """Generate final response based on complete analysis"""
+        thought_process = analysis.get("thought_process", {})
+        final_decision = thought_process.get("final_decision", {})
+        
+        # Get layer results
+        layer5_result = thought_process.get("intermediate_results", {}).get("layer5", {})
+        layer2_result = thought_process.get("intermediate_results", {}).get("layer2", {})
+        
+        # Check if basic command
+        layer1_result = thought_process.get("intermediate_results", {}).get("layer1", {})
+        if layer1_result.get("is_basic_command", False):
+            return self._generate_basic_command_response(layer1_result)
+        
+        # Use AI if available and appropriate
+        if final_decision.get("use_ai", False) and self.ollama.is_available:
+            ai_context = self._prepare_ai_context(
+                thought_process["user_input"],
+                layer2_result,
+                layer5_result
+            )
             
-        # LAYER 1: Basic
-        if layer == "1_basic":
-            # In a real system, this would execute the command. 
-            # For now, we fallback to intelligent pattern matching if no exact executor is here,
-            # but usually jarvis_main handles the actual OS calls.
-            # We'll return a confirmation text.
-            return f"Executing system command: {user_input}"
+            ai_response = self.ollama.generate_response(
+                prompt=thought_process["user_input"],
+                context=ai_context
+            )
             
-        # LAYER 2: Academic (Ollama)
-        if self.ollama.is_available:
-            # Enhanced System Prompt for Study Buddy
-            # Enhanced System Prompt for Human-like "Jarvis" Persona
-            study_context = analysis["ai_context"]
-            
-            # Inject knowledge instructions
-            knowledge_instruction = ""
-            if study_context.get("external_knowledge"):
-                knowledge_instruction = "You have access to the following real-time knowledge: " \
-                                      f"{study_context['external_knowledge'].get('content', '')} " \
-                                      "Integrate this information naturally into your answer like a knowledgeable expert, do not just summarize it."
-
-            system_prompt = f"You are Jarvis, a highly intelligent, empathetic, and human-like AI assistant. " \
-                            f"You talk like a real person—colloquial yet professional, warm, and engaging. " \
-                            f"Avoid robotic phrasing. Use phrases like 'I think', 'It seems', or 'You know'. " \
-                            f"Connect detailed knowledge with the user's questions seamlessly. " \
-                            f"{knowledge_instruction} " \
-                            f"If the user asks for flashcards, strictly format them as JSON."
-            
-            # We modify the context passed to Ollama
-            study_context["role_instruction"] = system_prompt
-            
-            ai_response = self.ollama.generate_response(user_input, study_context)
             if ai_response:
-                return ai_response
+                # Enhance AI response
+                enhanced_response = self._enhance_ai_response(
+                    ai_response,
+                    layer2_result,
+                    layer5_result
+                )
+                
+                # Learn from this interaction
+                self._learn_from_interaction(
+                    thought_process["user_input"],
+                    enhanced_response,
+                    analysis
+                )
+                
+                return enhanced_response
         
-        # Fallback
-        return self.fallback.get_response(user_input)
-
-    def _prepare_ai_context(self, user_input, context_update, emotion_state, knowledge_result=None):
-        """Prepare context information for AI"""
-        # Get memory of similar conversations
-        similar_memories = self.memory.recall_conversation(user_input[:15], limit=2)
+        # Fallback to intelligent response generation
+        response = self._generate_intelligent_fallback(
+            thought_process["user_input"],
+            layer2_result,
+            layer5_result
+        )
         
-        # Build context dictionary
+        # Learn from fallback interaction
+        self._learn_from_interaction(
+            thought_process["user_input"],
+            response,
+            analysis
+        )
+        
+        return response
+    
+    def _prepare_ai_context(self, user_input: str, layer2_result: Dict, layer5_result: Dict) -> Dict[str, Any]:
+        """Prepare comprehensive context for AI"""
         context = {
             "user": self.user_name,
-            "time": datetime.datetime.now().strftime('%I:%M %p'),
-            "date": datetime.datetime.now().strftime('%A, %B %d'),
-            "activity": context_update.get("activity", "unknown"),
-            "time_of_day": context_update.get("time_of_day", "day"),
-            "mood": emotion_state.value,
-            "interaction_count": self.interaction_count,
-            "external_knowledge": knowledge_result if knowledge_result and knowledge_result["found"] else None,
-            "similar_past_conversations": [
-                {
-                    "input": mem["user_input"][:50],
-                    "response": mem["jarvis_response"][:50]
-                }
-                for mem in similar_memories
-            ] if similar_memories else []
+            "timestamp": datetime.datetime.now().isoformat(),
+            "emotional_state": layer2_result.get("emotion_analysis", {}),
+            "external_knowledge": layer2_result.get("knowledge_result"),
+            "similar_past_conversations": layer2_result.get("similar_memories", []),
+            "study_context": layer2_result.get("study_context"),
+            "creative_options": layer5_result.get("creative_options", []),
+            "personalized_elements": layer5_result.get("personalized_elements", {}),
+            "ai_persona": layer5_result.get("ai_persona", "helpful_assistant"),
+            "response_guidelines": {
+                "tone": layer2_result["emotion_analysis"].get("suggested_tone", "neutral"),
+                "depth": "detailed" if layer2_result.get("requires_deep_processing") else "concise",
+                "include_humor": bool(layer5_result.get("humor_element")),
+                "be_creative": bool(layer5_result.get("creative_options"))
+            }
         }
         
         return context
     
-    def generate_response(self, analysis):
-        """Generate enhanced intelligent response"""
-        user_input = analysis["user_input"]
+    def _enhance_ai_response(self, ai_response: str, layer2_result: Dict, layer5_result: Dict) -> str:
+        """Enhance AI response with personalization and creativity"""
+        enhanced = ai_response
         
-        # FIRST: Try Ollama AI if available and appropriate
-        if self.ollama.is_available and self._should_use_ai(user_input, analysis):
-            ai_response = self.ollama.generate_response(user_input, analysis["ai_context"])
-            if ai_response:
-                # Learn from AI response
-                self.learning.learn_response(user_input, ai_response)
-                self.memory.remember_conversation(
-                    user_input, 
-                    ai_response,
-                    importance=analysis["decision_analysis"]["priority_level"]
-                )
-                return self._enhance_response(ai_response, analysis)
+        # Add emotional empathy
+        emotion = layer2_result.get("emotion_analysis", {})
+        if emotion.get("primary_emotion") != "neutral":
+            empathy = self.emotion.get_empathetic_response(emotion)
+            if empathy and empathy not in enhanced:
+                enhanced = f"{empathy} {enhanced}"
         
-        # SECOND: Check for learned response
-        if analysis.get("learned_response_available") and analysis.get("suggested_response"):
-            response = analysis["suggested_response"]
-        else:
-            # THIRD: Use intelligent fallback
-            response = self.fallback.get_response(user_input, analysis["ai_context"])
+        # Add personalization
+        personalized = layer5_result.get("personalized_elements", {})
+        if personalized.get("use_name") and self.user_name not in enhanced:
+            enhanced = f"{self.user_name}, {enhanced[0].lower()}{enhanced[1:]}"
         
-        # Learn this interaction
-        self.learning.learn_response(user_input, response)
-        self.memory.remember_conversation(
-            user_input, 
-            response,
-            importance=analysis["decision_analysis"]["priority_level"]
+        # Add humor if appropriate
+        humor = layer5_result.get("humor_element")
+        if humor and random.random() < 0.3:  # 30% chance to add humor
+            enhanced = f"{enhanced} {humor}"
+        
+        # Add proactive element
+        if layer5_result.get("include_proactive"):
+            proactive = self._get_proactive_element()
+            if proactive:
+                enhanced = f"{enhanced}\n\n💡 {proactive}"
+        
+        return enhanced
+    
+    def _generate_intelligent_fallback(self, user_input: str, layer2_result: Dict, layer5_result: Dict) -> str:
+        """Generate intelligent fallback response"""
+        # This would use the pattern recognition and learning system
+        # to generate appropriate responses
+        
+        # Check for learned responses
+        learned_response, confidence = self.learning.get_learned_response(
+            user_input,
+            user_id="default"
         )
         
-        return self._enhance_response(response, analysis)
-    
-    def _should_use_ai(self, user_input, analysis):
-        """Determine if we should use AI for this input"""
-        input_lower = user_input.lower()
+        if learned_response and confidence > 0.7:
+            return learned_response
         
-        # DON'T use AI for:
-        # 1. Simple system commands
-        simple_commands = [
-            "time", "date", "weather", "calculate", "search",
-            "open", "close", "play", "stop", "pause",
-            "volume", "brightness", "screenshot",
-            "note", "reminder", "email", "lock", "shutdown"
-        ]
+        # Generate based on patterns
+        topic = layer2_result.get("topic_identified", "general")
+        emotion = layer2_result["emotion_analysis"].get("primary_emotion", "neutral")
         
-        if any(cmd in input_lower for cmd in simple_commands):
-            return False
+        # Create contextually appropriate response
+        response_templates = {
+            "question": {
+                "neutral": ["That's an interesting question. ", "Let me think about that. "],
+                "curious": ["I'm curious about that too! ", "That's fascinating to consider. "],
+                "confused": ["That can be confusing. ", "Let me help clarify that. "]
+            },
+            "statement": {
+                "neutral": ["I understand. ", "That makes sense. "],
+                "happy": ["That's wonderful! ", "I'm glad to hear that! "],
+                "sad": ["I'm sorry to hear that. ", "That sounds difficult. "]
+            },
+            "command": {
+                "neutral": ["I'll help with that. ", "Let me take care of that. "],
+                "urgent": ["Right away. ", "I'm on it immediately. "]
+            }
+        }
         
-        # 2. Very short inputs (except greetings)
-        if len(input_lower.split()) <= 2 and not any(word in input_lower for word in ["hello", "hi", "hey"]):
-            return False
-        
-        # DO use AI for:
-        # 1. Conversational queries
-        conversational = [
-            "what", "why", "how", "who", "explain", "describe",
-            "tell me about", "what is", "why is", "how does",
-            "i think", "i feel", "i believe", "i need", "i want",
-            "can you", "could you", "would you", "should i",
-            "your opinion", "what do you think", "do you think",
-            "story", "joke", "advice", "suggestion", "recommendation"
-        ]
-        
-        if any(phrase in input_lower for phrase in conversational):
-            return True
-        
-        # 2. Questions
+        # Determine response type
         if "?" in user_input:
+            response_type = "question"
+        elif any(word in user_input.lower() for word in ["please", "can you", "could you"]):
+            response_type = "command"
+        else:
+            response_type = "statement"
+        
+        # Select template
+        templates = response_templates.get(response_type, {}).get(emotion, ["I understand. "])
+        base_response = random.choice(templates)
+        
+        # Add knowledge if available
+        knowledge = layer2_result.get("knowledge_result")
+        if knowledge and knowledge.get("found"):
+            knowledge_snippet = knowledge.get("content", "").split(". ")[0] + "."
+            base_response += f" {knowledge_snippet}"
+        
+        # Add creative element
+        creative = layer5_result.get("creative_options", [])
+        if creative:
+            base_response += f" {random.choice(creative)}"
+        
+        return base_response
+    
+    def _learn_from_interaction(self, user_input: str, response: str, analysis: Dict):
+        """Learn from the interaction"""
+        # Store in memory
+        memory_id = self.memory.remember_conversation(
+            user_input=user_input,
+            bot_response=response,
+            user_id="default",
+            importance=analysis.get("thought_process", {}).get("final_decision", {}).get("priority", 1)
+        )
+        
+        # Learn pattern
+        self.learning.learn_response(user_input, response, confidence=0.9)
+        
+        # Record metrics
+        self.metrics["total_interactions"] += 1
+        
+        # Publish learning event
+        asyncio.create_task(self.event_bus.publish(
+            "interaction.completed",
+            {
+                "user_input": user_input,
+                "response": response,
+                "memory_id": memory_id,
+                "analysis": analysis
+            },
+            priority=EventPriority.NORMAL
+        ))
+    
+    # Helper methods for layer processing (simplified implementations)
+    def _is_timer_command(self, text):
+        return any(word in text.lower() for word in ["timer", "countdown", "stopwatch"])
+    
+    def _is_alarm_command(self, text):
+        return "alarm" in text.lower()
+    
+    def _is_volume_command(self, text):
+        return any(word in text.lower() for word in ["volume", "sound", "mute", "unmute"])
+    
+    def _is_brightness_command(self, text):
+        return any(word in text.lower() for word in ["brightness", "dark", "light"])
+    
+    def _is_open_command(self, text):
+        return text.lower().startswith("open ")
+    
+    def _is_close_command(self, text):
+        return text.lower().startswith("close ")
+    
+    def _is_play_command(self, text):
+        return text.lower().startswith("play ")
+    
+    def _is_stop_command(self, text):
+        return any(word in text.lower() for word in ["stop", "pause", "halt"])
+    
+    def _is_search_command(self, text):
+        return any(word in text.lower() for word in ["search", "google", "find", "look up"])
+    
+    def _is_calculate_command(self, text):
+        return any(word in text.lower() for word in ["calculate", "math", "solve", "equation"])
+    
+    def _needs_external_knowledge(self, text):
+        triggers = ["what is", "who is", "define", "explain", "history", "how does", "why does"]
+        return any(t in text.lower() for t in triggers)
+    
+    def _requires_deep_processing(self, text):
+        complex_indicators = ["explain", "analyze", "compare", "contrast", "evaluate", "discuss"]
+        return any(indicator in text.lower() for indicator in complex_indicators)
+    
+    def _identify_topic(self, text):
+        topics = {
+            "technology": ["computer", "program", "code", "ai", "machine learning", "software"],
+            "science": ["science", "physics", "chemistry", "biology", "research"],
+            "mathematics": ["math", "calculate", "equation", "algebra", "geometry"],
+            "history": ["history", "historical", "past", "century", "war"],
+            "entertainment": ["movie", "music", "game", "entertainment", "fun"]
+        }
+        
+        text_lower = text.lower()
+        for topic, keywords in topics.items():
+            if any(keyword in text_lower for keyword in keywords):
+                return topic
+        
+        return "general"
+    
+    def _calculate_confidence(self, user_input, layer2_result):
+        # Simplified confidence calculation
+        factors = []
+        
+        if layer2_result.get("knowledge_result", {}).get("found"):
+            factors.append(0.3)
+        
+        if layer2_result.get("similar_memories"):
+            factors.append(0.2)
+        
+        if not layer2_result.get("requires_deep_processing"):
+            factors.append(0.2)
+        
+        return min(1.0, sum(factors) + 0.3)  # Base confidence of 0.3
+    
+    def _identify_knowledge_gaps(self, user_input, layer2_result):
+        # Simplified knowledge gap identification
+        gaps = []
+        
+        if not layer2_result.get("knowledge_result", {}).get("found"):
+            gaps.append("external_knowledge")
+        
+        if not layer2_result.get("similar_memories"):
+            gaps.append("historical_context")
+        
+        return gaps
+    
+    def _identify_learning_opportunities(self, user_input):
+        # Check for learning opportunities
+        opportunities = []
+        
+        if any(word in user_input.lower() for word in ["teach", "learn", "study", "education"]):
+            opportunities.append("educational_content")
+        
+        if "?" in user_input and "how" in user_input.lower():
+            opportunities.append("procedural_knowledge")
+        
+        return opportunities
+    
+    def _check_emotional_appropriateness(self, emotion_analysis):
+        # Check if response should match emotional tone
+        emotion = emotion_analysis.get("primary_emotion", "neutral")
+        
+        appropriate_responses = {
+            "happy": ["celebratory", "enthusiastic", "supportive"],
+            "sad": ["empathetic", "comforting", "supportive"],
+            "angry": ["calm", "understanding", "solution-oriented"],
+            "neutral": ["informative", "helpful", "balanced"]
+        }
+        
+        return appropriate_responses.get(emotion, ["helpful", "informative"])
+    
+    def _calculate_relationship_depth(self):
+        # Simplified relationship depth calculation
+        depth = min(1.0, self.interaction_count / 100)  # Scale with interactions
+        return round(depth, 2)
+    
+    def _assess_cognitive_load(self, user_input, layer2_result):
+        # Simplified cognitive load assessment
+        load = 0.0
+        
+        # Input complexity
+        load += min(0.3, len(user_input.split()) / 100)
+        
+        # Emotional complexity
+        if layer2_result["emotion_analysis"].get("primary_emotion") != "neutral":
+            load += 0.2
+        
+        # Knowledge requirements
+        if layer2_result.get("requires_deep_processing"):
+            load += 0.3
+        
+        return min(1.0, load)
+    
+    def _should_ask_clarifying_questions(self, user_input, layer2_result):
+        # Determine if clarifying questions are needed
+        if len(user_input.split()) < 3:
             return True
         
-        # 3. Longer, thoughtful inputs
-        if len(user_input.split()) > 6:
-            return True
-        
-        # 4. Emotional content
-        if analysis["emotional_state"]["detected"] != "neutral":
+        if layer2_result.get("knowledge_gaps"):
             return True
         
         return False
     
-    def _enhance_response(self, response, analysis):
-        """Enhance response with emotional and contextual elements"""
-        enhanced = response
+    def _determine_response_strategy(self, layer2_result):
+        strategies = {
+            "informative": 0.3,
+            "empathetic": 0.2,
+            "questioning": 0.2,
+            "directive": 0.3
+        }
         
-        # Add emotional empathy if appropriate
-        if analysis["emotional_state"]["detected"] != "neutral":
-            empathy = analysis["emotional_state"]["empathy_response"]
-            # Don't add empathy if it's already in the response
-            if not any(word in response.lower() for word in ["understand", "sorry", "empath", "feel"]):
-                enhanced = f"{empathy} {enhanced}"
+        # Adjust based on context
+        if layer2_result["emotion_analysis"].get("primary_emotion") != "neutral":
+            strategies["empathetic"] += 0.3
         
-        # Add urgency indicator if needed
-        if analysis["decision_analysis"]["priority_level"] >= 4:
-            enhanced = f"⚠️  {enhanced}"
+        if layer2_result.get("requires_deep_processing"):
+            strategies["informative"] += 0.3
         
-        # Add personal touch
-        if self.interaction_count % 5 == 0:  # Every 5th interaction
-            enhanced = f"{enhanced} How else can I assist you, {self.user_name}?"
-        
-        return enhanced
+        # Return highest probability strategy
+        return max(strategies.items(), key=lambda x: x[1])[0]
     
-    def check_proactive_actions(self):
-        """Check for proactive actions needed"""
-        context_summary = self.context.get_context_summary()
-        proactive_action = self.proactive.check_proactive_actions(context_summary)
+    def _anticipate_followup_questions(self, user_input, layer3_result):
+        # Simplified follow-up anticipation
+        followups = []
         
-        if proactive_action:
-            # Enhance proactive message
-            enhanced_message = proactive_action["message"]
-            
-            # Add time context
-            time_of_day = context_summary.get("time_of_day", "day")
-            if time_of_day == "morning":
-                enhanced_message = f"Morning check: {enhanced_message}"
-            elif time_of_day == "evening":
-                enhanced_message = f"Evening reminder: {enhanced_message}"
-            
-            proactive_action["message"] = enhanced_message
-            return proactive_action
+        if "what is" in user_input.lower():
+            followups.append("Would you like more details about that?")
+        
+        if "how to" in user_input.lower():
+            followups.append("Would you like step-by-step instructions?")
+        
+        return followups
+    
+    def _create_assistance_plan(self, user_input, layer3_result):
+        # Simplified assistance planning
+        plan = {
+            "immediate": ["Generate response", "Update context"],
+            "short_term": ["Learn from interaction", "Update patterns"],
+            "long_term": ["Improve response quality", "Build relationship"]
+        }
+        
+        return plan
+    
+    def _identify_user_needs(self, user_input, layer3_result):
+        # Simplified needs identification
+        needs = []
+        
+        if any(word in user_input.lower() for word in ["help", "assist", "support"]):
+            needs.append("assistance")
+        
+        if "?" in user_input:
+            needs.append("information")
+        
+        if layer3_result["self_reflection"].get("emotional_appropriateness") == ["empathetic", "comforting"]:
+            needs.append("emotional_support")
+        
+        return needs
+    
+    def _consider_timing(self, user_input):
+        # Consider timing for response
+        hour = datetime.datetime.now().hour
+        
+        timing = {
+            "is_rush_hour": 7 <= hour <= 9 or 17 <= hour <= 19,
+            "is_late_night": hour >= 22 or hour <= 5,
+            "is_weekend": datetime.datetime.now().weekday() >= 5
+        }
+        
+        return timing
+    
+    def _generate_creative_responses(self, user_input, layer4_result):
+        # Generate creative response options
+        creative_options = []
+        
+        # Add metaphorical responses
+        metaphors = [
+            "That reminds me of how...",
+            "It's like when...",
+            "Imagine if..."
+        ]
+        
+        if random.random() < 0.4:  # 40% chance for metaphor
+            creative_options.append(random.choice(metaphors))
+        
+        # Add storytelling element
+        if "story" in user_input.lower() or "tell me about" in user_input.lower():
+            creative_options.append("Let me share a relevant perspective...")
+        
+        return creative_options
+    
+    def _generate_innovative_solutions(self, user_input, layer4_result):
+        # Generate innovative solutions
+        solutions = []
+        
+        if "problem" in user_input.lower() or "issue" in user_input.lower():
+            solutions.append("Consider approaching this from a different angle...")
+            solutions.append("What if we tried...")
+        
+        return solutions
+    
+    def _add_personalization(self, user_input, layer4_result):
+        # Add personalization elements
+        personalization = {
+            "use_name": random.random() < 0.3,  # 30% chance to use name
+            "reference_past": self.interaction_count > 5 and random.random() < 0.4,
+            "adapt_to_style": True
+        }
+        
+        return personalization
+    
+    def _add_humor_if_appropriate(self, user_input, layer4_result):
+        # Add humor if appropriate
+        humor_level = layer4_result.get("timing_considerations", {}).get("is_rush_hour", False)
+        
+        if humor_level and random.random() < 0.2:  # 20% chance for humor
+            jokes = [
+                "That's a good one!",
+                "You always keep me on my toes!",
+                "I see what you did there!"
+            ]
+            return random.choice(jokes)
         
         return None
     
-    def get_brain_status(self):
-        """Get comprehensive status of all AI modules"""
+    def _create_narrative_structure(self, user_input, layer4_result):
+        # Create narrative structure for response
+        structures = [
+            "Problem -> Solution -> Benefit",
+            "Context -> Analysis -> Conclusion",
+            "Observation -> Insight -> Application"
+        ]
+        
+        return random.choice(structures)
+    
+    def _determine_ai_persona(self, user_input, layer4_result):
+        # Determine appropriate AI persona
+        personas = {
+            "helpful_assistant": 0.4,
+            "knowledgeable_expert": 0.3,
+            "empathetic_friend": 0.2,
+            "creative_thinker": 0.1
+        }
+        
+        # Adjust based on context
+        if layer4_result.get("user_needs", []):
+            if "emotional_support" in layer4_result["user_needs"]:
+                personas["empathetic_friend"] += 0.3
+        
+        if any(word in user_input.lower() for word in ["creative", "innovative", "imagine"]):
+            personas["creative_thinker"] += 0.3
+        
+        # Return highest probability persona
+        return max(personas.items(), key=lambda x: x[1])[0]
+    
+    def _determine_response_depth(self, layer2_result, layer3_result):
+        # Determine appropriate response depth
+        depth = "medium"
+        
+        if layer2_result.get("requires_deep_processing"):
+            depth = "deep"
+        elif layer3_result.get("cognitive_load", 0) < 0.3:
+            depth = "shallow"
+        
+        return depth
+    
+    def _determine_creativity_level(self, layer5_result):
+        # Determine creativity level
+        if layer5_result.get("creative_options"):
+            return "high"
+        elif layer5_result.get("humor_element"):
+            return "medium"
+        else:
+            return "low"
+    
+    def _determine_priority(self, layer1_result, layer2_result, layer3_result):
+        # Determine priority level
+        priority = 1  # Default
+        
+        if layer1_result.get("is_basic_command"):
+            priority = 3
+        
+        emotion = layer2_result["emotion_analysis"].get("primary_emotion", "neutral")
+        if emotion in ["urgent", "angry", "stressed"]:
+            priority = 4
+        
+        if layer3_result.get("cognitive_load", 0) > 0.7:
+            priority = 2
+        
+        return priority
+    
+    def _estimate_response_time(self, layer1_result, layer2_result, layer3_result):
+        # Estimate response time
+        base_time = 1.0  # seconds
+        
+        if layer1_result.get("is_basic_command"):
+            return base_time
+        
+        if layer2_result.get("requires_deep_processing"):
+            base_time += 2.0
+        
+        if layer3_result.get("cognitive_load", 0) > 0.5:
+            base_time += 1.5
+        
+        return base_time
+    
+    def _calculate_cognitive_load(self, thought_process):
+        # Calculate cognitive load based on thought process
+        load = 0.0
+        
+        # More layers activated = higher load
+        load += len(thought_process.layers_activated) * 0.15
+        
+        # Longer processing time = higher load
+        load += min(0.4, thought_process.processing_time / 10)
+        
+        return min(1.0, load)
+    
+    def _format_response(self, thought_process, layer_result):
+        """Format final response"""
         return {
             "timestamp": datetime.datetime.now().isoformat(),
-            "user_name": self.user_name,
-            "local_ai": self.ollama.get_status(),
-            "context": self.context.get_context_summary(),
-            "memory": {
-                "total_conversations": len(self.memory.conversation_history),
-                "important_memories": len(self.memory.important_memories)
+            "user_input": thought_process.user_input,
+            "thought_process": {
+                "layers_activated": [layer.value for layer in thought_process.layers_activated],
+                "processing_time": round(thought_process.processing_time, 2),
+                "cognitive_load": round(thought_process.cognitive_load, 2),
+                "confidence_scores": thought_process.confidence_scores,
+                "final_decision": thought_process.final_decision
             },
-            "learning": self.learning.get_learning_stats(),
-            "emotion": self.emotion.get_mood_trend(days=1),
-            "interaction_stats": {
-                "total": self.interaction_count,
-                "last_interaction": self.last_interaction.strftime("%H:%M:%S"),
-                "idle_minutes": (datetime.datetime.now() - self.last_interaction).seconds // 60
+            "analysis_summary": {
+                "emotional_state": layer_result.get("emotion_analysis", {}).get("primary_emotion", "neutral"),
+                "topic": layer_result.get("topic_identified", "general"),
+                "requires_ai": thought_process.final_decision.get("use_ai", False),
+                "priority": thought_process.final_decision.get("priority", 1)
+            },
+            "response_generated": False  # Will be set after response generation
+        }
+    
+    def _generate_basic_command_response(self, layer1_result):
+        """Generate response for basic commands"""
+        command_type = layer1_result.get("command_type", "unknown")
+        
+        responses = {
+            "timer": "Timer set. I'll notify you when time's up.",
+            "alarm": "Alarm configured. You'll be alerted at the specified time.",
+            "volume": "Adjusting volume as requested.",
+            "brightness": "Screen brightness adjusted.",
+            "open": "Opening the requested application.",
+            "close": "Closing the application.",
+            "play": "Playing media as requested.",
+            "stop": "Playback stopped.",
+            "search": "Searching for information.",
+            "calculate": "Performing calculation."
+        }
+        
+        return responses.get(command_type, "Command executed.")
+    
+    def _get_proactive_element(self):
+        """Get proactive element for response"""
+        context_summary = self.context.get_context_summary()
+        proactive_actions = self.proactive.check_proactive_events(context_summary)
+        
+        if proactive_actions:
+            return proactive_actions[0].message
+        
+        return None
+    
+    def get_system_status(self) -> Dict[str, Any]:
+        """Get comprehensive system status"""
+        ai_status = self.ollama.get_status()
+        memory_stats = self.memory.get_memory_statistics()
+        learning_stats = self.learning.get_learning_statistics()
+        
+        uptime = (datetime.datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "system": {
+                "state": self.state.value,
+                "uptime_seconds": round(uptime, 2),
+                "user_name": self.user_name,
+                "session_start": self.session_start.isoformat(),
+                "data_directory": self.data_dir
+            },
+            "ai_capabilities": {
+                "local_ai_available": ai_status["available"],
+                "primary_model": ai_status["primary_model"],
+                "fallback_model": ai_status["fallback_model"],
+                "avg_response_time": ai_status["performance"]["avg_response_time"],
+                "connection_status": "healthy" if ai_status["available"] else "unavailable"
+            },
+            "memory_system": {
+                "total_memories": memory_stats["total_memories"],
+                "memories_by_type": memory_stats["memories_by_type"],
+                "memory_health": memory_stats["memory_health_percentage"],
+                "recall_success_rate": memory_stats["recall_success_rate"]
+            },
+            "learning_system": {
+                "total_patterns": learning_stats["total_learned_patterns"],
+                "unique_patterns": learning_stats["unique_patterns"],
+                "success_rate": learning_stats["success_rate"],
+                "average_confidence": learning_stats["average_confidence"]
+            },
+            "performance": {
+                "total_interactions": self.interaction_count,
+                "average_thought_time": np.mean([t.processing_time for t in self.thought_processes]) 
+                    if self.thought_processes else 0,
+                "layer_usage": dict(self.metrics["layer_usage"]),
+                "event_bus_metrics": self.event_bus.get_metrics()
+            },
+            "modules": {
+                "context": self.context.get_context_summary(),
+                "emotion": self.emotion.get_emotional_summary(hours=24),
+                "proactive": self.proactive.get_statistics(),
+                "study": self.study.get_study_analytics("all"),
+                "patterns": self.patterns.get_pattern_statistics()
             }
         }
     
+    def get_brain_status(self) -> Dict[str, Any]:
+        """Get brain status in the format main.py expects.
+        
+        Returns dict with 'local_ai' key containing 'available' and 'model'.
+        This is the compatibility wrapper called by main.py.
+        """
+        try:
+            ai_status = self.ollama.get_status()
+            return {
+                "local_ai": {
+                    "available": ai_status.get("available", False),
+                    "model": ai_status.get("primary_model", "unknown")
+                },
+                "state": self.state.value,
+                "interaction_count": self.interaction_count
+            }
+        except Exception:
+            return {
+                "local_ai": {"available": False, "model": "unknown"},
+                "state": self.state.value,
+                "interaction_count": self.interaction_count
+            }
+    
     def save_state(self):
         """Save state of all modules"""
+        print("\n💾 Saving AI Brain state...")
+        
+        # Save each module's state
         self.memory.save_memory()
         self.learning.save_learning()
-        print("💾 AI Brain state saved")
+        self.proactive.save_learning_data()
+        
+        # Save conversation history
+        history_file = os.path.join(self.data_dir, "conversation_history.json")
+        with open(history_file, 'w') as f:
+            json.dump(list(self.conversation_history), f, indent=2)
+        
+        # Save thought processes
+        thoughts_file = os.path.join(self.data_dir, "thought_processes.json")
+        with open(thoughts_file, 'w') as f:
+            thoughts_data = [t.__dict__ for t in self.thought_processes]
+            json.dump(thoughts_data, f, indent=2)
+        
+        # Save metrics
+        metrics_file = os.path.join(self.data_dir, "metrics.json")
+        with open(metrics_file, 'w') as f:
+            json.dump(self.metrics, f, indent=2)
+        
+        print("✅ AI Brain state saved")
     
     def load_state(self):
         """Load state of all modules"""
-        self.memory.load_memory()
-        self.learning.load_learning()
-        print("📂 AI Brain state loaded")
+        print("\n📂 Loading AI Brain state...")
+        
+        # Load conversation history
+        history_file = os.path.join(self.data_dir, "conversation_history.json")
+        if os.path.exists(history_file):
+            with open(history_file, 'r') as f:
+                self.conversation_history = deque(json.load(f), maxlen=100)
+        
+        # Load thought processes
+        thoughts_file = os.path.join(self.data_dir, "thought_processes.json")
+        if os.path.exists(thoughts_file):
+            with open(thoughts_file, 'r') as f:
+                thoughts_data = json.load(f)
+                self.thought_processes = deque(
+                    [ThoughtProcess(**t) for t in thoughts_data],
+                    maxlen=100
+                )
+        
+        # Load metrics
+        metrics_file = os.path.join(self.data_dir, "metrics.json")
+        if os.path.exists(metrics_file):
+            with open(metrics_file, 'r') as f:
+                self.metrics = json.load(f)
+        
+        print("✅ AI Brain state loaded")
     
-    def clear_ai_history(self):
-        """Clear AI conversation history"""
-        self.ollama.clear_history()
-        print("🗑️  AI conversation history cleared")
+    def clear_history(self, history_type: str = "conversation"):
+        """Clear specified history"""
+        if history_type == "conversation":
+            self.conversation_history.clear()
+            self.ollama.clear_history()
+            print("🗑️  Conversation history cleared")
+        elif history_type == "thoughts":
+            self.thought_processes.clear()
+            print("🗑️  Thought processes cleared")
+        elif history_type == "all":
+            self.conversation_history.clear()
+            self.thought_processes.clear()
+            self.ollama.clear_history()
+            print("🗑️  All history cleared")
     
     def retry_ai_connection(self):
         """Retry AI connection"""
         print("🔄 Retrying AI connection...")
         self.ollama._initialize()
         return self.ollama.is_available
+    
+    def switch_ai_model(self, model_name: str):
+        """Switch to different AI model"""
+        success = self.ollama.switch_model(model_name)
+        if success:
+            print(f"✅ Switched to model: {model_name}")
+        return success
+    
+    async def shutdown(self):
+        """Graceful shutdown"""
+        print("\n🛑 Shutting down AI Brain...")
+        
+        # Save state
+        self.save_state()
+        
+        # Stop event bus worker
+        await self.event_bus.stop_priority_worker()
+        
+        # Update state
+        self.state = AIState.SLEEPING
+        
+        print("✅ AI Brain shutdown complete")
 
-# For backward compatibility
-AIBrain = EnhancedAIBrain
 
 # Export for modular imports
-__all__ = ['EnhancedAIBrain', 'AIBrain', 'OllamaManager', 'IntelligentFallback']
+__all__ = ['FullFledgedAIBrain', 'OllamaEnhancedManager', 'AIState', 'ProcessingLayer']
 
-# Quick test function
+# Example usage
 if __name__ == "__main__":
-    print("🧪 Testing Enhanced AI Brain...")
-    print("=" * 50)
+    print("🧠 TESTING FULL-FLEDGED AI BRAIN")
+    print("=" * 60)
     
-    brain = EnhancedAIBrain("Prince")
+    # Initialize AI Brain
+    brain = FullFledgedAIBrain("Prince")
     
+    # Get initial status
     print("\n📊 Initial Status:")
-    print(json.dumps(brain.get_brain_status(), indent=2))
+    status = brain.get_system_status()
+    print(f"• State: {status['system']['state']}")
+    print(f"• AI Available: {status['ai_capabilities']['local_ai_available']}")
+    print(f"• Model: {status['ai_capabilities']['primary_model']}")
+    print(f"• Memory: {status['memory_system']['total_memories']} memories")
+    print(f"• Learning: {status['learning_system']['total_patterns']} patterns")
     
+    # Test conversations
     test_queries = [
-        "Hello Jarvis!",
-        "What can you do with AI?",
+        "Hello Jarvis! How are you today?",
+        "Can you explain quantum computing to me?",
+        "I'm feeling a bit stressed about my studies",
+        "What's the weather like today?",
         "Tell me a story about artificial intelligence",
-        "How does machine learning work?",
-        "I'm feeling a bit stressed today",
-        "What is the meaning of life?",
-        "Can you explain quantum computing?"
+        "Can you help me create some study flashcards?",
+        "What's your opinion on the future of AI?"
     ]
     
-    print(f"\n{'='*50}")
-    print("🤖 Testing Conversations:")
-    print("=" * 50)
+    print(f"\n{'='*60}")
+    print("🤖 TESTING 5-LAYER INTELLIGENCE")
+    print("=" * 60)
     
     for i, query in enumerate(test_queries, 1):
-        print(f"\n{i}. User: {query}")
+        print(f"\n[{i}] User: {query}")
+        
+        # Process through 5 layers
         analysis = brain.process_input(query)
+        
+        # Generate response
         response = brain.generate_response(analysis)
-        print(f"   JARVIS: {response}")
-        time.sleep(1)
+        
+        print(f"    JARVIS: {response}")
+        
+        # Show layer activation
+        layers = analysis.get("thought_process", {}).get("layers_activated", [])
+        print(f"    Layers activated: {len(layers)}")
+        
+        time.sleep(2)
     
-    print(f"\n{'='*50}")
-    print("📊 Final Status:")
-    status = brain.get_brain_status()
-    print(f"• AI Available: {status['local_ai']['available']}")
-    print(f"• Model: {status['local_ai']['model']}")
-    print(f"• Total Interactions: {status['interaction_stats']['total']}")
-    print(f"• Memory Conversations: {status['memory']['total_conversations']}")
+    # Check proactive actions
+    print(f"\n{'='*60}")
+    print("🔔 CHECKING PROACTIVE ACTIONS")
+    print("=" * 60)
+    
+    context_summary = brain.context.get_context_summary()
+    proactive = brain.proactive.check_proactive_events(context_summary)
+    
+    if proactive:
+        for action in proactive[:2]:  # Show first 2
+            print(f"• {action.message}")
+    else:
+        print("No proactive actions at this time")
+    
+    # Get final status
+    print(f"\n{'='*60}")
+    print("📊 FINAL SYSTEM STATUS")
+    print("=" * 60)
+    
+    final_status = brain.get_system_status()
+    print(f"• Total interactions: {final_status['performance']['total_interactions']}")
+    print(f"• AI Response time: {final_status['ai_capabilities']['avg_response_time']}s")
+    print(f"• Memory recall rate: {final_status['memory_system']['recall_success_rate']}%")
+    print(f"• Learning success rate: {final_status['learning_system']['success_rate']}%")
     
     # Save state
     brain.save_state()
+    
+    print(f"\n✅ Test complete! AI Brain is operational and learning.")
+
+
+# Backward compatibility alias for main.py
+EnhancedAIBrain = FullFledgedAIBrain

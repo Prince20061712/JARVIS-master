@@ -1,0 +1,13 @@
+{
+  "user_profiles": {},
+  "stats": {
+    "total_interactions": 0,
+    "successful_responses": 0,
+    "failed_responses": 0,
+    "user_corrections": 0,
+    "auto_learned_patterns": 0,
+    "context_aware_responses": 0,
+    "personalized_responses": 0
+  },
+  "last_updated": "2026-02-10T15:01:10.941510"
+}

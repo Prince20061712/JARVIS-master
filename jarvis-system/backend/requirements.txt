@@ -20,3 +20,8 @@ pyfiglet
 colorama
 pyaudio
 setuptools
+pytz
+textblob
+scikit-learn
+nltk
+numpy
