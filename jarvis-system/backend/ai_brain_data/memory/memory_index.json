@@ -149,11 +149,17 @@
       "timestamp": "2026-02-10T23:01:09.912844",
       "user_id": "default",
       "user_input_preview": "give me the print code of python"
+    },
+    {
+      "memory_id": "9315046fd6097ae2",
+      "timestamp": "2026-02-11T19:32:49.784467",
+      "user_id": "default",
+      "user_input_preview": "who is narendra modi"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 25,
+      "total_conversations": 26,
       "conversation_history": [
         {
           "memory_id": "c476ba2358be026d",
@@ -279,12 +285,17 @@
           "memory_id": "197e3ef0b46c0777",
           "timestamp": "2026-02-10T23:01:09.912897",
           "preview": "give me the print code of pyth"
+        },
+        {
+          "memory_id": "9315046fd6097ae2",
+          "timestamp": "2026-02-11T19:32:49.784493",
+          "preview": "who is narendra modi"
         }
       ],
       "preferred_topics": {},
       "conversation_patterns": {},
-      "last_interaction": "2026-02-10T23:01:09.912892"
+      "last_interaction": "2026-02-11T19:32:49.784490"
     }
   },
-  "last_updated": "2026-02-10T23:01:57.768938"
+  "last_updated": "2026-02-11T19:34:02.709223"
 }
