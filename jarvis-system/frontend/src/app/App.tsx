@@ -25,7 +25,6 @@ export default function App() {
   const speechQueue = useRef<string[]>([]);
   const isTalking = useRef(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const synth = window.speechSynthesis;
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
@@ -119,6 +118,22 @@ export default function App() {
   };
 
   const handleBackendMessage = (data: any) => {
+    // Helper to update chat
+    const updateChat = (text: string) => {
+      setMessages((prev) => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg && lastMsg.type === 'ai' && lastMsg.text === text) {
+          return prev;
+        }
+        return [...prev, {
+          id: Date.now().toString(),
+          type: "ai",
+          text: text,
+          timestamp: new Date(),
+        }];
+      });
+    };
+
     if (data.type === 'response') {
       if (data.sender === 'user') {
         // User message echoed back
@@ -130,12 +145,7 @@ export default function App() {
         }]);
       } else {
         // AI response
-        setMessages((prev) => [...prev, {
-          id: Date.now().toString(),
-          type: "ai",
-          text: data.content,
-          timestamp: new Date(),
-        }]);
+        updateChat(data.content);
         // Make robot speak
         if (data.content && !data.content.startsWith('(')) {
           robotSpeak(data.content);
@@ -150,6 +160,19 @@ export default function App() {
       robotSpeak("Error: " + data.message);
       setRobotState("error");
       setTimeout(() => setRobotState("idle"), 3000);
+    } else if (data.type === 'speech') {
+      // Legacy handler - keep for compatibility logic if needed
+      if (data.text && data.is_final) {
+        updateChat(data.text);
+      }
+    } else if (data.type === 'text') {
+      if (data.text) {
+        updateChat(data.text);
+      }
+    } else if (data.type === 'lipsync_start') {
+      setRobotState("speaking");
+    } else if (data.type === 'lipsync_stop') {
+      setRobotState("idle");
     }
   };
 

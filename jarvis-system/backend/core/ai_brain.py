@@ -21,16 +21,16 @@ from collections import defaultdict, deque
 import numpy as np
 
 # Import all enhanced modules
-from .context_awareness_enhanced import EnhancedContextAwareness
-from .memory_system_enhanced import EnhancedMemorySystem
-from .learning_system_enhanced import EnhancedLearningSystem
-from .decision_engine_enhanced import EnhancedDecisionEngine
-from .proactive_assistant_enhanced import AdvancedProactiveAssistant
-from .pattern_recognition_enhanced import AdvancedPatternRecognizer
-from .emotional_intelligence_enhanced import EnhancedEmotionalIntelligence
-from .knowledge_system_enhanced import EnhancedKnowledgeSystem
-from .study_manager_enhanced import AdvancedStudyManager
-from .event_bus_enhanced import AdvancedEventBus, Event, EventPriority, EventStatus
+from .context.context_awareness_enhanced import EnhancedContextAwareness
+from .memory.memory_system_enhanced import EnhancedMemorySystem
+from .learning.learning_system_enhanced import EnhancedLearningSystem
+from .decision.decision_engine_enhanced import EnhancedDecisionEngine
+from .context.proactive_assistant_enhanced import AdvancedProactiveAssistant
+from .learning.pattern_recognition_enhanced import AdvancedPatternRecognizer
+from .emotion.emotional_intelligence_enhanced import EnhancedEmotionalIntelligence
+from .learning.knowledge_system_enhanced import EnhancedKnowledgeSystem
+from .learning.study_manager_enhanced import AdvancedStudyManager
+from .system.event_bus_enhanced import AdvancedEventBus, Event, EventPriority, EventStatus
 
 class AIState(Enum):
     IDLE = "idle"
@@ -458,6 +458,14 @@ class OllamaEnhancedManager:
                 result = response.json()
                 ai_response = result["message"]["content"].strip()
                 
+                # CLEANUP: Remove JSON artifacts if present at start/end
+                # This fixes the "leaked JSON" issue where model repeats context
+                if ai_response.startswith('{') and "user" in ai_response and "timestamp" in ai_response:
+                    parts = ai_response.split('}')
+                    if len(parts) > 1:
+                        # Assuming the real response follows the JSON dump
+                        ai_response = parts[-1].strip()
+
                 # Add to conversation history
                 self.conversation_history.append({
                     "role": "assistant",

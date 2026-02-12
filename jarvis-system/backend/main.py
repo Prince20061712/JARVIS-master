@@ -131,12 +131,16 @@ class AudioSystem:
         self.loop = loop
         self.engine = None
         try:
-            self.engine = pyttsx3.init()
-            self.configure_jarvis_voice()
+            # Use Edge TTS for high quality voice
+            from core.system.tts_engine import EdgeTTSEngine
+            self.engine = EdgeTTSEngine(voice="en-US-ChristopherNeural")
+            print(f"{Fore.GREEN}🔊 Initialized Edge TTS (Voice: Christopher)")
         except Exception as e:
-            print(f"{Fore.YELLOW}⚠️  Could not initialize local TTS engine: {e}")
+            print(f"{Fore.YELLOW}⚠️  Could not initialize Edge TTS engine: {e}")
             print(f"{Fore.YELLOW}⚠️  Running in text-only mode (backend voice disabled)")
         
+        self.volume_level = 80
+        self.speech_rate = 175
         self.volume_level = 80
         self.speech_rate = 175
         self._ensure_audio_output()
@@ -146,8 +150,10 @@ class AudioSystem:
         print(f"\n{Fore.CYAN}🔊 Configuring Audio System...")
         if self.engine:
             try:
-                # test_phrase = "Audio system ready."
-                # self.engine.say(test_phrase)
+                # Simple test
+                pass
+            except Exception:
+                pass
                 # self.engine.runAndWait()
                 print(f"{Fore.GREEN}✅ Audio output configured")
             except Exception as e:
@@ -217,58 +223,43 @@ class AudioSystem:
         except:
             pass
     
-    def speak(self, text, play_beep=False, rate=None):
-        """Convert text to authentic JARVIS speech - GUARANTEED TO SPEAK"""
+    def speak(self, text, play_beep=False, rate=None, on_complete=None, on_start=None):
+        """Speak text using Edge TTS (High Quality)"""
+        if not text:
+            if on_complete: on_complete()
+            return
+
         print(f"{Fore.GREEN}{JARVIS_NAME}: {text}")
         
-        # Broadcast to WebSocket if available
+        # 1. Send text to frontend immediately (no animation)
         if self.websocket_manager and self.loop:
             try:
                 asyncio.run_coroutine_threadsafe(
                     self.websocket_manager.broadcast({
-                        "type": "response",
-                        "content": text,
-                        "sender": "robot"
+                        "type": "text",
+                        "text": text
                     }),
                     self.loop
                 )
             except Exception as e:
                 print(f"{Fore.RED}Error broadcasting to WebSocket: {e}")
 
-        if not text or not text.strip():
-            text = "Processing complete."
-        
-        if play_beep:
-            self.play_beep("response")
-            time.sleep(0.1)
-        
-        # Check if terminal voice is enabled
-        if not ENABLE_TERMINAL_VOICE:
-            return
-
+        # 2. Speak audio locally
         if self.engine:
             try:
-                current_rate = self.engine.getProperty('rate')
-                if rate:
-                    self.engine.setProperty('rate', rate)
-                
-                if self.engine._inLoop:
-                    self.engine.endLoop()
-                self.engine.say(text)
-                self.engine.runAndWait()
-                
-                if rate:
-                    self.engine.setProperty('rate', current_rate)
-                    
+                # Pass on_start to trigger animation exactly when audio starts
+                # Check signature compatibility
+                if 'on_start' in self.engine.speak.__code__.co_varnames:
+                    self.engine.speak(text, on_complete=on_complete, on_start=on_start)
+                else:
+                    # Fallback for older engine versions
+                    if on_start: on_start()
+                    self.engine.speak(text, on_complete=on_complete)
             except Exception as e:
-                print(f"{Fore.YELLOW}⚠️  Speech error (recovering): {e}")
-                # Try to re-init if it failed
-                try:
-                    self.engine = pyttsx3.init()
-                    self.engine.say(text)
-                    self.engine.runAndWait()
-                except:
-                    print(f"{Fore.RED}❌ Critical speech failure")
+                print(f"{Fore.RED}Error in speech synthesis: {e}")
+                if on_complete: on_complete()
+        else:
+             if on_complete: on_complete()
     
     def play_beep(self, type="response"):
         """Play different beep sounds"""
@@ -893,8 +884,11 @@ class JarvisAI:
         self.is_jarvis_speaking = False # Track if JARVIS is speaking
         
         print(f"\n{Fore.CYAN}🤖 Loading Enhanced AI Brain (Modular)...")
+        # Initialize AI Brain
         try:
-            self.ai_brain = EnhancedAIBrain(USER_NAME)
+            # Use centralized data directory
+            data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+            self.ai_brain = EnhancedAIBrain(USER_NAME, data_dir=data_dir)
             print(f"{Fore.GREEN}✅ AI Brain loaded successfully")
         except Exception as e:
             print(f"{Fore.RED}❌ Error loading AI Brain: {e}")
@@ -1010,10 +1004,42 @@ class JarvisAI:
         # We will modify AudioSystem.speak to respect ENABLE_TERMINAL_VOICE global 
         # or pass it as an arg. For now, let's just call it, and we'll patch AudioSystem.
         self.is_jarvis_speaking = True
-        try:
-            self.audio.speak(text, play_beep, rate)
-        finally:
+        
+        def on_speech_start():
+            # Trigger lip sync on frontend
+            if self.audio.websocket_manager and self.loop:
+                asyncio.run_coroutine_threadsafe(
+                    self.audio.websocket_manager.broadcast({
+                        "type": "lipsync_start"
+                    }),
+                    self.loop
+                )
+
+        def on_speech_complete():
             self.is_jarvis_speaking = False
+            # Stop lip sync on frontend
+            if self.audio.websocket_manager and self.loop:
+                asyncio.run_coroutine_threadsafe(
+                    self.audio.websocket_manager.broadcast({
+                        "type": "lipsync_stop"
+                    }),
+                    self.loop
+                )
+            
+        try:
+            # Check if AudioSystem.speak supports on_complete and on_start
+            if hasattr(self.audio, 'speak'):
+                # We assume we updated AudioSystem.speak to support both
+                self.audio.speak(text, play_beep, rate, on_complete=on_speech_complete, on_start=on_speech_start)
+            else:
+                 # Fallback
+                 self.audio.speak(text, play_beep, rate)
+        except Exception as e:
+            print(f"Error in speech: {e}")
+            self.is_jarvis_speaking = False # Reset on error
+        except Exception as e:
+            print(f"Error in speech: {e}")
+            self.is_jarvis_speaking = False # Reset on error
     
     def toggle_voice_input(self):
         """Toggle voice input on/off"""
@@ -1040,6 +1066,11 @@ class JarvisAI:
         """Listen for audio input and convert to text"""
         if not self.voice_enabled:
             time.sleep(0.5)
+            return ""
+
+        # Check if JARVIS is speaking to prevent feedback loop
+        if self.is_jarvis_speaking:
+            time.sleep(0.1)
             return ""
 
         with self.microphone as source:

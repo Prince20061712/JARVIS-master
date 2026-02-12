@@ -1,0 +1,79 @@
+{
+  "context_history": [],
+  "suggestion_history": [
+    {
+      "event_type": "suggestion",
+      "message": "Relaxation time: Want some calming music or sounds?",
+      "timestamp": "2026-02-10T21:17:03.024218",
+      "priority": "info",
+      "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Relaxation time: Want some calming music or sounds?",
+      "timestamp": "2026-02-10T21:51:26.973514",
+      "priority": "info",
+      "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Winding down for sleep? Need calming sounds or meditation guidance?",
+      "timestamp": "2026-02-10T22:04:54.157079",
+      "priority": "medium",
+      "confidence": 0.8
+    },
+    {
+      "event_type": "reminder",
+      "message": "Remember to stay hydrated! Your body needs water to function optimally.",
+      "timestamp": "2026-02-11T19:32:40.706451",
+      "priority": "info",
+      "confidence": 0.95
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Time to review morning progress and adjust plans.",
+      "timestamp": "2026-02-12T13:40:19.574239",
+      "priority": "info",
+      "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Afternoon productivity boost: Try the Pomodoro technique.",
+      "timestamp": "2026-02-12T15:47:53.260718",
+      "priority": "info",
+      "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Wrapping up work? Need help summarizing today's achievements?",
+      "timestamp": "2026-02-12T17:35:13.891724",
+      "priority": "medium",
+      "confidence": 0.8
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Commute time. Want the latest news headlines?",
+      "timestamp": "2026-02-12T18:12:33.528036",
+      "priority": "low",
+      "confidence": 0.8
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Evening plans? I can suggest activities based on your mood.",
+      "timestamp": "2026-02-12T20:08:12.042239",
+      "priority": "low",
+      "confidence": 0.8
+    }
+  ],
+  "stats": {
+    "total_events_generated": 9,
+    "events_by_type": {},
+    "events_by_priority": {},
+    "user_feedback_positive": 0,
+    "user_feedback_negative": 0,
+    "prediction_accuracy": 0.0,
+    "patterns_learned": 0,
+    "average_response_time": 0.0
+  },
+  "last_updated": "2026-02-12T20:09:26.631911"
+}
