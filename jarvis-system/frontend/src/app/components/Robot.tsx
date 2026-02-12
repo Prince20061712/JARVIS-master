@@ -1,6 +1,10 @@
-import { motion } from "motion/react";
-// Import image - verify path
-import robotImage from "../../assets/cyborg_talking_transparent.png";
+import { Canvas } from "@react-three/fiber";
+import { useGLTF, OrbitControls, Environment } from "@react-three/drei";
+import { Suspense, useEffect, useRef } from "react";
+import * as THREE from "three";
+
+// Pre-load the model
+useGLTF.preload("https://models.readyplayer.me/698d662a773780b71b5dee00.glb");
 
 export type RobotState =
   | "idle"
@@ -31,79 +35,100 @@ export interface RobotProps {
   thoughtProcess?: string[];
 }
 
+function AvatarModel({ state, voiceLevel = 0 }: { state: RobotState; voiceLevel?: number }) {
+  const { scene } = useGLTF("https://models.readyplayer.me/698d662a773780b71b5dee00.glb");
+  const modelRef = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    if (modelRef.current) {
+      // Reset position
+      modelRef.current.position.y = -1.6;
+    }
+  }, []);
+
+  // Simple animation using useFrame is better, but for now we can use simple react updates or just pass props.
+  // Ideally we would access the bone structure for lip sync, but that requires more complex setup.
+  // For now, let's just gently bob the head/body when speaking.
+
+  const isSpeaking = state === 'speaking';
+
+  // Rotate/Scale based on voice to simulate activity
+  useEffect(() => {
+    if (modelRef.current) {
+      if (isSpeaking) {
+        const scale = 1.2 + (voiceLevel * 0.05);
+        modelRef.current.scale.setScalar(scale);
+      } else {
+        modelRef.current.scale.setScalar(1.2);
+      }
+    }
+  }, [isSpeaking, voiceLevel]);
+
+  return (
+    <primitive
+      object={scene}
+      ref={modelRef}
+      scale={1.2}
+      position={[0, -1.8, 0]}
+    />
+  );
+}
+
 export function Robot({
   state,
   voiceLevel = 0
 }: RobotProps) {
-  // Simple pulsing logic for speaking based on voice level or state
-  const isSpeaking = state === "speaking";
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center h-full w-full relative overflow-hidden bg-black/20">
       {/* Background glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-cyan-900/20 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-cyan-900/10 via-transparent to-transparent pointer-events-none" />
 
-      <motion.div
-        className="relative z-10 flex flex-col items-center justify-center p-8"
-        animate={{
-          scale: isSpeaking ? [1, 1.02 + (voiceLevel * 0.1), 1] : 1,
-          filter: state === 'listening' ? 'drop-shadow(0 0 15px rgba(0, 229, 255, 0.6)) brightness(1.2)' :
-            state === 'speaking' ? 'drop-shadow(0 0 25px rgba(0, 255, 136, 0.4)) brightness(1.1)' :
-              state === 'error' ? 'drop-shadow(0 0 15px rgba(255, 68, 68, 0.6)) grayscale(0.5) sepia(0.5)' :
-                'drop-shadow(0 0 10px rgba(0, 229, 255, 0.2))'
-        }}
-        transition={{
-          scale: {
-            repeat: isSpeaking ? Infinity : 0,
-            duration: 0.15,
-            ease: "easeInOut"
-          },
-          filter: { duration: 0.5 }
-        }}
-      >
-        <img
-          src={robotImage}
-          alt="AI Robot Assistant"
-          className="max-h-[65vh] w-auto object-contain pointer-events-none select-none"
-          style={{
-            filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.5))"
-          }}
-        />
+      <div className="w-full h-full relative z-10">
+        <Canvas
+          camera={{ position: [0, 0, 3], fov: 40 }} // Moved camera back to 3
+          style={{ height: "100%", width: "100%" }}
+        >
+          <color attach="background" args={['#0a0a0a']} />
+          <ambientLight intensity={1.5} />
+          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} />
+          <pointLight position={[-10, -10, -10]} intensity={1} />
+          <Environment preset="city" />
 
-        {/* Processing Indicator Overlay */}
-        {state === 'processing' && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-32 h-32 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
-            <div className="absolute w-24 h-24 border-4 border-purple-500/30 border-b-purple-500 rounded-full animate-spin-reverse" />
-          </div>
-        )}
+          <Suspense fallback={null}>
+            <AvatarModel state={state} voiceLevel={voiceLevel} />
+          </Suspense>
 
-        {/* Listening Indicator */}
-        {state === 'listening' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-cyan-900/80 backdrop-blur border border-cyan-500/30 px-4 py-1 rounded-full"
-          >
-            <span className="text-cyan-300 text-sm font-mono tracking-widest animate-pulse">LISTENING...</span>
-          </motion.div>
-        )}
+          <OrbitControls
+            enableZoom={true}
+            enablePan={false}
+            minPolarAngle={Math.PI / 2.5}
+            maxPolarAngle={Math.PI / 1.8}
+            target={[0, 1.45, 0]} // Focus on face
+          />
+        </Canvas>
+      </div>
 
-        {/* Error Indicator */}
-        {state === 'error' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-red-900/80 backdrop-blur border border-red-500/30 px-4 py-1 rounded-full"
-          >
-            <span className="text-red-300 text-sm font-mono tracking-widest animate-pulse">SYSTEM ERROR</span>
-          </motion.div>
-        )}
-      </motion.div>
+      {/* Processing Indicator Overlay */}
+      {state === 'processing' && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-32 h-32 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+        </div>
+      )}
 
-      {/* Grid Floor Effect (Simple CSS) */}
-      <div className="absolute bottom-0 w-full h-1/3 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,229,255,0.05)_100%)] pointer-events-none border-t border-cyan-500/10" />
+      {/* Listening Indicator */}
+      {state === 'listening' && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-cyan-900/80 backdrop-blur border border-cyan-500/30 px-4 py-1 rounded-full pointer-events-none">
+          <span className="text-cyan-300 text-sm font-mono tracking-widest animate-pulse">LISTENING...</span>
+        </div>
+      )}
 
+      {/* Error Indicator */}
+      {state === 'error' && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-red-900/80 backdrop-blur border border-red-500/30 px-4 py-1 rounded-full pointer-events-none">
+          <span className="text-red-300 text-sm font-mono tracking-widest animate-pulse">SYSTEM ERROR</span>
+        </div>
+      )}
     </div>
   );
 }

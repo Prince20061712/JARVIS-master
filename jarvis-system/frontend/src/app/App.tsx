@@ -58,13 +58,13 @@ export default function App() {
       socket.onclose = () => {
         setIsConnected(false);
         addSystemMessage("Connection lost. Reconnecting in 3s...");
-        setRobotState("error");
+        // setRobotState("error");
         setTimeout(connectWebSocket, 3000);
       };
 
       socket.onerror = (error) => {
         console.error('WebSocket Error:', error);
-        setRobotState("error");
+        // setRobotState("error");
       };
 
       socket.onmessage = (event) => {
