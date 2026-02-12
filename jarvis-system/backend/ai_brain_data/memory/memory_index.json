@@ -155,11 +155,35 @@
       "timestamp": "2026-02-11T19:32:49.784467",
       "user_id": "default",
       "user_input_preview": "who is narendra modi"
+    },
+    {
+      "memory_id": "43fb68beaff71db2",
+      "timestamp": "2026-02-12T13:40:31.512280",
+      "user_id": "default",
+      "user_input_preview": "kaun hai"
+    },
+    {
+      "memory_id": "62970e1d78b41ad4",
+      "timestamp": "2026-02-12T13:47:18.633206",
+      "user_id": "default",
+      "user_input_preview": "pankha band karo"
+    },
+    {
+      "memory_id": "e52f6a0f5b6ab5b4",
+      "timestamp": "2026-02-12T13:50:03.069544",
+      "user_id": "default",
+      "user_input_preview": "ai"
+    },
+    {
+      "memory_id": "96e649be5ebb0f9e",
+      "timestamp": "2026-02-12T15:48:05.377151",
+      "user_id": "default",
+      "user_input_preview": "how was your day"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 26,
+      "total_conversations": 30,
       "conversation_history": [
         {
           "memory_id": "c476ba2358be026d",
@@ -290,12 +314,32 @@
           "memory_id": "9315046fd6097ae2",
           "timestamp": "2026-02-11T19:32:49.784493",
           "preview": "who is narendra modi"
+        },
+        {
+          "memory_id": "43fb68beaff71db2",
+          "timestamp": "2026-02-12T13:40:31.512315",
+          "preview": "kaun hai"
+        },
+        {
+          "memory_id": "62970e1d78b41ad4",
+          "timestamp": "2026-02-12T13:47:18.633228",
+          "preview": "pankha band karo"
+        },
+        {
+          "memory_id": "e52f6a0f5b6ab5b4",
+          "timestamp": "2026-02-12T13:50:03.069552",
+          "preview": "ai"
+        },
+        {
+          "memory_id": "96e649be5ebb0f9e",
+          "timestamp": "2026-02-12T15:48:05.377165",
+          "preview": "how was your day"
         }
       ],
       "preferred_topics": {},
       "conversation_patterns": {},
-      "last_interaction": "2026-02-11T19:32:49.784490"
+      "last_interaction": "2026-02-12T15:48:05.377161"
     }
   },
-  "last_updated": "2026-02-11T19:34:02.709223"
+  "last_updated": "2026-02-12T15:49:16.781898"
 }

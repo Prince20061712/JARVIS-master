@@ -28,10 +28,24 @@
       "timestamp": "2026-02-11T19:32:40.706451",
       "priority": "info",
       "confidence": 0.95
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Time to review morning progress and adjust plans.",
+      "timestamp": "2026-02-12T13:40:19.574239",
+      "priority": "info",
+      "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Afternoon productivity boost: Try the Pomodoro technique.",
+      "timestamp": "2026-02-12T15:47:53.260718",
+      "priority": "info",
+      "confidence": 0.7
     }
   ],
   "stats": {
-    "total_events_generated": 4,
+    "total_events_generated": 6,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -40,5 +54,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-02-11T19:34:02.710691"
+  "last_updated": "2026-02-12T15:49:06.287540"
 }

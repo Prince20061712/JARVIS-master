@@ -24,6 +24,8 @@ export default function App() {
   const socketRef = useRef<WebSocket | null>(null);
   const speechQueue = useRef<string[]>([]);
   const isTalking = useRef(false);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const synth = window.speechSynthesis;
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
@@ -40,9 +42,13 @@ export default function App() {
 
   // Initialize WebSocket
   useEffect(() => {
+    let reconnectTimeout: NodeJS.Timeout;
+    let isMounted = true;
+
     const connectWebSocket = () => {
+      if (!isMounted) return;
+
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Adjust port if running on dev server (frontend 5173 -> backend 8000)
       const host = window.location.port === '5173' ? 'localhost:8000' : window.location.host;
       const wsUrl = `${protocol}//${host}/ws`;
 
@@ -50,24 +56,35 @@ export default function App() {
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
+        if (!isMounted) {
+          socket.close();
+          return;
+        }
         setIsConnected(true);
         addSystemMessage("Connected to JARVIS core.");
         setRobotState("idle");
       };
 
       socket.onclose = () => {
+        if (!isMounted) return;
+
         setIsConnected(false);
         addSystemMessage("Connection lost. Reconnecting in 3s...");
-        // setRobotState("error");
-        setTimeout(connectWebSocket, 3000);
+        setRobotState("error");
+
+        // Clear any existing timeout before setting a new one
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = setTimeout(connectWebSocket, 3000);
       };
 
       socket.onerror = (error) => {
+        if (!isMounted) return;
         console.error('WebSocket Error:', error);
-        // setRobotState("error");
+        setRobotState("error");
       };
 
       socket.onmessage = (event) => {
+        if (!isMounted) return;
         try {
           const data = JSON.parse(event.data);
           handleBackendMessage(data);
@@ -82,7 +99,11 @@ export default function App() {
     connectWebSocket();
 
     return () => {
+      isMounted = false;
+      clearTimeout(reconnectTimeout);
       if (socketRef.current) {
+        // Remove onclose handler to prevent accidental reconnection trigger during cleanup
+        socketRef.current.onclose = null;
         socketRef.current.close();
       }
     };
@@ -132,17 +153,29 @@ export default function App() {
     }
   };
 
-  const robotSpeak = (text: string) => {
-    if (!text || isTalking.current) {
-      speechQueue.current.push(text);
-      return;
+  // Process the speech queue
+  const processSpeechQueue = () => {
+    if (speechQueue.current.length > 0) {
+      isTalking.current = true;
+      setRobotState("speaking");
+      const nextText = speechQueue.current.shift();
+      if (nextText) speakUtterance(nextText);
+    } else {
+      isTalking.current = false;
+      setRobotState("idle");
+      setCurrentMessage(""); // Clear message bubble when finished speaking all chunks
+      // Notify backend that speech has finished
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({
+          type: 'speech_state',
+          status: 'finished'
+        }));
+      }
     }
+  };
 
-    isTalking.current = true;
-    setRobotState("speaking");
-    setCurrentMessage(text);
-
-    // Notify backend that speech has started
+  const speakUtterance = (text: string) => {
+    // Notify backend that speech has started (only for first chunk effectively, or keep confirming)
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({
         type: 'speech_state',
@@ -150,11 +183,14 @@ export default function App() {
       }));
     }
 
+    // Cancel any ongoing speech
     if (synth.speaking) {
       synth.cancel();
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
+    utteranceRef.current = utterance;
+
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.volume = 1;
@@ -178,34 +214,44 @@ export default function App() {
     }
 
     utterance.onend = () => {
-      finishSpeaking();
+      // Immediately process next chunk without going to idle
+      processSpeechQueue();
     };
 
     utterance.onerror = (event) => {
       console.error('Speech synthesis error:', event);
-      finishSpeaking();
+      processSpeechQueue();
     };
 
+    setCurrentMessage(text);
     synth.speak(utterance);
   };
 
-  const finishSpeaking = () => {
-    isTalking.current = false;
-    setRobotState("idle");
-    setCurrentMessage(""); // Clear message bubble
+  const robotSpeak = (text: string) => {
+    // Split long text into chunks to avoid browser timeout (approx 200 chars or by sentence)
+    // Regular expression to split by sentence terminators but keep them
+    const chunks = text.match(/[^.!?]+[.!?]+|\s*$/g)
+      ?.map(t => t.trim())
+      .filter(t => t.length > 0) || [text];
 
-    // Notify backend that speech has finished
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({
-        type: 'speech_state',
-        status: 'finished'
-      }));
-    }
+    // Limit chunk size just in case there are very long sentences
+    const safeChunks: string[] = [];
+    chunks.forEach(chunk => {
+      if (chunk.length > 200) {
+        // Split by comma or simple length if absolutely necessary
+        const subChunks = chunk.match(/.{1,200}(?:\s|$)/g)?.map(t => t.trim()) || [chunk];
+        safeChunks.push(...subChunks);
+      } else {
+        safeChunks.push(chunk);
+      }
+    });
 
-    // Process queue
-    if (speechQueue.current.length > 0) {
-      const nextText = speechQueue.current.shift();
-      if (nextText) setTimeout(() => robotSpeak(nextText), 500);
+    // Add to queue
+    speechQueue.current.push(...safeChunks);
+
+    // If not currently talking, start processing
+    if (!isTalking.current) {
+      processSpeechQueue();
     }
   };
 
@@ -247,6 +293,13 @@ export default function App() {
     if (synth.speaking) synth.cancel();
     speechQueue.current = [];
     isTalking.current = false;
+    // Notify backend
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: 'speech_state',
+        status: 'finished'
+      }));
+    }
     addSystemMessage("Interface reset.");
   };
 
@@ -315,10 +368,9 @@ export default function App() {
           <div
             className="w-[60%] border-r relative flex flex-col justify-center"
             style={{
-              backgroundColor: "#0a1428",
+              backgroundColor: "#111", // Darker background for avatar
               borderColor: "rgba(0, 229, 255, 0.2)",
-              background:
-                "linear-gradient(135deg, #001a33 0%, #0a1428 100%)",
+              backgroundImage: "radial-gradient(circle at center, #1a2c4e 0%, #000 100%)",
             }}
           >
             <Robot
