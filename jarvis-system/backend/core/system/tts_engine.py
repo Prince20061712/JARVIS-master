@@ -36,7 +36,7 @@ class EdgeTTSEngine:
         communicate = edge_tts.Communicate(text, self.voice, rate=self.rate, volume=self.volume)
         await communicate.save(output_file)
 
-    def speak(self, text, on_complete=None):
+    def speak(self, text, on_complete=None, on_start=None):
         """
         Convert text to speech and play it immediately.
         Handles both synchronous and asynchronous contexts.
@@ -58,10 +58,12 @@ class EdgeTTSEngine:
                     if loop.is_running():
                         # Use a separate thread to run the async generation AND playback 
                         # to avoid blocking/conflict and ensure sequence
-                        thread = Thread(target=self._generate_and_play, args=(text, output_file, on_complete))
+                        thread = Thread(target=self._generate_and_play, args=(text, output_file, on_complete, on_start))
                         thread.start()
                     else:
                          loop.run_until_complete(self._generate_audio(text, output_file))
+                         if on_start:
+                             on_start()
                          self._play_audio(output_file)
                          if on_complete:
                              on_complete()
@@ -71,6 +73,8 @@ class EdgeTTSEngine:
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(self._generate_audio(text, output_file))
                     loop.close()
+                    if on_start:
+                        on_start()
                     self._play_audio(output_file)
                     if on_complete:
                         on_complete()

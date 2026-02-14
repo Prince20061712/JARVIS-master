@@ -40,8 +40,8 @@ export function ChatInterface({
   return (
     <div className="flex flex-col h-full">
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ 
-        background: "linear-gradient(180deg, rgba(0, 26, 51, 0.3) 0%, rgba(10, 20, 40, 0.5) 100%)" 
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{
+        background: "linear-gradient(180deg, rgba(0, 26, 51, 0.3) 0%, rgba(10, 20, 40, 0.5) 100%)"
       }}>
         <AnimatePresence initial={false}>
           {messages.map((message) => (
@@ -51,13 +51,12 @@ export function ChatInterface({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className={`flex ${
-                message.type === "user"
+              className={`flex ${message.type === "user"
                   ? "justify-end"
                   : message.type === "system"
-                  ? "justify-center"
-                  : "justify-start"
-              }`}
+                    ? "justify-center"
+                    : "justify-start"
+                }`}
             >
               {message.type === "system" ? (
                 <div className="text-sm italic text-center" style={{ color: "#888888" }}>
@@ -69,20 +68,20 @@ export function ChatInterface({
                   style={
                     message.type === "user"
                       ? {
-                          background: "linear-gradient(135deg, #00E5FF 0%, #0088CC 100%)",
-                          color: "#000000",
-                          borderRadius: "15px 15px 2px 15px",
-                          boxShadow: "0 0 20px rgba(0, 229, 255, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3)",
-                          border: "1px solid rgba(255, 255, 255, 0.2)",
-                        }
+                        background: "linear-gradient(135deg, #00E5FF 0%, #0088CC 100%)",
+                        color: "#000000",
+                        borderRadius: "15px 15px 2px 15px",
+                        boxShadow: "0 0 20px rgba(0, 229, 255, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                      }
                       : {
-                          background: "linear-gradient(135deg, rgba(0, 100, 200, 0.3) 0%, rgba(0, 50, 100, 0.3) 100%)",
-                          color: "#FFFFFF",
-                          border: "1px solid rgba(0, 229, 255, 0.5)",
-                          borderRadius: "15px 15px 15px 2px",
-                          boxShadow: "0 0 15px rgba(0, 229, 255, 0.3), 0 4px 10px rgba(0, 0, 0, 0.3)",
-                          backdropFilter: "blur(10px)",
-                        }
+                        background: "linear-gradient(135deg, rgba(0, 100, 200, 0.3) 0%, rgba(0, 50, 100, 0.3) 100%)",
+                        color: "#FFFFFF",
+                        border: "1px solid rgba(0, 229, 255, 0.5)",
+                        borderRadius: "15px 15px 15px 2px",
+                        boxShadow: "0 0 15px rgba(0, 229, 255, 0.3), 0 4px 10px rgba(0, 0, 0, 0.3)",
+                        backdropFilter: "blur(10px)",
+                      }
                   }
                 >
                   <p className="text-sm">{message.text}</p>
@@ -104,7 +103,7 @@ export function ChatInterface({
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t" style={{ 
+      <form onSubmit={handleSubmit} className="p-4 border-t" style={{
         borderColor: "rgba(0, 229, 255, 0.3)",
         backgroundColor: "rgba(10, 20, 50, 0.6)",
       }}>
@@ -125,8 +124,8 @@ export function ChatInterface({
             animate={
               isListening
                 ? {
-                    scale: [1, 1.1, 1],
-                  }
+                  scale: [1, 1.1, 1],
+                }
                 : {}
             }
             transition={{

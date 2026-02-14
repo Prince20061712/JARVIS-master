@@ -53,11 +53,107 @@
       "timestamp": "2026-02-12T20:08:44.568826",
       "user_id": "default",
       "user_input_preview": "iske pahle wala 28 tarikh ko"
+    },
+    {
+      "memory_id": "2e3316144a9ff48a",
+      "timestamp": "2026-02-12T22:44:10.964741",
+      "user_id": "default",
+      "user_input_preview": "can you tell those things in the chat"
+    },
+    {
+      "memory_id": "43ffc0a30f171a61",
+      "timestamp": "2026-02-12T22:44:53.631246",
+      "user_id": "default",
+      "user_input_preview": "tell me things you can do in chat"
+    },
+    {
+      "memory_id": "0b7c139a13eadc09",
+      "timestamp": "2026-02-14T13:23:10.259076",
+      "user_id": "default",
+      "user_input_preview": "do you know about mahashivratri"
+    },
+    {
+      "memory_id": "ecc2ac10a368eccd",
+      "timestamp": "2026-02-14T13:34:29.209150",
+      "user_id": "default",
+      "user_input_preview": "aapko kis ko dena hai"
+    },
+    {
+      "memory_id": "3f8c9b81d563a865",
+      "timestamp": "2026-02-14T13:41:13.413796",
+      "user_id": "default",
+      "user_input_preview": "please dance"
+    },
+    {
+      "memory_id": "fe0df484e34db3fa",
+      "timestamp": "2026-02-14T13:47:52.408646",
+      "user_id": "default",
+      "user_input_preview": "can you talk"
+    },
+    {
+      "memory_id": "f7e75cf763ef5734",
+      "timestamp": "2026-02-14T17:47:48.777698",
+      "user_id": "default",
+      "user_input_preview": "tell me about jeevan"
+    },
+    {
+      "memory_id": "b3d3b4514fe65e26",
+      "timestamp": "2026-02-14T17:58:04.231387",
+      "user_id": "default",
+      "user_input_preview": "tera suit kare sare kare"
+    },
+    {
+      "memory_id": "35b3deb85cd6f9a2",
+      "timestamp": "2026-02-14T18:07:19.396750",
+      "user_id": "default",
+      "user_input_preview": "do you know about"
+    },
+    {
+      "memory_id": "28fcc8c8cc9375f9",
+      "timestamp": "2026-02-14T18:21:50.853342",
+      "user_id": "default",
+      "user_input_preview": "adityanath"
+    },
+    {
+      "memory_id": "276e62f1b3137a8d",
+      "timestamp": "2026-02-14T18:22:08.695531",
+      "user_id": "default",
+      "user_input_preview": "tell me about yogi aditya"
+    },
+    {
+      "memory_id": "dec2cfde2a927276",
+      "timestamp": "2026-02-14T18:33:27.129465",
+      "user_id": "default",
+      "user_input_preview": "what do you know about valentine"
+    },
+    {
+      "memory_id": "ecac6216d1a2aecb",
+      "timestamp": "2026-02-14T18:36:24.984595",
+      "user_id": "default",
+      "user_input_preview": "do you know about prachi"
+    },
+    {
+      "memory_id": "7c6186260ddf46a0",
+      "timestamp": "2026-02-14T18:40:30.480172",
+      "user_id": "default",
+      "user_input_preview": "tell me about prachi"
+    },
+    {
+      "memory_id": "ac4b6c30c815299e",
+      "timestamp": "2026-02-14T18:42:43.862013",
+      "user_id": "default",
+      "user_input_preview": "tell me about prachi"
+    },
+    {
+      "memory_id": "29107e347c329716",
+      "timestamp": "2026-02-14T18:44:32.530163",
+      "user_id": "default",
+      "user_input_preview": "tell me about prachi"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 9,
+      "total_conversations": 25,
       "conversation_history": [
         {
           "memory_id": "10dfafe3248c1778",
@@ -103,14 +199,94 @@
           "memory_id": "f9d6d3f79ea9fc0d",
           "timestamp": "2026-02-12T20:08:44.568845",
           "preview": "iske pahle wala 28 tarikh ko"
+        },
+        {
+          "memory_id": "2e3316144a9ff48a",
+          "timestamp": "2026-02-12T22:44:10.964755",
+          "preview": "can you tell those things in t"
+        },
+        {
+          "memory_id": "43ffc0a30f171a61",
+          "timestamp": "2026-02-12T22:44:53.631260",
+          "preview": "tell me things you can do in c"
+        },
+        {
+          "memory_id": "0b7c139a13eadc09",
+          "timestamp": "2026-02-14T13:23:10.259100",
+          "preview": "do you know about mahashivratr"
+        },
+        {
+          "memory_id": "ecc2ac10a368eccd",
+          "timestamp": "2026-02-14T13:34:29.209165",
+          "preview": "aapko kis ko dena hai"
+        },
+        {
+          "memory_id": "3f8c9b81d563a865",
+          "timestamp": "2026-02-14T13:41:13.413813",
+          "preview": "please dance"
+        },
+        {
+          "memory_id": "fe0df484e34db3fa",
+          "timestamp": "2026-02-14T13:47:52.408661",
+          "preview": "can you talk"
+        },
+        {
+          "memory_id": "f7e75cf763ef5734",
+          "timestamp": "2026-02-14T17:47:48.777714",
+          "preview": "tell me about jeevan"
+        },
+        {
+          "memory_id": "b3d3b4514fe65e26",
+          "timestamp": "2026-02-14T17:58:04.231411",
+          "preview": "tera suit kare sare kare"
+        },
+        {
+          "memory_id": "35b3deb85cd6f9a2",
+          "timestamp": "2026-02-14T18:07:19.396770",
+          "preview": "do you know about"
+        },
+        {
+          "memory_id": "28fcc8c8cc9375f9",
+          "timestamp": "2026-02-14T18:21:50.853364",
+          "preview": "adityanath"
+        },
+        {
+          "memory_id": "276e62f1b3137a8d",
+          "timestamp": "2026-02-14T18:22:08.695553",
+          "preview": "tell me about yogi aditya"
+        },
+        {
+          "memory_id": "dec2cfde2a927276",
+          "timestamp": "2026-02-14T18:33:27.129483",
+          "preview": "what do you know about valenti"
+        },
+        {
+          "memory_id": "ecac6216d1a2aecb",
+          "timestamp": "2026-02-14T18:36:24.984632",
+          "preview": "do you know about prachi"
+        },
+        {
+          "memory_id": "7c6186260ddf46a0",
+          "timestamp": "2026-02-14T18:40:30.480178",
+          "preview": "tell me about prachi"
+        },
+        {
+          "memory_id": "ac4b6c30c815299e",
+          "timestamp": "2026-02-14T18:42:43.862022",
+          "preview": "tell me about prachi"
+        },
+        {
+          "memory_id": "29107e347c329716",
+          "timestamp": "2026-02-14T18:44:32.530182",
+          "preview": "tell me about prachi"
         }
       ],
       "preferred_topics": {
-        "topic_tech": 1
+        "topic_tech": 2
       },
       "conversation_patterns": {},
-      "last_interaction": "2026-02-12T20:08:44.568842"
+      "last_interaction": "2026-02-14T18:44:32.530179"
     }
   },
-  "last_updated": "2026-02-12T20:09:34.376087"
+  "last_updated": "2026-02-14T18:45:49.831554"
 }

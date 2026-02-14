@@ -1,17 +1,1 @@
-[
-  {
-    "start_time": 1770883817.531919,
-    "user_input": "kaun hai",
-    "layers_activated": [
-      "reactive",
-      "cognitive",
-      "metacognitive",
-      "proactive",
-      "creative"
-    ],
-    "confidence_scores": {},
-    "intermediate_results": {
-      "layer1": {
-        "is_basic_command": false,
-        "command_type": null,
-        "pattern_analysis": 
+[]

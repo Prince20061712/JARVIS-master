@@ -18,12 +18,12 @@ export function StatusLED({ color, active, label }: StatusLEDProps) {
         animate={
           active
             ? {
-                boxShadow: [
-                  `0 0 15px ${color}`,
-                  `0 0 25px ${color}`,
-                  `0 0 15px ${color}`,
-                ],
-              }
+              boxShadow: [
+                `0 0 15px ${color}`,
+                `0 0 25px ${color}`,
+                `0 0 15px ${color}`,
+              ],
+            }
             : {}
         }
         transition={{

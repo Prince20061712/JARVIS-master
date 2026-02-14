@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "motion/react";
-import { Bot, Music, RotateCcw } from "lucide-react";
 import { Robot, RobotState } from "./components/Robot";
 import {
   ChatInterface,
@@ -10,6 +8,7 @@ import { StatusLED } from "./components/StatusLED";
 
 export default function App() {
   const [robotState, setRobotState] = useState<RobotState>("idle");
+  const [robotEmotion, setRobotEmotion] = useState<'neutral' | 'shy'>('neutral');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -22,22 +21,8 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
-  const speechQueue = useRef<string[]>([]);
-  const isTalking = useRef(false);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const synth = window.speechSynthesis;
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
-  // Initialize Voices
-  useEffect(() => {
-    const loadVoices = () => {
-      setVoices(synth.getVoices());
-    };
-    loadVoices();
-    if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = loadVoices;
-    }
-  }, [synth]);
+  // Initialize WebSocket
 
   // Initialize WebSocket
   useEffect(() => {
@@ -117,177 +102,104 @@ export default function App() {
     }]);
   };
 
-  const handleBackendMessage = (data: any) => {
-    // Helper to update chat
-    const updateChat = (text: string) => {
-      setMessages((prev) => {
-        const lastMsg = prev[prev.length - 1];
-        if (lastMsg && lastMsg.type === 'ai' && lastMsg.text === text) {
-          return prev;
-        }
-        return [...prev, {
-          id: Date.now().toString(),
-          type: "ai",
-          text: text,
-          timestamp: new Date(),
-        }];
-      });
-    };
-
-    if (data.type === 'response') {
-      if (data.sender === 'user') {
-        // User message echoed back
-        setMessages((prev) => [...prev, {
-          id: Date.now().toString(),
-          type: "user",
-          text: data.content,
-          timestamp: new Date(),
-        }]);
-      } else {
-        // AI response
-        updateChat(data.content);
-        // Make robot speak
-        if (data.content && !data.content.startsWith('(')) {
-          robotSpeak(data.content);
-        }
+  const addAiMessage = (text: string) => {
+    setMessages((prev) => {
+      const lastMsg = prev[prev.length - 1];
+      if (lastMsg && lastMsg.type === 'ai' && lastMsg.text === text) {
+        return prev;
       }
-    } else if (data.type === 'voice_status') {
-      setIsListening(data.listening);
-      setRobotState(data.listening ? "listening" : "idle");
-    } else if (data.type === 'processing') {
-      setRobotState("processing");
-    } else if (data.type === 'error') {
-      robotSpeak("Error: " + data.message);
-      setRobotState("error");
-      setTimeout(() => setRobotState("idle"), 3000);
-    } else if (data.type === 'speech') {
-      // Legacy handler - keep for compatibility logic if needed
-      if (data.text && data.is_final) {
-        updateChat(data.text);
-      }
-    } else if (data.type === 'text') {
-      if (data.text) {
-        updateChat(data.text);
-      }
-    } else if (data.type === 'lipsync_start') {
-      setRobotState("speaking");
-    } else if (data.type === 'lipsync_stop') {
-      setRobotState("idle");
-    }
-  };
-
-  // Process the speech queue
-  const processSpeechQueue = () => {
-    if (speechQueue.current.length > 0) {
-      isTalking.current = true;
-      setRobotState("speaking");
-      const nextText = speechQueue.current.shift();
-      if (nextText) speakUtterance(nextText);
-    } else {
-      isTalking.current = false;
-      setRobotState("idle");
-      setCurrentMessage(""); // Clear message bubble when finished speaking all chunks
-      // Notify backend that speech has finished
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify({
-          type: 'speech_state',
-          status: 'finished'
-        }));
-      }
-    }
-  };
-
-  const speakUtterance = (text: string) => {
-    // Notify backend that speech has started (only for first chunk effectively, or keep confirming)
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({
-        type: 'speech_state',
-        status: 'started'
-      }));
-    }
-
-    // Cancel any ongoing speech
-    if (synth.speaking) {
-      synth.cancel();
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utteranceRef.current = utterance;
-
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
-    // Voice Selection (Daniel Priority)
-    if (voices.length > 0) {
-      let preferredVoice = voices.find(v => v.name.includes('Daniel'));
-      if (!preferredVoice) {
-        preferredVoice = voices.find(v => v.name.includes('UK English Male') || v.name.includes('Google UK English Male'));
-      }
-      if (!preferredVoice) {
-        preferredVoice = voices.find(v => v.lang === 'en-GB' && v.name.includes('Male'));
-      }
-      if (!preferredVoice) {
-        preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Microsoft'));
-      }
-
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-      }
-    }
-
-    utterance.onend = () => {
-      // Immediately process next chunk without going to idle
-      processSpeechQueue();
-    };
-
-    utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
-      processSpeechQueue();
-    };
-
-    setCurrentMessage(text);
-    synth.speak(utterance);
-  };
-
-  const robotSpeak = (text: string) => {
-    // Split long text into chunks to avoid browser timeout (approx 200 chars or by sentence)
-    // Regular expression to split by sentence terminators but keep them
-    const chunks = text.match(/[^.!?]+[.!?]+|\s*$/g)
-      ?.map(t => t.trim())
-      .filter(t => t.length > 0) || [text];
-
-    // Limit chunk size just in case there are very long sentences
-    const safeChunks: string[] = [];
-    chunks.forEach(chunk => {
-      if (chunk.length > 200) {
-        // Split by comma or simple length if absolutely necessary
-        const subChunks = chunk.match(/.{1,200}(?:\s|$)/g)?.map(t => t.trim()) || [chunk];
-        safeChunks.push(...subChunks);
-      } else {
-        safeChunks.push(chunk);
-      }
+      return [...prev, {
+        id: Date.now().toString(),
+        type: "ai",
+        text: text,
+        timestamp: new Date(),
+      }];
     });
+  };
 
-    // Add to queue
-    speechQueue.current.push(...safeChunks);
+  // Handle Backend Messages
+  const handleBackendMessage = (data: any) => {
+    console.log("Received backend message:", data);
 
-    // If not currently talking, start processing
-    if (!isTalking.current) {
-      processSpeechQueue();
+    switch (data.type) {
+      case 'response':
+        if (data.sender === 'user') {
+          // User message echoed back
+          setMessages((prev) => [...prev, {
+            id: Date.now().toString(),
+            type: "user",
+            text: data.content,
+            timestamp: new Date(),
+          }]);
+        }
+        // AI response handling moved to 'text' event for better sync
+        break;
+
+      case 'text':
+        // Display AI text immediately
+        if (data.text) {
+          addAiMessage(data.text);
+          setCurrentMessage(data.text);
+        }
+        break;
+
+      case 'lipsync_start':
+        console.log("[App] Received lipsync_start, setting state to speaking");
+        setRobotState("speaking");
+        break;
+
+      case 'lipsync_stop':
+        console.log("[App] Received lipsync_stop, setting state to idle");
+        setRobotState("idle");
+        setRobotEmotion("neutral");
+        // Optional: clear current message bubble after a delay?
+        // setCurrentMessage(""); 
+        break;
+
+      case 'voice_status':
+        setIsListening(data.listening);
+        setRobotState(data.listening ? "listening" : "idle");
+        break;
+
+      case 'processing':
+        setRobotState("processing");
+        break;
+
+      case 'error':
+        addSystemMessage("Error: " + data.message);
+        setRobotState("error");
+        setTimeout(() => setRobotState("idle"), 3000);
+        break;
+
+      default:
+        console.log("Unhandled message type:", data.type);
     }
   };
 
   const handleSendMessage = (text: string) => {
+    // Check for admiration keywords
+    const lowerText = text.toLowerCase();
+    if (
+      lowerText.includes('good work') ||
+      lowerText.includes('thank you') ||
+      lowerText.includes('great job') ||
+      lowerText.includes('well done') ||
+      lowerText.includes('nice work')
+    ) {
+      setRobotEmotion('shy');
+    } else {
+      setRobotEmotion('neutral');
+    }
+
     if (isConnected && socketRef.current) {
       setRobotState("processing");
       socketRef.current.send(JSON.stringify({
         type: 'command',
         content: text
       }));
-      // Optimistically add user message? No, wait for echo to confirm persistence/order
     }
   };
+
 
   const handleMicClick = () => {
     if (isConnected && socketRef.current) {
@@ -295,35 +207,6 @@ export default function App() {
         type: 'toggle_voice'
       }));
     }
-  };
-
-  const handleTalkClick = () => {
-    robotSpeak("Systems operational. Ready for commands.");
-  };
-
-  const handleDanceClick = () => {
-    setRobotState("dancing");
-    robotSpeak("Initiating dance protocol.");
-    setTimeout(() => {
-      setRobotState("idle");
-    }, 5000);
-  };
-
-  const handleResetClick = () => {
-    setRobotState("idle");
-    setCurrentMessage("");
-    setIsListening(false);
-    if (synth.speaking) synth.cancel();
-    speechQueue.current = [];
-    isTalking.current = false;
-    // Notify backend
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({
-        type: 'speech_state',
-        status: 'finished'
-      }));
-    }
-    addSystemMessage("Interface reset.");
   };
 
   return (
@@ -399,6 +282,7 @@ export default function App() {
             <Robot
               state={robotState}
               message={currentMessage}
+              emotion={robotEmotion}
             />
           </div>
 
@@ -420,69 +304,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Footer Controls */}
-        <div
-          className="h-16 px-6 flex items-center justify-center gap-4 border-t shrink-0"
-          style={{
-            backgroundColor: "rgba(10, 20, 50, 0.8)",
-            borderColor: "rgba(0, 229, 255, 0.3)",
-            boxShadow: "0 -4px 20px rgba(0, 229, 255, 0.2)",
-          }}
-        >
-          <ControlButton
-            icon={<Bot className="w-5 h-5" />}
-            label="Talk"
-            onClick={handleTalkClick}
-          />
-          <ControlButton
-            icon={<Music className="w-5 h-5" />}
-            label="Dance"
-            onClick={handleDanceClick}
-          />
-          <ControlButton
-            icon={<RotateCcw className="w-5 h-5" />}
-            label="Reset"
-            onClick={handleResetClick}
-          />
-        </div>
+        {/* Footer Controls: REMOVED */}
       </div>
     </div>
-  );
-}
-
-interface ControlButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}
-
-function ControlButton({
-  icon,
-  label,
-  onClick,
-}: ControlButtonProps) {
-  return (
-    <motion.button
-      onClick={onClick}
-      className="flex items-center gap-2 px-6 py-2 rounded-lg"
-      style={{
-        backgroundColor: "rgba(0, 50, 100, 0.4)",
-        border: "1px solid rgba(0, 229, 255, 0.6)",
-        color: "#00E5FF",
-        boxShadow: "0 0 15px rgba(0, 229, 255, 0.3)",
-      }}
-      whileHover={{
-        scale: 1.05,
-        boxShadow: "0 0 30px rgba(0, 229, 255, 0.6)",
-        backgroundColor: "rgba(0, 100, 200, 0.5)",
-      }}
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.2 }}
-    >
-      {icon}
-      <span className="text-sm font-medium uppercase tracking-wider">
-        {label}
-      </span>
-    </motion.button>
   );
 }

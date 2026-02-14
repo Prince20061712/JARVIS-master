@@ -762,6 +762,20 @@ class SystemUtilitiesManager:
         except:
             return "Could not clean temporary files"
 
+    def get_weather(self, city):
+        """Get weather for a specific city"""
+        try:
+            # Use wttr.in service
+            url = f"https://wttr.in/{urllib.parse.quote(city)}?format=%C+%t"
+            response = requests.get(url)
+            if response.status_code == 200:
+                weather_info = response.text.strip()
+                return f"The weather in {city} is {weather_info}."
+            else:
+                return f"Could not get weather for {city}."
+        except Exception as e:
+            return f"Error getting weather: {str(e)}"
+
 # ========== VOICE TYPING MANAGER ==========
 class VoiceTypingManager:
     """Manages voice typing and text input"""
@@ -1006,8 +1020,19 @@ class JarvisAI:
         self.is_jarvis_speaking = True
         
         def on_speech_start():
-            # Trigger lip sync on frontend
+            # Trigger text display AND lip sync on frontend simultaneously
             if self.audio.websocket_manager and self.loop:
+                # 1. Show text
+                print(f"[Backend] Broadcasting text: {text[:50]}...")
+                asyncio.run_coroutine_threadsafe(
+                    self.audio.websocket_manager.broadcast({
+                        "type": "text",
+                        "text": text
+                    }),
+                    self.loop
+                )
+                # 2. Start animation
+                print("[Backend] Broadcasting lipsync_start")
                 asyncio.run_coroutine_threadsafe(
                     self.audio.websocket_manager.broadcast({
                         "type": "lipsync_start"
@@ -1333,7 +1358,12 @@ class JarvisAI:
             return
         
         if "weather" in command_lower:
-            self.speak("I can check the weather. Please specify a city, for example: 'weather in London'")
+            city = command_lower.replace("weather in ", "").replace("weather for ", "").replace("weather ", "").strip()
+            if city and city != "weather":
+                weather_info = self.system_utils.get_weather(city)
+                self.speak(weather_info)
+            else:
+                self.speak("I can check the weather. Please specify a city, for example: 'weather in London'")
             return
         
         if "joke" in command_lower:
