@@ -47,7 +47,7 @@ export function Robot({ state, emotion = 'neutral' }: RobotProps) {
   }, [videoSrc, state, emotion]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full relative overflow-hidden bg-black">
+    <div className="flex flex-col items-center justify-center h-full w-full relative overflow-hidden bg-transparent rounded-[30px]">
       {/* Video Avatar */}
       <video
         ref={videoRef}

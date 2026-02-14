@@ -149,11 +149,17 @@
       "timestamp": "2026-02-14T18:44:32.530163",
       "user_id": "default",
       "user_input_preview": "tell me about prachi"
+    },
+    {
+      "memory_id": "eb40acee6b119654",
+      "timestamp": "2026-02-14T21:24:19.270205",
+      "user_id": "default",
+      "user_input_preview": "how was your day"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 25,
+      "total_conversations": 26,
       "conversation_history": [
         {
           "memory_id": "10dfafe3248c1778",
@@ -279,14 +285,19 @@
           "memory_id": "29107e347c329716",
           "timestamp": "2026-02-14T18:44:32.530182",
           "preview": "tell me about prachi"
+        },
+        {
+          "memory_id": "eb40acee6b119654",
+          "timestamp": "2026-02-14T21:24:19.270225",
+          "preview": "how was your day"
         }
       ],
       "preferred_topics": {
         "topic_tech": 2
       },
       "conversation_patterns": {},
-      "last_interaction": "2026-02-14T18:44:32.530179"
+      "last_interaction": "2026-02-14T21:24:19.270221"
     }
   },
-  "last_updated": "2026-02-14T18:45:49.831554"
+  "last_updated": "2026-02-14T21:26:08.459977"
 }

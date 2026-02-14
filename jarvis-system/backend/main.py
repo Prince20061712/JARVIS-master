@@ -1380,7 +1380,7 @@ class JarvisAI:
             self.is_running = False
             return
         
-        # ========== AI RESPONSE FOR OTHER QUERIES ==========
+        # =========== AI RESPONSE FOR OTHER QUERIES ===========
         await self.handle_ai_response(command_lower)
     
     async def handle_ai_response(self, query):
