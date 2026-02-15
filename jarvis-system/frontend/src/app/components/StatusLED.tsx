@@ -4,13 +4,20 @@ interface StatusLEDProps {
   color: string;
   active: boolean;
   label: string;
+  size?: "sm" | "md" | "lg";
 }
 
-export function StatusLED({ color, active, label }: StatusLEDProps) {
+export function StatusLED({ color, active, label, size = "md" }: StatusLEDProps) {
+  const sizeClasses = {
+    sm: "w-2 h-2",
+    md: "w-3 h-3",
+    lg: "w-4 h-4",
+  };
+
   return (
     <div className="flex items-center gap-2">
       <motion.div
-        className="relative w-3 h-3 rounded-full"
+        className={`relative rounded-full ${sizeClasses[size]}`}
         style={{
           backgroundColor: color,
           opacity: active ? 1 : 0.3,
