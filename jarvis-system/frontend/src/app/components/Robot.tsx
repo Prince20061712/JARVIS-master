@@ -29,8 +29,8 @@ export function Robot({ state, emotion = 'neutral' }: RobotProps) {
   // Determine which video to play based on state and emotion
   const getVideoSource = () => {
     if (state === 'dancing') return DancingBody;
-    if (emotion === 'shy') return ShyFace;
     if (state === 'speaking') return TalkingFace;
+    if (emotion === 'shy') return ShyFace;
     return NormalFace;
   };
 
@@ -41,6 +41,7 @@ export function Robot({ state, emotion = 'neutral' }: RobotProps) {
     console.log(`[Robot] State: ${state}, Emotion: ${emotion}, Video Src: ${videoSrc}`);
     if (videoRef.current) {
       console.log(`[Robot] Loading video: ${videoSrc}`);
+      videoRef.current.loop = true;
       videoRef.current.load();
       videoRef.current.play().catch(e => console.error("[Robot] Auto-play error:", e));
     }
