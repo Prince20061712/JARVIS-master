@@ -58,5 +58,5 @@ open http://localhost:5173 2>/dev/null || xdg-open http://localhost:5173 2>/dev/
 
 echo "⌨️  Press Ctrl+C to stop JARVIS."
 
-# Wait for all background processes
+# Wait for alll background processes
 wait
