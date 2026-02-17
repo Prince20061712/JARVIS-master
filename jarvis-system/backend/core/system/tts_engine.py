@@ -5,6 +5,7 @@ import pygame
 import os
 import tempfile
 import time
+import platform
 from threading import Thread
 
 class EdgeTTSEngine:
@@ -25,8 +26,14 @@ class EdgeTTSEngine:
             import logging
             logging.getLogger("pygame").setLevel(logging.CRITICAL)
             
-            pygame.mixer.init()
-            self.pygame_available = True
+            # Check OS - on macOS, prefer afplay over pygame for reliability
+            if platform.system() == 'Darwin':
+                # Force disable pygame to use afplay
+                self.pygame_available = False
+                # print("MacOS detected: Using system player (afplay) for reliability")
+            else:
+                pygame.mixer.init()
+                self.pygame_available = True
         except Exception as e:
             # print(f"Warning: Could not initialize pygame mixer: {e}")
             self.pygame_available = False

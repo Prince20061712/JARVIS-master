@@ -77,10 +77,17 @@
       "timestamp": "2026-02-14T18:21:48.517779",
       "priority": "info",
       "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Relaxation time: Want some calming music or sounds?",
+      "timestamp": "2026-02-17T20:22:51.680131",
+      "priority": "info",
+      "confidence": 0.7
     }
   ],
   "stats": {
-    "total_events_generated": 11,
+    "total_events_generated": 12,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -89,5 +96,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-02-16T21:01:34.190285"
+  "last_updated": "2026-02-17T20:23:04.627805"
 }

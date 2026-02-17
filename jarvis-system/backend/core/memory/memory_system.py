@@ -798,6 +798,64 @@ class EnhancedMemorySystem:
         forgotten_count = 0
         
         memory_ids_to_remove = []
+        
+    def get_detailed_user_summary(self, user_id: str = "default") -> str:
+        """Get a detailed summary of the user's profile, preferences, and facts"""
+        summary_parts = []
+        
+        # 1. User Profile Basics
+        if user_id in self.user_profiles:
+            profile = self.user_profiles[user_id]
+            summary_parts.append(f"User Profile Overview:")
+            summary_parts.append(f"- Interaction Count: {profile.get('total_conversations', 0)}")
+            
+            # Top Topics
+            topics = profile.get("preferred_topics", {})
+            if topics:
+                top_topics = sorted(topics.items(), key=lambda x: x[1], reverse=True)[:5]
+                topics_str = ", ".join([t for t, c in top_topics])
+                summary_parts.append(f"- Interests: {topics_str}")
+                
+            # Conversation Style
+            patterns = profile.get("conversation_patterns", {})
+            if patterns:
+                style = []
+                if patterns.get("asks_questions", 0) > 5: style.append("Curious/Inquisitive")
+                if patterns.get("detailed_queries", 0) > 3: style.append("Detailed/Technical")
+                if style:
+                    summary_parts.append(f"- Communication Style: {', '.join(style)}")
+
+        # 2. Key Preferences
+        preferences = []
+        for memory in self.memories.values():
+            if memory.memory_type == MemoryType.PREFERENCE and memory.metadata.get("user_id") == user_id:
+                 # Extract key/value if available in metadata, else use content
+                key = memory.metadata.get("preference_key")
+                value = memory.metadata.get("preference_value")
+                if key and value:
+                    preferences.append(f"{key}: {value}")
+                else:
+                    preferences.append(memory.content.replace("User preference: ", ""))
+        
+        if preferences:
+            summary_parts.append("\nExplicit Preferences:")
+            for pref in preferences:
+                summary_parts.append(f"- {pref}")
+
+        # 3. Known Facts
+        facts = []
+        for memory in self.memories.values():
+            if memory.memory_type == MemoryType.FACT and (not memory.metadata.get("user_id") or memory.metadata.get("user_id") == user_id):
+                 # Prioritize facts about the user ("My name is...", "I live in...")
+                 if "i " in memory.content.lower() or "my " in memory.content.lower() or "user" in memory.tags:
+                    facts.append(memory.content)
+        
+        if facts:
+            summary_parts.append("\nKnown Facts:")
+            for fact in facts[-5:]: # Limit to recent 5 relevant facts
+                summary_parts.append(f"- {fact}")
+
+        return "\n".join(summary_parts) if summary_parts else "No detailed user summary available."
         for memory_id, memory in self.memories.items():
             memory_time = datetime.datetime.fromisoformat(memory.timestamp)
             if memory_time < cutoff and memory.priority.value < keep_priority.value:

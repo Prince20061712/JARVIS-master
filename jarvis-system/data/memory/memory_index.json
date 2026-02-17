@@ -155,11 +155,53 @@
       "timestamp": "2026-02-14T21:24:19.270205",
       "user_id": "default",
       "user_input_preview": "how was your day"
+    },
+    {
+      "memory_id": "f97c1e199fd90f26",
+      "timestamp": "2026-02-16T22:57:17.228043",
+      "user_id": "default",
+      "user_input_preview": "who is the current president of usa"
+    },
+    {
+      "memory_id": "6d0f67e3e96959c3",
+      "timestamp": "2026-02-16T22:57:32.979913",
+      "user_id": "default",
+      "user_input_preview": "president of india"
+    },
+    {
+      "memory_id": "ddf144dc50e31296",
+      "timestamp": "2026-02-16T22:58:08.938093",
+      "user_id": "default",
+      "user_input_preview": "han"
+    },
+    {
+      "memory_id": "a73f56df9ec4e4cf",
+      "timestamp": "2026-02-16T22:59:01.808499",
+      "user_id": "default",
+      "user_input_preview": "who is draupadi"
+    },
+    {
+      "memory_id": "94e7e4089a2b06a8",
+      "timestamp": "2026-02-16T23:13:11.814548",
+      "user_id": "default",
+      "user_input_preview": "tell me about"
+    },
+    {
+      "memory_id": "e053f4753ffc2812",
+      "timestamp": "2026-02-17T20:22:54.642909",
+      "user_id": "default",
+      "user_input_preview": "mere ko dudh mein"
+    },
+    {
+      "memory_id": "34b606df383be78a",
+      "timestamp": "2026-02-17T20:23:03.251979",
+      "user_id": "default",
+      "user_input_preview": "i cannot respond to this prompt"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 26,
+      "total_conversations": 33,
       "conversation_history": [
         {
           "memory_id": "10dfafe3248c1778",
@@ -290,14 +332,49 @@
           "memory_id": "eb40acee6b119654",
           "timestamp": "2026-02-14T21:24:19.270225",
           "preview": "how was your day"
+        },
+        {
+          "memory_id": "f97c1e199fd90f26",
+          "timestamp": "2026-02-16T22:57:17.228061",
+          "preview": "who is the current president o"
+        },
+        {
+          "memory_id": "6d0f67e3e96959c3",
+          "timestamp": "2026-02-16T22:57:32.979929",
+          "preview": "president of india"
+        },
+        {
+          "memory_id": "ddf144dc50e31296",
+          "timestamp": "2026-02-16T22:58:08.938113",
+          "preview": "han"
+        },
+        {
+          "memory_id": "a73f56df9ec4e4cf",
+          "timestamp": "2026-02-16T22:59:01.808514",
+          "preview": "who is draupadi"
+        },
+        {
+          "memory_id": "94e7e4089a2b06a8",
+          "timestamp": "2026-02-16T23:13:11.814568",
+          "preview": "tell me about"
+        },
+        {
+          "memory_id": "e053f4753ffc2812",
+          "timestamp": "2026-02-17T20:22:54.642920",
+          "preview": "mere ko dudh mein"
+        },
+        {
+          "memory_id": "34b606df383be78a",
+          "timestamp": "2026-02-17T20:23:03.251992",
+          "preview": "i cannot respond to this promp"
         }
       ],
       "preferred_topics": {
         "topic_tech": 2
       },
       "conversation_patterns": {},
-      "last_interaction": "2026-02-14T21:24:19.270221"
+      "last_interaction": "2026-02-17T20:23:03.251989"
     }
   },
-  "last_updated": "2026-02-16T21:01:44.997846"
+  "last_updated": "2026-02-17T20:23:08.487508"
 }

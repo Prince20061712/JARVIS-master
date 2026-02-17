@@ -333,7 +333,14 @@ class OllamaEnhancedManager:
         
         # Add context information
         if context:
-            system_prompt += f"\n\nCurrent Context:\n{json.dumps(sanitize_for_json(context), indent=2)}"
+            if "user_profile" in context:
+                 system_prompt += f"\n\nUser Profile & Preferences:\n{context['user_profile']}\n\nIMPORTANT: Use the above profile to tailor your response content, complexity, and tone to the user."
+                 # Remove user_profile from generic context dump to avoid duplication
+                 context_copy = context.copy()
+                 del context_copy['user_profile']
+                 system_prompt += f"\n\nCurrent Context:\n{json.dumps(sanitize_for_json(context_copy), indent=2)}"
+            else:
+                 system_prompt += f"\n\nCurrent Context:\n{json.dumps(sanitize_for_json(context), indent=2)}"
         
         # Add conversation history
         if self.conversation_history:
@@ -1112,8 +1119,15 @@ class FullFledgedAIBrain:
         elif hasattr(emotion, 'suggested_tone'):
             suggested_tone = str(emotion.suggested_tone)
 
+        # Get user summary from memory
+        try:
+            user_profile_summary = self.memory.get_detailed_user_summary(self.user_name)
+        except Exception:
+            user_profile_summary = "User profile not available."
+
         context = {
             "user": self.user_name,
+            "user_profile": user_profile_summary,
             "timestamp": datetime.datetime.now().isoformat(),
             "emotional_state": emotion,
             "external_knowledge": layer2_result.get("knowledge_result"),
