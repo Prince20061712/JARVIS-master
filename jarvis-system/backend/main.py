@@ -85,7 +85,7 @@ JARVIS_NAME = "Jarvis"
 CONTINUOUS_MODE = True
 WAKE_WORD = "jarvis"
 ENABLE_LOCAL_AI = True
-OLLAMA_MODEL = "llama3.2:1b"
+OLLAMA_MODEL = "llama3.1"
 ENABLE_TERMINAL_VOICE = False # Set to False to prevent backend from speaking (prevents feedback loop)
 
 # ========== FASTAPI & WEBSOCKET SETUP ==========
@@ -397,26 +397,57 @@ class ApplicationManager:
         }
     
     def open_application(self, app_name):
-        """Open a macOS application"""
+        """Open a macOS application with web fallback"""
         app_name_lower = app_name.lower()
         
+        # Web fallbacks for common apps if not installed
+        web_fallbacks = {
+            "spotify": "https://open.spotify.com",
+            "whatsapp": "https://web.whatsapp.com",
+            "discord": "https://discord.com/app",
+            "slack": "https://app.slack.com/client",
+            "telegram": "https://web.telegram.org",
+            "instagram": "https://www.instagram.com",
+            "twitter": "https://twitter.com",
+            "x": "https://twitter.com",
+            "gmail": "https://mail.google.com",
+            "outlook": "https://outlook.office.com/mail"
+        }
+        
+        target_app = None
         if app_name_lower in self.applications:
-            app_command = self.applications[app_name_lower]
-            
+            target_app = self.applications[app_name_lower]
+        else:
+            for key, app_command in self.applications.items():
+                if key in app_name_lower:
+                    target_app = app_command
+                    break
+        
+        if target_app:
             try:
-                os.system(f'open -a "{app_command}"')
-                return f"{app_command} opened successfully"
-            except:
-                return f"Could not open {app_command}"
+                # Use subprocess to capture error instead of os.system printing to stderr
+                result = subprocess.run(
+                    ['open', '-a', target_app], 
+                    capture_output=True, 
+                    text=True
+                )
+                
+                if result.returncode == 0:
+                    return f"{target_app} opened successfully"
+                else:
+                    # App launch failed, check fallback
+                    if app_name_lower in web_fallbacks:
+                        webbrowser.open(web_fallbacks[app_name_lower])
+                        return f"Could not find {target_app} app. Opening web version."
+                    return f"Could not open {target_app}. It might not be installed."
+            except Exception as e:
+                return f"Error opening {target_app}: {e}"
         
-        for key, app_command in self.applications.items():
-            if key in app_name_lower:
-                try:
-                    os.system(f'open -a "{app_command}"')
-                    return f"{app_command} opened successfully"
-                except:
-                    return f"Could not open {app_command}"
-        
+        # Exact match not found, try generic web fallback
+        if app_name_lower in web_fallbacks:
+             webbrowser.open(web_fallbacks[app_name_lower])
+             return f"App not configured, but opening {app_name} web version."
+
         return "Application not found"
     
     def close_application(self, app_name):
@@ -765,16 +796,24 @@ class SystemUtilitiesManager:
     def get_weather(self, city):
         """Get weather for a specific city"""
         try:
-            # Use wttr.in service
+            # Use wttr.in service with robust headers and timeout
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
             url = f"https://wttr.in/{urllib.parse.quote(city)}?format=%C+%t"
-            response = requests.get(url)
+            response = requests.get(url, headers=headers, timeout=10)
+            
             if response.status_code == 200:
                 weather_info = response.text.strip()
+                if not weather_info:
+                    return f"I couldn't retrieve the weather data for {city} right now."
                 return f"The weather in {city} is {weather_info}."
             else:
-                return f"Could not get weather for {city}."
+                return f"I couldn't get the weather for {city}. Service returned status {response.status_code}."
+        except requests.exceptions.Timeout:
+            return f"The weather service timed out for {city}. Please try again."
         except Exception as e:
-            return f"Error getting weather: {str(e)}"
+            return f"I encountered an error getting the weather: {str(e)}"
 
 # ========== VOICE TYPING MANAGER ==========
 class VoiceTypingManager:

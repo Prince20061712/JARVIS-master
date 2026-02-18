@@ -101,7 +101,7 @@ def sanitize_for_json(obj):
 class OllamaEnhancedManager:
     """Enhanced Ollama manager with multiple models, streaming, and better management"""
     
-    def __init__(self, primary_model="llama3.2:1b", fallback_model="mistral:7b"):
+    def __init__(self, primary_model="llama3.1", fallback_model="mistral"):
         self.primary_model = primary_model
         self.fallback_model = fallback_model
         self.base_url = "http://localhost:11434"
@@ -637,8 +637,8 @@ class FullFledgedAIBrain:
         # 10. Ollama Manager (Local LLM)
         print("\n🤖 Initializing Local AI (Ollama)...")
         self.ollama = OllamaEnhancedManager(
-            primary_model="llama3.2:1b",
-            fallback_model="mistral:7b"
+            primary_model="llama3.1",
+            fallback_model="mistral"
         )
         
         # Conversation management
