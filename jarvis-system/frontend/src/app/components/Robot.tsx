@@ -1,8 +1,5 @@
+import Spline from '@splinetool/react-spline';
 import { useRef, useEffect } from 'react';
-import NormalFace from './avatar/Normal_face.mp4';
-import TalkingFace from './avatar/Talking_face.mp4';
-import ShyFace from './avatar/Shy_face.mp4';
-import DancingBody from './avatar/Dancing_body.mp4';
 
 export type RobotState =
   | "idle"
@@ -24,45 +21,105 @@ export interface RobotProps {
 }
 
 export function Robot({ state, emotion = 'neutral' }: RobotProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const splineRef = useRef<any>(null);
 
-  // Determine which video to play based on state and emotion
-  const getVideoSource = () => {
-    if (state === 'dancing') return DancingBody;
-    if (state === 'speaking') return TalkingFace;
-    if (emotion === 'shy') return ShyFace;
-    return NormalFace;
-  };
+  function onLoad(splineApp: any) {
+    splineRef.current = splineApp;
+    console.log("Spline scene loaded");
 
-  const videoSrc = getVideoSource();
-
-  // Handle video source change
-  useEffect(() => {
-    console.log(`[Robot] State: ${state}, Emotion: ${emotion}, Video Src: ${videoSrc}`);
-    if (videoRef.current) {
-      console.log(`[Robot] Loading video: ${videoSrc}`);
-      videoRef.current.loop = true;
-      videoRef.current.load();
-      videoRef.current.play().catch(e => console.error("[Robot] Auto-play error:", e));
+    // Remove background color
+    if (splineApp.setBackgroundColor) {
+      splineApp.setBackgroundColor('transparent');
     }
-  }, [videoSrc, state, emotion]);
+
+    // Set zoom to ensure full robot is visible - adjusted based on feedback
+    if (splineApp.setZoom) {
+      splineApp.setZoom(0.9); // Increased zoom for larger appearance
+    }
+
+    // Aggressively remove watermark from DOM
+    setTimeout(() => {
+      const watermark = document.querySelector('a[href^="https://spline.design"]');
+      if (watermark) {
+        (watermark as HTMLElement).style.display = 'none';
+      }
+
+      // Also check shadow roots if possible
+      const shadows = document.querySelectorAll('*');
+      shadows.forEach(el => {
+        if (el.shadowRoot) {
+          const wm = el.shadowRoot.querySelector('a[href^="https://spline.design"]');
+          if (wm) (wm as HTMLElement).style.display = 'none';
+        }
+      });
+
+      // Try by ID as well
+      const wmId = document.getElementById('spline-watermark');
+      if (wmId) wmId.style.display = 'none';
+    }, 1000);
+
+    // Attempt to find and hide text/logo objects
+    try {
+      // Common specific names
+      const objectsToHide = ['Text', 'Neobot', 'NEOBOT', 'Title', 'Label', 'Watermark', 'Logo', 'Brand', 'Background', 'Scene'];
+
+      objectsToHide.forEach(name => {
+        const obj = splineApp.findObjectByName(name);
+        if (obj) {
+          console.log(`Hiding Spline object: ${name}`);
+          obj.visible = false;
+        }
+      });
+
+      // Also iterate all objects to catch others case-insensitively
+      if (typeof splineApp.getAllObjects === 'function') {
+        const allObjects = splineApp.getAllObjects();
+        if (allObjects && Array.isArray(allObjects)) {
+          allObjects.forEach((obj: any) => {
+            const name = obj.name ? obj.name.toLowerCase() : '';
+            const type = obj.type;
+
+            if (name.includes('text') || name.includes('neobot') || name.includes('brand') || name.includes('logo') || name.includes('watermark')) {
+              console.log(`Hiding object based on name: ${obj.name}`);
+              obj.visible = false;
+            }
+
+            if (type === 'Text') {
+              console.log(`Hiding object based on type: ${obj.name}`);
+              obj.visible = false;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Error iterating Spline objects:", e);
+    }
+
+  }
+
+  // Trigger Spline events based on state
+  useEffect(() => {
+    if (splineRef.current) {
+      try {
+        // Map states to Spline events/variables if available in the scene
+        // For now, we just load the scene which looks cool by default
+        console.log(`[Robot] State changed to: ${state}`);
+
+        // Example: If the scene has variables, we could set them:
+        // splineRef.current.setVariable('state', state);
+      } catch (e) {
+        console.error("Error updating Spline state:", e);
+      }
+    }
+  }, [state, emotion]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full relative overflow-hidden bg-transparent rounded-[30px]">
-      {/* Video Avatar */}
-      <video
-        ref={videoRef}
-        className="w-full h-full object-cover"
-        autoPlay
-        loop
-        muted
-        playsInline
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
-
-      {/* Overlay Effects (Optional: keep existing overlays if desired) */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+    <div className="w-full h-full relative overflow-hidden rounded-[30px]">
+      <Spline
+        scene="https://prod.spline.design/Ge8D8rQPojoko8eQ/scene.splinecode"
+        onLoad={onLoad}
+        className="w-full h-full"
+      />
 
       {/* Processing Indicator Overlay */}
       {state === 'processing' && (

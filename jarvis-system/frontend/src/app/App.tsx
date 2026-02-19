@@ -201,128 +201,137 @@ export default function App() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Dynamic Live Wallpaper */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-black to-purple-900 animate-gradient-xy">
-          {/* Animated Particles */}
-          <div className="absolute inset-0">
-            {[...Array(50)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full bg-blue-500/20 animate-float"
-                style={{
-                  width: Math.random() * 4 + 2 + 'px',
-                  height: Math.random() * 4 + 2 + 'px',
-                  left: Math.random() * 100 + '%',
-                  top: Math.random() * 100 + '%',
-                  animationDelay: Math.random() * 5 + 's',
-                  animationDuration: Math.random() * 10 + 10 + 's',
-                }}
-              />
-            ))}
-          </div>
+      {/* Dynamic Live Wallpaper */}
+      <div className="fixed inset-0 z-0 bg-[#050505]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(25,25,25,1)_0%,rgba(5,5,5,1)_100%)] animate-pulse-slow">
+          {/* Glossy overlay */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-20 transform rotate-12 scale-150 animate-gloss-slide"></div>
+        </div>
 
-          {/* Grid Overlay */}
-          <div className="absolute inset-0" style={{
-            backgroundImage: `linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px',
-            transform: 'perspective(500px) rotateX(60deg)',
-            transformOrigin: 'top',
-            opacity: 0.3,
-          }} />
+        {/* Animated Particles - Subtle Dust */}
+        <div className="absolute inset-0">
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full bg-white/10 animate-float"
+              style={{
+                width: Math.random() * 3 + 1 + 'px',
+                height: Math.random() * 3 + 1 + 'px',
+                left: Math.random() * 100 + '%',
+                top: Math.random() * 100 + '%',
+                animationDelay: Math.random() * 5 + 's',
+                animationDuration: Math.random() * 20 + 20 + 's',
+                opacity: Math.random() * 0.5 + 0.1,
+              }}
+            />
+          ))}
+        </div>
 
-          {/* Animated Light Beams */}
-          <div className="absolute inset-0 overflow-hidden">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-full h-full animate-scan"
-                style={{
-                  background: `linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent)`,
-                  left: `${i * 20}%`,
-                  animationDelay: `${i * 2}s`,
-                }}
-              />
-            ))}
-          </div>
+        {/* Grid Overlay - Faint Tech Grid */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+          transform: 'perspective(500px) rotateX(60deg)',
+          transformOrigin: 'top',
+          opacity: 0.2,
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%)'
+        }} />
+
+        {/* Animated Light Beams - Subtle Scan lines */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-full h-full animate-scan"
+              style={{
+                background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.02), transparent)`,
+                left: `${i * 30}%`,
+                animationDelay: `${i * 4}s`,
+                animationDuration: '15s'
+              }}
+            />
+          ))}
         </div>
       </div>
 
       {/* Floating Robot Interface */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-8 pointer-events-none">
-        <div className="relative pointer-events-auto">
-          {/* Robot Container - Floating with minimal background */}
-          <div className="relative backdrop-blur-sm rounded-[30px] p-8">
-            <div className="relative">
-              <Robot
-                state={robotState}
-                message={currentMessage}
-                emotion={robotEmotion}
-              />
+      {/* Floating Robot Interface - Positioned at bottom */}
+      <div className="absolute bottom-[-50px] left-1/2 transform -translate-x-1/2 w-[500px] h-[500px] md:w-[900px] md:h-[900px] flex items-end justify-center pointer-events-auto">
+        <Robot
+          state={robotState}
+          message={currentMessage}
+          emotion={robotEmotion}
+        />
 
-              {/* Status LEDs overlay */}
-              <div className="absolute top-4 right-4 flex gap-3">
-                <StatusLED
-                  color="#00E5FF"
-                  active={isConnected}
-                  label=""
-                  size="sm"
-                />
-                <StatusLED
-                  color="#00FF00"
-                  active={robotState === "processing"}
-                  label=""
-                  size="sm"
-                />
-                <StatusLED
-                  color="#FF4444"
-                  active={robotState === "error"}
-                  label=""
-                  size="sm"
-                />
-              </div>
-            </div>
-          </div>
+        {/* Status LEDs overlay */}
+        <div className="absolute top-4 right-4 flex gap-3">
+          <StatusLED
+            color="#00E5FF"
+            active={isConnected}
+            label=""
+            size="sm"
+          />
+          <StatusLED
+            color="#00FF00"
+            active={robotState === "processing"}
+            label=""
+            size="sm"
+          />
+          <StatusLED
+            color="#FF4444"
+            active={robotState === "error"}
+            label=""
+            size="sm"
+          />
         </div>
+      </div>
 
-        {/* Floating Chat Interface - Positioned at bottom right */}
-        <div className="fixed bottom-8 right-8 z-20 w-[400px] pointer-events-auto">
-          <div className="rounded-2xl overflow-hidden">
-            <ChatInterface
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              onMicClick={handleMicClick}
-              isListening={isListening}
-            />
-          </div>
+      {/* Floating Chat Interface - Positioned at bottom right */}
+      <div className="fixed bottom-8 right-8 z-20 w-[400px] pointer-events-auto">
+        <div className="rounded-2xl overflow-hidden">
+          <ChatInterface
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onMicClick={handleMicClick}
+            isListening={isListening}
+          />
         </div>
+      </div>
 
-        {/* Optional: Floating Status Bar at top */}
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="backdrop-blur-md px-6 py-2 rounded-full border border-blue-500/30 bg-black/20">
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-blue-400 font-light">J.A.R.V.I.S</span>
-              <span className="text-blue-300/50">|</span>
-              <span className={`text-xs ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-                {isConnected ? '● ONLINE' : '○ OFFLINE'}
-              </span>
-            </div>
+      {/* Optional: Floating Status Bar at top */}
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="backdrop-blur-md px-6 py-2 rounded-full border border-blue-500/30 bg-black/20">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-blue-400 font-light">J.A.R.V.I.S</span>
+            <span className="text-blue-300/50">|</span>
+            <span className={`text-xs ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+              {isConnected ? '● ONLINE' : '○ OFFLINE'}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Custom CSS Animations */}
       <style>{`
-        @keyframes gradient-xy {
-          0%, 100% { background-position: 0% 0%; }
-          25% { background-position: 100% 0%; }
-          50% { background-position: 100% 100%; }
-          75% { background-position: 0% 100%; }
+        @keyframes gloss-slide {
+          0% { background-position: 0% 50%; opacity: 0.1; }
+          50% { background-position: 100% 50%; opacity: 0.2; }
+          100% { background-position: 0% 50%; opacity: 0.1; }
         }
         
-        .animate-gradient-xy {
+        .animate-gloss-slide {
           background-size: 200% 200%;
-          animation: gradient-xy 15s ease infinite;
+          animation: gloss-slide 10s ease-in-out infinite;
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 1; }
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 8s ease-in-out infinite;
         }
         
         @keyframes float {
@@ -333,16 +342,18 @@ export default function App() {
         }
         
         .animate-float {
-          animation: float 15s ease-in-out infinite;
+          animation: float 20s ease-in-out infinite;
         }
         
         @keyframes scan {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(400%); }
+          0% { transform: translateX(-100%) rotate(0deg); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateX(200%) rotate(0deg); opacity: 0; }
         }
         
         .animate-scan {
-          animation: scan 8s linear infinite;
+          animation: scan 15s linear infinite;
         }
       `}</style>
     </div>

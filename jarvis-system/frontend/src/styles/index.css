@@ -1,3 +1,21 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* Hide Spline Watermark */
+/* Hide Spline Watermark - Aggressive */
+#spline-watermark,
+.spline-watermark,
+a[href*="spline.design"],
+a[href*="spline.com"],
+[class*="spline-watermark"],
+[id*="spline-watermark"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
