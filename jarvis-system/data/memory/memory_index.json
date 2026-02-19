@@ -197,11 +197,173 @@
       "timestamp": "2026-02-17T20:23:03.251979",
       "user_id": "default",
       "user_input_preview": "i cannot respond to this prompt"
+    },
+    {
+      "memory_id": "5bcbdd18fd6fe47a",
+      "timestamp": "2026-02-19T23:28:02.842890",
+      "user_id": "default",
+      "user_input_preview": "dusron kya hai budhwar"
+    },
+    {
+      "memory_id": "5d20f1b73300ded1",
+      "timestamp": "2026-02-19T23:28:20.759307",
+      "user_id": "default",
+      "user_input_preview": "mere liye chinese ya nahin daudne per hai"
+    },
+    {
+      "memory_id": "6e67e245a7ddf6a8",
+      "timestamp": "2026-02-19T23:28:38.985220",
+      "user_id": "default",
+      "user_input_preview": "11:30 bolegi tum nikaalo"
+    },
+    {
+      "memory_id": "6df69c16fa2d1a7e",
+      "timestamp": "2026-02-19T23:29:31.910893",
+      "user_id": "default",
+      "user_input_preview": "blue mein kya fark hai explain nahin kar sakte ho "
+    },
+    {
+      "memory_id": "0c21185a394ea236",
+      "timestamp": "2026-02-19T23:31:23.019812",
+      "user_id": "default",
+      "user_input_preview": "emergency mein hospitalize karen"
+    },
+    {
+      "memory_id": "9442c70ce666c2e5",
+      "timestamp": "2026-02-19T23:31:57.616740",
+      "user_id": "default",
+      "user_input_preview": "vah acche tarike se kar paye aur doctor ki bhi bat"
+    },
+    {
+      "memory_id": "57d3a065d942ae5e",
+      "timestamp": "2026-02-19T23:32:54.895508",
+      "user_id": "default",
+      "user_input_preview": "clotting hota hai vah remove kiya gaya hai aur vah"
+    },
+    {
+      "memory_id": "bb2994a3656d8ffc",
+      "timestamp": "2026-02-19T23:33:30.636902",
+      "user_id": "default",
+      "user_input_preview": "salim khan ka vah agar hamen mile"
+    },
+    {
+      "memory_id": "4b788ba81e0c7b3e",
+      "timestamp": "2026-02-19T23:36:46.299379",
+      "user_id": "default",
+      "user_input_preview": "bhivandi mein congress party kya hai single langua"
+    },
+    {
+      "memory_id": "1cb99cdea074bd7b",
+      "timestamp": "2026-02-19T23:40:10.400439",
+      "user_id": "default",
+      "user_input_preview": "baba le liya apna roti"
+    },
+    {
+      "memory_id": "0d985b208eab8ca8",
+      "timestamp": "2026-02-19T23:40:48.614072",
+      "user_id": "default",
+      "user_input_preview": "main bimar ho gaya"
+    },
+    {
+      "memory_id": "db3477c4f6d04318",
+      "timestamp": "2026-02-19T23:41:54.630361",
+      "user_id": "default",
+      "user_input_preview": "isase pahle vah vahan se chala gaya tha tab"
+    },
+    {
+      "memory_id": "84a7f77f12c51868",
+      "timestamp": "2026-02-19T23:46:16.715388",
+      "user_id": "default",
+      "user_input_preview": "main tujhko jaan se maar dunga shant ho kya tum ai"
+    },
+    {
+      "memory_id": "6805e0c6dc6c458c",
+      "timestamp": "2026-02-20T00:49:38.939357",
+      "user_id": "default",
+      "user_input_preview": "what do uh like"
+    },
+    {
+      "memory_id": "3b11f143bb24ec09",
+      "timestamp": "2026-02-20T00:50:32.306220",
+      "user_id": "default",
+      "user_input_preview": "who is narendra modi"
+    },
+    {
+      "memory_id": "62c7dde287ce6c32",
+      "timestamp": "2026-02-20T00:51:25.473578",
+      "user_id": "default",
+      "user_input_preview": "safari"
+    },
+    {
+      "memory_id": "f666b49794c814af",
+      "timestamp": "2026-02-20T00:51:59.308005",
+      "user_id": "default",
+      "user_input_preview": "i understand"
+    },
+    {
+      "memory_id": "f96a39cea24d8019",
+      "timestamp": "2026-02-20T00:52:59.084813",
+      "user_id": "default",
+      "user_input_preview": "gaon"
+    },
+    {
+      "memory_id": "0dd118bb64cbbe8e",
+      "timestamp": "2026-02-20T00:53:29.102523",
+      "user_id": "default",
+      "user_input_preview": "internet"
+    },
+    {
+      "memory_id": "3fc678d1e061c228",
+      "timestamp": "2026-02-20T00:53:59.118905",
+      "user_id": "default",
+      "user_input_preview": "7"
+    },
+    {
+      "memory_id": "4a61e2720d6048b0",
+      "timestamp": "2026-02-20T01:01:02.513929",
+      "user_id": "default",
+      "user_input_preview": "who is narendra modi"
+    },
+    {
+      "memory_id": "e004cf01b28d6c15",
+      "timestamp": "2026-02-20T01:01:36.472623",
+      "user_id": "default",
+      "user_input_preview": "that make sen"
+    },
+    {
+      "memory_id": "ba08c863417d9a66",
+      "timestamp": "2026-02-20T01:02:06.491431",
+      "user_id": "default",
+      "user_input_preview": "aur tumne yah dekha hai"
+    },
+    {
+      "memory_id": "df2d61def0578fc2",
+      "timestamp": "2026-02-20T01:17:06.165710",
+      "user_id": "default",
+      "user_input_preview": "who is yogi adityanath"
+    },
+    {
+      "memory_id": "a1bfebccbd7b9177",
+      "timestamp": "2026-02-20T01:17:59.496546",
+      "user_id": "default",
+      "user_input_preview": "can you provide more data about"
+    },
+    {
+      "memory_id": "e2cfe7e04b847842",
+      "timestamp": "2026-02-20T01:19:00.917801",
+      "user_id": "default",
+      "user_input_preview": "aadesh diya hai ki imran khan ko unke bacchon se m"
+    },
+    {
+      "memory_id": "ee901f3c6ba7b3fe",
+      "timestamp": "2026-02-20T01:19:36.307375",
+      "user_id": "default",
+      "user_input_preview": "i cannot fulfill your request"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 33,
+      "total_conversations": 60,
       "conversation_history": [
         {
           "memory_id": "10dfafe3248c1778",
@@ -367,14 +529,149 @@
           "memory_id": "34b606df383be78a",
           "timestamp": "2026-02-17T20:23:03.251992",
           "preview": "i cannot respond to this promp"
+        },
+        {
+          "memory_id": "5bcbdd18fd6fe47a",
+          "timestamp": "2026-02-19T23:28:02.842936",
+          "preview": "dusron kya hai budhwar"
+        },
+        {
+          "memory_id": "5d20f1b73300ded1",
+          "timestamp": "2026-02-19T23:28:20.759324",
+          "preview": "mere liye chinese ya nahin dau"
+        },
+        {
+          "memory_id": "6e67e245a7ddf6a8",
+          "timestamp": "2026-02-19T23:28:38.985244",
+          "preview": "11:30 bolegi tum nikaalo"
+        },
+        {
+          "memory_id": "6df69c16fa2d1a7e",
+          "timestamp": "2026-02-19T23:29:31.910945",
+          "preview": "blue mein kya fark hai explain"
+        },
+        {
+          "memory_id": "0c21185a394ea236",
+          "timestamp": "2026-02-19T23:31:23.019852",
+          "preview": "emergency mein hospitalize kar"
+        },
+        {
+          "memory_id": "9442c70ce666c2e5",
+          "timestamp": "2026-02-19T23:31:57.616764",
+          "preview": "vah acche tarike se kar paye a"
+        },
+        {
+          "memory_id": "57d3a065d942ae5e",
+          "timestamp": "2026-02-19T23:32:54.895542",
+          "preview": "clotting hota hai vah remove k"
+        },
+        {
+          "memory_id": "bb2994a3656d8ffc",
+          "timestamp": "2026-02-19T23:33:30.636920",
+          "preview": "salim khan ka vah agar hamen m"
+        },
+        {
+          "memory_id": "4b788ba81e0c7b3e",
+          "timestamp": "2026-02-19T23:36:46.299405",
+          "preview": "bhivandi mein congress party k"
+        },
+        {
+          "memory_id": "1cb99cdea074bd7b",
+          "timestamp": "2026-02-19T23:40:10.400482",
+          "preview": "baba le liya apna roti"
+        },
+        {
+          "memory_id": "0d985b208eab8ca8",
+          "timestamp": "2026-02-19T23:40:48.614108",
+          "preview": "main bimar ho gaya"
+        },
+        {
+          "memory_id": "db3477c4f6d04318",
+          "timestamp": "2026-02-19T23:41:54.630402",
+          "preview": "isase pahle vah vahan se chala"
+        },
+        {
+          "memory_id": "84a7f77f12c51868",
+          "timestamp": "2026-02-19T23:46:16.715412",
+          "preview": "main tujhko jaan se maar dunga"
+        },
+        {
+          "memory_id": "6805e0c6dc6c458c",
+          "timestamp": "2026-02-20T00:49:38.939410",
+          "preview": "what do uh like"
+        },
+        {
+          "memory_id": "3b11f143bb24ec09",
+          "timestamp": "2026-02-20T00:50:32.306256",
+          "preview": "who is narendra modi"
+        },
+        {
+          "memory_id": "62c7dde287ce6c32",
+          "timestamp": "2026-02-20T00:51:25.473606",
+          "preview": "safari"
+        },
+        {
+          "memory_id": "f666b49794c814af",
+          "timestamp": "2026-02-20T00:51:59.308019",
+          "preview": "i understand"
+        },
+        {
+          "memory_id": "f96a39cea24d8019",
+          "timestamp": "2026-02-20T00:52:59.084852",
+          "preview": "gaon"
+        },
+        {
+          "memory_id": "0dd118bb64cbbe8e",
+          "timestamp": "2026-02-20T00:53:29.102543",
+          "preview": "internet"
+        },
+        {
+          "memory_id": "3fc678d1e061c228",
+          "timestamp": "2026-02-20T00:53:59.118929",
+          "preview": "7"
+        },
+        {
+          "memory_id": "4a61e2720d6048b0",
+          "timestamp": "2026-02-20T01:01:02.513987",
+          "preview": "who is narendra modi"
+        },
+        {
+          "memory_id": "e004cf01b28d6c15",
+          "timestamp": "2026-02-20T01:01:36.472640",
+          "preview": "that make sen"
+        },
+        {
+          "memory_id": "ba08c863417d9a66",
+          "timestamp": "2026-02-20T01:02:06.491441",
+          "preview": "aur tumne yah dekha hai"
+        },
+        {
+          "memory_id": "df2d61def0578fc2",
+          "timestamp": "2026-02-20T01:17:06.165756",
+          "preview": "who is yogi adityanath"
+        },
+        {
+          "memory_id": "a1bfebccbd7b9177",
+          "timestamp": "2026-02-20T01:17:59.496565",
+          "preview": "can you provide more data abou"
+        },
+        {
+          "memory_id": "e2cfe7e04b847842",
+          "timestamp": "2026-02-20T01:19:00.917813",
+          "preview": "aadesh diya hai ki imran khan "
+        },
+        {
+          "memory_id": "ee901f3c6ba7b3fe",
+          "timestamp": "2026-02-20T01:19:36.307386",
+          "preview": "i cannot fulfill your request"
         }
       ],
       "preferred_topics": {
-        "topic_tech": 2
+        "topic_tech": 12
       },
       "conversation_patterns": {},
-      "last_interaction": "2026-02-17T20:23:03.251989"
+      "last_interaction": "2026-02-20T01:19:36.307383"
     }
   },
-  "last_updated": "2026-02-17T20:23:08.487508"
+  "last_updated": "2026-02-20T01:20:08.179780"
 }

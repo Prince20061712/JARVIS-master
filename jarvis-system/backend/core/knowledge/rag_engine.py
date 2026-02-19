@@ -1,16 +1,33 @@
 import os
-import chromadb
+try:
+    import chromadb
+except ImportError:
+    chromadb = None
+    print("⚠️ ChromaDB module not found. RAG features will be disabled.")
+
 from sentence_transformers import SentenceTransformer
 import fitz  # PyMuPDF
 
 class EngineeringRAGEngine:
     def __init__(self, knowledge_base_path="engineering_knowledge"):
         self.kb_path = knowledge_base_path
-        self.chroma_client = chromadb.PersistentClient(path="chroma_db")
-        self.collection = self.chroma_client.get_or_create_collection(name="engineering_knowledge")
+        self.chroma_client = None
+        self.collection = None
+        
+        if chromadb:
+            try:
+                self.chroma_client = chromadb.PersistentClient(path="chroma_db")
+                self.collection = self.chroma_client.get_or_create_collection(name="engineering_knowledge")
+            except Exception as e:
+                print(f"⚠️ Failed to initialize ChromaDB client: {e}")
+        
         # Load lightweight embedding model
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2') 
-        print("🔧 Engineering RAG Engine Initialized")
+        try:
+            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2') 
+            print("🔧 Engineering RAG Engine Initialized")
+        except Exception as e:
+             self.embedding_model = None
+             print(f"⚠️ Failed to load embedding model: {e}")
 
     def ingest_document(self, file_path, subject):
         """Ingest a PDF document into the vector store"""
@@ -38,7 +55,7 @@ class EngineeringRAGEngine:
                 })
                 ids.append(f"{os.path.basename(file_path)}_p{page_num}_{i}")
 
-        if chunks:
+        if chunks and self.collection and self.embedding_model:
             embeddings = self.embedding_model.encode(chunks).tolist()
             self.collection.add(
                 documents=chunks,
@@ -51,6 +68,9 @@ class EngineeringRAGEngine:
 
     def retrieve_context(self, query, subject=None, n_results=4):
         """Retrieve relevant context for a query"""
+        if not self.collection or not self.embedding_model:
+            return ""
+
         query_embedding = self.embedding_model.encode([query]).tolist()
         
         where_filter = {"subject": subject} if subject else None

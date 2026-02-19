@@ -795,34 +795,26 @@ class FullFledgedAIBrain:
             return self._format_response(thought_process, layer1_result)
         
         # LAYER 2: COGNITIVE (Understanding, knowledge)
+        print(f"[Layer 2] Cognitive processing...")
         try:
+            layer2_result = self._process_layer2_cognitive(user_input, layer1_result)
+            
             # RAG Retrieval - Educational Context
             rag_context = None
             if hasattr(self, 'rag_engine') and self.rag_engine:
                  print(f"📚 Querying RAG Engine for: {user_input[:50]}...")
                  try:
-                     # Determine subject from input or context (simplified for now)
                      rag_context = self.rag_engine.retrieve_context(user_input)
                      if rag_context:
                          print(f"✅ RAG Context retrieved ({len(rag_context)} chars)")
                  except Exception as e:
                      print(f"⚠️ RAG Retrieval error: {e}")
-    
-            # Generate AI response
-            response = self.ollama.generate_response(
-                prompt=user_input,
-                context=self.context.get_context(),
-                rag_context=rag_context
-            )
-            
-            layer2_result = {
-                "response": response,
-                "topic": "general", # TODO: Implement topic classification
-                "rag_used": rag_context is not None
-            }
+                     
+            layer2_result["rag_context"] = rag_context
         except Exception as e:
             print(f"⚠️ Layer 2 error: {e}")
-            layer2_result = {"response": "I encountered an error processing your request.", "topic": "error", "rag_used": False}
+            layer2_result = {"emotion_analysis": {"primary_emotion": "neutral"}, "requires_deep_processing": False}
+            
         thought_process.layers_activated.append(ProcessingLayer.LAYER_2_COGNITIVE)
         thought_process.intermediate_results["layer2"] = layer2_result
         
@@ -1105,7 +1097,8 @@ class FullFledgedAIBrain:
             try:
                 ai_response = self.ollama.generate_response(
                     prompt=thought_process["user_input"],
-                    context=ai_context
+                    context=ai_context,
+                    rag_context=layer2_result.get("rag_context")
                 )
                 print(f"DEBUG: Ollama response: {ai_response[:100] if ai_response else 'None'}")
             except Exception as e:

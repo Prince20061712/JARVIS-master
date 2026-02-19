@@ -57,39 +57,20 @@ export function ChatInterface({
                 }`}
             >
               {message.type === "system" ? (
-                <div className="text-sm italic text-center text-cyan-500/70" style={{ textShadow: "0 0 10px rgba(0, 229, 255, 0.3)" }}>
+                <div className="text-sm italic text-center text-white/50">
                   {message.text}
                 </div>
               ) : (
                 <div
-                  className="max-w-[80%] px-4 py-3"
-                  style={
-                    message.type === "user"
-                      ? {
-                        color: "#FFFFFF",
-                        textShadow: "0 0 10px rgba(0, 229, 255, 0.5)",
-                        borderRight: "2px solid #00E5FF",
-                        paddingRight: "15px",
-                        background: "linear-gradient(90deg, transparent 0%, rgba(0, 229, 255, 0.1) 100%)",
-                      }
-                      : {
-                        color: "#00E5FF",
-                        textShadow: "0 0 10px rgba(0, 229, 255, 0.5)",
-                        borderLeft: "2px solid #00E5FF",
-                        paddingLeft: "15px",
-                        background: "linear-gradient(90deg, rgba(0, 229, 255, 0.1) 0%, transparent 100%)",
-                        fontFamily: "'Courier New', monospace", // Robotic feel
-                        letterSpacing: "0.5px",
-                      }
-                  }
+                  className={`max-w-[80%] px-4 py-3 rounded-2xl backdrop-blur-md shadow-lg border ${message.type === "user"
+                      ? "bg-white/20 border-white/30 text-white rounded-br-sm"
+                      : "bg-black/40 border-white/10 text-white/90 rounded-bl-sm"
+                    }`}
                 >
-                  <p className="text-sm md:text-base font-medium">{message.text}</p>
+                  <p className="text-sm md:text-base font-medium leading-relaxed">{message.text}</p>
                   <div
-                    className="text-[10px] mt-1 opacity-60"
-                    style={{
-                      color: "#00E5FF",
-                      textAlign: message.type === "user" ? "right" : "left"
-                    }}
+                    className={`text-[10px] mt-1 opacity-50 ${message.type === "user" ? "text-right" : "text-left"
+                      }`}
                   >
                     {message.timestamp.toLocaleTimeString()}
                   </div>
@@ -102,69 +83,41 @@ export function ChatInterface({
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSubmit} className="p-4 bg-transparent">
-        <div className="flex gap-4 items-center">
-          {/* Microphone Button - Floating Orb */}
+      <form onSubmit={handleSubmit} className="p-4 bg-transparent mt-2 border-t border-white/10">
+        <div className="flex gap-3 items-center">
+          {/* Microphone Button - Glassy */}
           <motion.button
             type="button"
             onClick={onMicClick}
-            className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm"
-            style={{
-              background: isListening ? "rgba(255, 68, 68, 0.2)" : "rgba(0, 229, 255, 0.1)",
-              border: isListening ? "1px solid #FF4444" : "1px solid #00E5FF",
-              boxShadow: isListening
-                ? "0 0 25px rgba(255, 68, 68, 0.5)"
-                : "0 0 20px rgba(0, 229, 255, 0.3)",
-            }}
-            whileHover={{ scale: 1.1, boxShadow: "0 0 30px rgba(0, 229, 255, 0.6)" }}
+            className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${isListening
+                ? "bg-red-500/20 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+              } border`}
             whileTap={{ scale: 0.95 }}
-            animate={
-              isListening
-                ? {
-                  scale: [1, 1.1, 1],
-                  boxShadow: ["0 0 25px rgba(255, 68, 68, 0.5)", "0 0 40px rgba(255, 68, 68, 0.8)", "0 0 25px rgba(255, 68, 68, 0.5)"]
-                }
-                : {}
-            }
-            transition={{
-              duration: 1.5,
-              repeat: isListening ? Infinity : 0,
-            }}
           >
-            <Mic className="w-5 h-5" style={{ color: isListening ? "#FF4444" : "#00E5FF" }} />
+            <Mic className={`w-5 h-5 ${isListening ? "text-red-400" : "text-white/70"}`} />
           </motion.button>
 
-          {/* Text Input - Floating Line */}
+          {/* Text Input - Glassy Pill */}
           <div className="flex-1 relative group">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Command Interface..."
-              className="w-full h-12 px-6 bg-transparent outline-none transition-all duration-300"
-              style={{
-                color: "#00E5FF",
-                borderBottom: "1px solid rgba(0, 229, 255, 0.3)",
-                textShadow: "0 0 5px rgba(0, 229, 255, 0.3)",
-                fontFamily: "monospace",
-              }}
+              placeholder="Message..."
+              className="w-full h-10 px-4 bg-white/5 border border-white/10 rounded-full text-white/90 placeholder-white/40 focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all backdrop-blur-md shadow-inner"
             />
-            {/* Animated Bottom Line */}
-            <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#00E5FF] transition-all duration-500 group-hover:w-full shadow-[0_0_10px_#00E5FF]" />
           </div>
 
           {/* Send Button */}
           <motion.button
             type="submit"
-            className="w-10 h-10 flex items-center justify-center opacity-70 hover:opacity-100"
-            style={{
-              color: "#00E5FF",
-            }}
-            whileHover={{ scale: 1.1, textShadow: "0 0 10px #00E5FF" }}
-            whileTap={{ scale: 0.95 }}
+            className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/10 transition-all ${!input.trim() ? "opacity-50 bg-white/5 cursor-not-allowed" : "bg-white/10 hover:bg-white/20 hover:border-white/30 shadow-lg"
+              }`}
+            whileTap={input.trim() ? { scale: 0.95 } : {}}
             disabled={!input.trim()}
           >
-            <Send className="w-6 h-6" />
+            <Send className="w-4 h-4 text-white/90" />
           </motion.button>
         </div>
       </form>

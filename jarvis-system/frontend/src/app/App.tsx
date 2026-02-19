@@ -31,7 +31,8 @@ export default function App() {
       if (!isMounted) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.port === '5173' ? 'localhost:8000' : window.location.host;
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const host = isLocal ? 'localhost:8000' : window.location.host;
       const wsUrl = `${protocol}//${host}/ws`;
 
       console.log("Connecting to WebSocket:", wsUrl);
@@ -288,8 +289,8 @@ export default function App() {
       </div>
 
       {/* Floating Chat Interface - Positioned at bottom right */}
-      <div className="fixed bottom-8 right-8 z-20 w-[400px] pointer-events-auto">
-        <div className="rounded-2xl overflow-hidden">
+      <div className="fixed bottom-8 right-8 z-20 w-[400px] h-[500px] pointer-events-auto">
+        <div className="h-full rounded-3xl overflow-hidden bg-black/20 backdrop-blur-3xl border border-white/10 shadow-2xl flex flex-col">
           <ChatInterface
             messages={messages}
             onSendMessage={handleSendMessage}
@@ -301,11 +302,11 @@ export default function App() {
 
       {/* Optional: Floating Status Bar at top */}
       <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="backdrop-blur-md px-6 py-2 rounded-full border border-blue-500/30 bg-black/20">
+        <div className="backdrop-blur-xl px-6 py-2 rounded-full border border-white/10 bg-white/5 shadow-lg">
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-blue-400 font-light">J.A.R.V.I.S</span>
-            <span className="text-blue-300/50">|</span>
-            <span className={`text-xs ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+            <span className="text-white/80 font-medium tracking-wide">J.A.R.V.I.S</span>
+            <span className="text-white/20">|</span>
+            <span className={`text-xs font-semibold tracking-wider ${isConnected ? 'text-green-400/90' : 'text-red-400/90'}`}>
               {isConnected ? '● ONLINE' : '○ OFFLINE'}
             </span>
           </div>
