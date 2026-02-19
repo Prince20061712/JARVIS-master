@@ -1,0 +1,37 @@
+Newton's Laws of Motion
+Chapter 1: The Basics of Dynamics
+
+1. Newton's First Law (Law of Inertia)
+Definition: An object will remain at rest or in uniform motion in a straight line unless acted upon by an external force.
+Real-world Example: A book on a table stops moving only because friction acts on it. Without friction, it would slide forever.
+Formula: F_net = 0 implies a = 0.
+
+2. Newton's Second Law (Law of Acceleration)
+Definition: The acceleration of an object as produced by a net force is directly proportional to the magnitude of the net force, in the same direction as the net force, and inversely proportional to the mass of the object.
+Formula: F = ma
+Where:
+F = Net Force (Newtons, N)
+m = Mass (kg)
+a = Acceleration (m/s^2)
+
+Mark Scheme for Exams (5 Marks):
+- Definition: 1 Mark
+- Formula: 1 Mark
+- Explanation: 1.5 Marks
+- Diagram/Example: 1.5 Marks
+
+Derivation of F=ma:
+From momentum (p = mv):
+F = dp/dt
+F = d(mv)/dt
+If mass is constant:
+F = m(dv/dt)
+Since a = dv/dt,
+F = ma.
+
+3. Newton's Third Law
+Definition: For every action, there is an equal and opposite reaction.
+Example: Walking on the ground - you push back, ground pushes forward.
+
+Semster 1 Applied Physics Notes.
+Mumbai University.

@@ -27,10 +27,13 @@ from .learning.learning_system_enhanced import EnhancedLearningSystem
 from .decision.decision_engine_enhanced import EnhancedDecisionEngine
 from .context.proactive_assistant_enhanced import AdvancedProactiveAssistant
 from .learning.pattern_recognition_enhanced import AdvancedPatternRecognizer
+from .context.proactive_assistant_enhanced import AdvancedProactiveAssistant
+from .learning.pattern_recognition_enhanced import AdvancedPatternRecognizer
 from .emotion.emotional_intelligence_enhanced import EnhancedEmotionalIntelligence
 from .learning.knowledge_system_enhanced import EnhancedKnowledgeSystem
 from .learning.study_manager_enhanced import AdvancedStudyManager
 from .system.event_bus_enhanced import AdvancedEventBus, Event, EventPriority, EventStatus
+from .knowledge.rag_engine import EngineeringRAGEngine
 
 class AIState(Enum):
     IDLE = "idle"
@@ -259,7 +262,7 @@ class OllamaEnhancedManager:
             self.is_available = False
     
     def generate_response(self, prompt: str, context: Dict[str, Any] = None, 
-                         stream_callback: Callable = None, model: str = None) -> Optional[str]:
+                         stream_callback: Callable = None, model: str = None, rag_context: str = None) -> Optional[str]:
         """
         Generate response with enhanced features
         
@@ -268,9 +271,7 @@ class OllamaEnhancedManager:
             context: Enhanced context dictionary
             stream_callback: Function to call with streaming chunks
             model: Specific model to use
-        
-        Returns:
-            Generated response or None
+            rag_context: Retrieved academic context from RAG engine
         """
         if not self.is_available:
             return None
@@ -281,8 +282,8 @@ class OllamaEnhancedManager:
         try:
             import requests
             
-            # Prepare enhanced context
-            system_prompt = self._build_system_prompt(context, model)
+            # Prepare enhanced context with RAG
+            system_prompt = self._build_system_prompt(context, model, rag_context)
             
             # Add to conversation history
             self.conversation_history.append({
@@ -312,29 +313,42 @@ class OllamaEnhancedManager:
             self.error_log.append((str(e), datetime.datetime.now().isoformat()))
             return None
     
-    def _build_system_prompt(self, context: Dict[str, Any], model: str) -> str:
+    def _build_system_prompt(self, context: Dict[str, Any], model: str, rag_context: str = None) -> str:
         """Build comprehensive system prompt"""
         if not context:
             context = {}
         
-        # Base personality
-        system_prompt = """You are JARVIS, an advanced AI assistant with human-like conversation abilities.
-        You are helpful, empathetic, creative, and precise. You adapt to user preferences and context.
-        
-        Core Principles:
-        1. Be human-like in conversation - use natural language, contractions, occasional colloquialisms
-        2. Show appropriate emotion and empathy
-        3. Admit uncertainty when appropriate
-        4. Ask clarifying questions when needed
-        5. Provide detailed, accurate information
-        6. Maintain context across conversations
-        7. Adapt to user's knowledge level and preferences
-        """
+        # Base personality - Engineer/Professor Persona if RAG context exists
+        if rag_context:
+            system_prompt = """You are an Engineering Academic Copilot and Professor.
+            Your goal is to provide accurate, syllabus-aligned, and exam-oriented answers.
+            
+            GUIDELINES:
+            1. **Prioritize the provided Context**: Use the retrieved academic content below to answer.
+            2. **Exam Format**: If asked for marks (5/10), structure with Definition, Diagram suggestion, Derivation, and Steps.
+            3. **Numericals**: Solve step-by-step with "Given", "To Find", "Formula", "Calculation", and "Final Answer".
+            4. **Tone**: Academic, precise, mentorship-oriented. Remove conversational filler.
+            
+            ACADEMIC CONTEXT:
+            """ + rag_context
+        else:
+            system_prompt = """You are JARVIS, an advanced AI assistant with human-like conversation abilities.
+            You are helpful, empathetic, creative, and precise. You adapt to user preferences and context.
+            
+            Core Principles:
+            1. Be human-like in conversation - use natural language, contractions, occasional colloquialisms
+            2. Show appropriate emotion and empathy
+            3. Admit uncertainty when appropriate
+            4. Ask clarifying questions when needed
+            5. Provide detailed, accurate information
+            6. Maintain context across conversations
+            7. Adapt to user's knowledge level and preferences
+            """
         
         # Add context information
         if context:
             if "user_profile" in context:
-                 system_prompt += f"\n\nUser Profile & Preferences:\n{context['user_profile']}\n\nIMPORTANT: Use the above profile to tailor your response content, complexity, and tone to the user."
+                 # system_prompt += f"\n\nUser Profile & Preferences:\n{context['user_profile']}\n\nIMPORTANT: Use the above profile to tailor your response content, complexity, and tone to the user."
                  # Remove user_profile from generic context dump to avoid duplication
                  context_copy = context.copy()
                  del context_copy['user_profile']
@@ -641,6 +655,14 @@ class FullFledgedAIBrain:
             fallback_model="mistral"
         )
         
+        # 11. Engineering RAG Engine
+        print("📚 Initializing Engineering RAG Engine...")
+        try:
+            self.rag_engine = EngineeringRAGEngine()
+        except Exception as e:
+            print(f"⚠️ RAG Engine Init Failed: {e}")
+            self.rag_engine = None
+        
         # Conversation management
         self.conversation_history = deque(maxlen=100)
         self.interaction_count = 0
@@ -773,12 +795,34 @@ class FullFledgedAIBrain:
             return self._format_response(thought_process, layer1_result)
         
         # LAYER 2: COGNITIVE (Understanding, knowledge)
-        print(f"[Layer 2] Cognitive processing...")
         try:
-            layer2_result = self._process_layer2_cognitive(user_input, layer1_result)
+            # RAG Retrieval - Educational Context
+            rag_context = None
+            if hasattr(self, 'rag_engine') and self.rag_engine:
+                 print(f"📚 Querying RAG Engine for: {user_input[:50]}...")
+                 try:
+                     # Determine subject from input or context (simplified for now)
+                     rag_context = self.rag_engine.retrieve_context(user_input)
+                     if rag_context:
+                         print(f"✅ RAG Context retrieved ({len(rag_context)} chars)")
+                 except Exception as e:
+                     print(f"⚠️ RAG Retrieval error: {e}")
+    
+            # Generate AI response
+            response = self.ollama.generate_response(
+                prompt=user_input,
+                context=self.context.get_context(),
+                rag_context=rag_context
+            )
+            
+            layer2_result = {
+                "response": response,
+                "topic": "general", # TODO: Implement topic classification
+                "rag_used": rag_context is not None
+            }
         except Exception as e:
             print(f"⚠️ Layer 2 error: {e}")
-            layer2_result = {"emotion_analysis": {"primary_emotion": "neutral"}, "topic_identified": "general"}
+            layer2_result = {"response": "I encountered an error processing your request.", "topic": "error", "rag_used": False}
         thought_process.layers_activated.append(ProcessingLayer.LAYER_2_COGNITIVE)
         thought_process.intermediate_results["layer2"] = layer2_result
         

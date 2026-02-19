@@ -25,3 +25,7 @@ textblob
 scikit-learn
 nltk
 numpy
+chromadb
+sentence-transformers
+pymupdf
+langchain
