@@ -359,11 +359,119 @@
       "timestamp": "2026-02-20T01:19:36.307375",
       "user_id": "default",
       "user_input_preview": "i cannot fulfill your request"
+    },
+    {
+      "memory_id": "b4d1a50769872a06",
+      "timestamp": "2026-02-20T03:05:34.820019",
+      "user_id": "default",
+      "user_input_preview": "what is rotational motion"
+    },
+    {
+      "memory_id": "38d7e18abb614679",
+      "timestamp": "2026-02-20T03:06:41.662273",
+      "user_id": "default",
+      "user_input_preview": "what is rotational motion"
+    },
+    {
+      "memory_id": "0a74adb2ec524a9a",
+      "timestamp": "2026-02-20T03:08:47.747739",
+      "user_id": "default",
+      "user_input_preview": "what is queue in data structure"
+    },
+    {
+      "memory_id": "4c9c12ffb6ebee28",
+      "timestamp": "2026-02-20T03:09:42.268946",
+      "user_id": "default",
+      "user_input_preview": "queue"
+    },
+    {
+      "memory_id": "e5e1a073c38835da",
+      "timestamp": "2026-02-20T03:13:39.743966",
+      "user_id": "default",
+      "user_input_preview": "what is queue"
+    },
+    {
+      "memory_id": "834e2e04fc5bfe87",
+      "timestamp": "2026-02-20T03:31:27.281236",
+      "user_id": "default",
+      "user_input_preview": "good jab jarvis"
+    },
+    {
+      "memory_id": "7f803059390617c5",
+      "timestamp": "2026-02-20T03:37:30.857788",
+      "user_id": "default",
+      "user_input_preview": "helllooo"
+    },
+    {
+      "memory_id": "83306dcee7a61139",
+      "timestamp": "2026-02-20T03:50:22.197248",
+      "user_id": "default",
+      "user_input_preview": "good job"
+    },
+    {
+      "memory_id": "96cb4cf234c7db34",
+      "timestamp": "2026-02-20T04:05:01.877902",
+      "user_id": "default",
+      "user_input_preview": "good"
+    },
+    {
+      "memory_id": "5bf5c56c6ce879fb",
+      "timestamp": "2026-02-20T04:11:25.730873",
+      "user_id": "default",
+      "user_input_preview": "i am sorry"
+    },
+    {
+      "memory_id": "f1ac1d2efacd2ea6",
+      "timestamp": "2026-02-20T04:12:20.747127",
+      "user_id": "default",
+      "user_input_preview": "tell me about narrendra modi"
+    },
+    {
+      "memory_id": "88c108018044a709",
+      "timestamp": "2026-02-20T10:42:08.001333",
+      "user_id": "default",
+      "user_input_preview": "viva"
+    },
+    {
+      "memory_id": "f173c9e6d4e9877d",
+      "timestamp": "2026-02-20T10:43:39.424046",
+      "user_id": "default",
+      "user_input_preview": "what is operating system"
+    },
+    {
+      "memory_id": "92a4a013811398a4",
+      "timestamp": "2026-02-20T11:06:30.874980",
+      "user_id": "default",
+      "user_input_preview": "dhurandhar"
+    },
+    {
+      "memory_id": "8138da6969258be2",
+      "timestamp": "2026-02-20T11:11:25.327430",
+      "user_id": "default",
+      "user_input_preview": "what is process"
+    },
+    {
+      "memory_id": "4a7909d0d28c1abe",
+      "timestamp": "2026-02-20T12:31:15.181614",
+      "user_id": "default",
+      "user_input_preview": "what is operating system"
+    },
+    {
+      "memory_id": "3b6a4944c7ba3be5",
+      "timestamp": "2026-02-20T20:38:08.717280",
+      "user_id": "default",
+      "user_input_preview": "what is operating system"
+    },
+    {
+      "memory_id": "a03edcace20f983a",
+      "timestamp": "2026-02-20T20:39:49.860027",
+      "user_id": "default",
+      "user_input_preview": "what is process in operating system"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 60,
+      "total_conversations": 78,
       "conversation_history": [
         {
           "memory_id": "10dfafe3248c1778",
@@ -664,14 +772,104 @@
           "memory_id": "ee901f3c6ba7b3fe",
           "timestamp": "2026-02-20T01:19:36.307386",
           "preview": "i cannot fulfill your request"
+        },
+        {
+          "memory_id": "b4d1a50769872a06",
+          "timestamp": "2026-02-20T03:05:34.820048",
+          "preview": "what is rotational motion"
+        },
+        {
+          "memory_id": "38d7e18abb614679",
+          "timestamp": "2026-02-20T03:06:41.662299",
+          "preview": "what is rotational motion"
+        },
+        {
+          "memory_id": "0a74adb2ec524a9a",
+          "timestamp": "2026-02-20T03:08:47.747770",
+          "preview": "what is queue in data structur"
+        },
+        {
+          "memory_id": "4c9c12ffb6ebee28",
+          "timestamp": "2026-02-20T03:09:42.268986",
+          "preview": "queue"
+        },
+        {
+          "memory_id": "e5e1a073c38835da",
+          "timestamp": "2026-02-20T03:13:39.743995",
+          "preview": "what is queue"
+        },
+        {
+          "memory_id": "834e2e04fc5bfe87",
+          "timestamp": "2026-02-20T03:31:27.281265",
+          "preview": "good jab jarvis"
+        },
+        {
+          "memory_id": "7f803059390617c5",
+          "timestamp": "2026-02-20T03:37:30.857810",
+          "preview": "helllooo"
+        },
+        {
+          "memory_id": "83306dcee7a61139",
+          "timestamp": "2026-02-20T03:50:22.197280",
+          "preview": "good job"
+        },
+        {
+          "memory_id": "96cb4cf234c7db34",
+          "timestamp": "2026-02-20T04:05:01.877930",
+          "preview": "good"
+        },
+        {
+          "memory_id": "5bf5c56c6ce879fb",
+          "timestamp": "2026-02-20T04:11:25.730898",
+          "preview": "i am sorry"
+        },
+        {
+          "memory_id": "f1ac1d2efacd2ea6",
+          "timestamp": "2026-02-20T04:12:20.747160",
+          "preview": "tell me about narrendra modi"
+        },
+        {
+          "memory_id": "88c108018044a709",
+          "timestamp": "2026-02-20T10:42:08.001355",
+          "preview": "viva"
+        },
+        {
+          "memory_id": "f173c9e6d4e9877d",
+          "timestamp": "2026-02-20T10:43:39.424087",
+          "preview": "what is operating system"
+        },
+        {
+          "memory_id": "92a4a013811398a4",
+          "timestamp": "2026-02-20T11:06:30.874999",
+          "preview": "dhurandhar"
+        },
+        {
+          "memory_id": "8138da6969258be2",
+          "timestamp": "2026-02-20T11:11:25.327437",
+          "preview": "what is process"
+        },
+        {
+          "memory_id": "4a7909d0d28c1abe",
+          "timestamp": "2026-02-20T12:31:15.181668",
+          "preview": "what is operating system"
+        },
+        {
+          "memory_id": "3b6a4944c7ba3be5",
+          "timestamp": "2026-02-20T20:38:08.717320",
+          "preview": "what is operating system"
+        },
+        {
+          "memory_id": "a03edcace20f983a",
+          "timestamp": "2026-02-20T20:39:49.860042",
+          "preview": "what is process in operating s"
         }
       ],
       "preferred_topics": {
         "topic_tech": 12
       },
       "conversation_patterns": {},
-      "last_interaction": "2026-02-20T01:19:36.307383"
+      "last_interaction": "2026-02-20T20:39:49.860039"
     }
   },
-  "last_updated": "2026-02-20T01:20:08.179780"
+  "last_updated": "2026-02-20T20:40:46.301742"
 }

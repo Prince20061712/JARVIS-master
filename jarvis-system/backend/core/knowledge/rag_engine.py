@@ -7,6 +7,9 @@ except ImportError:
 
 from sentence_transformers import SentenceTransformer
 import fitz  # PyMuPDF
+from pptx import Presentation
+from PIL import Image
+import pytesseract
 
 class EngineeringRAGEngine:
     def __init__(self, knowledge_base_path="engineering_knowledge"):
@@ -30,30 +33,37 @@ class EngineeringRAGEngine:
              print(f"⚠️ Failed to load embedding model: {e}")
 
     def ingest_document(self, file_path, subject):
-        """Ingest a PDF document into the vector store"""
+        """Ingest a document (PDF, PPTX, image) into the vector store"""
         if not os.path.exists(file_path):
             return f"File not found: {file_path}"
             
-        doc = fitz.open(file_path)
+        ext = os.path.splitext(file_path)[1].lower()
         chunks = []
         metadatas = []
         ids = []
         
-        for page_num, page in enumerate(doc):
-            text = page.get_text()
-            # Simple chunking (improve this later for equations)
-            page_chunks = [text[i:i+1000] for i in range(0, len(text), 800)] # 20% overlap
-            
-            for i, chunk in enumerate(page_chunks):
-                if len(chunk.strip()) < 50: continue # Skip empty chunks
-                
-                chunks.append(chunk)
-                metadatas.append({
-                    "source": os.path.basename(file_path),
-                    "page": page_num + 1,
-                    "subject": subject
-                })
-                ids.append(f"{os.path.basename(file_path)}_p{page_num}_{i}")
+        try:
+            if ext == '.pdf':
+                doc = fitz.open(file_path)
+                for page_num, page in enumerate(doc):
+                    text = page.get_text()
+                    self._process_text_to_chunks(text, chunks, metadatas, ids, file_path, subject, page_num + 1)
+            elif ext in ['.pptx']:
+                prs = Presentation(file_path)
+                for slide_num, slide in enumerate(prs.slides):
+                    text = ""
+                    for shape in slide.shapes:
+                        if hasattr(shape, "text"):
+                            text += shape.text + "\n"
+                    self._process_text_to_chunks(text, chunks, metadatas, ids, file_path, subject, slide_num + 1)
+            elif ext in ['.jpg', '.jpeg', '.png']:
+                image = Image.open(file_path)
+                text = pytesseract.image_to_string(image)
+                self._process_text_to_chunks(text, chunks, metadatas, ids, file_path, subject, 1)
+            else:
+                return f"Unsupported file type: {ext}"
+        except Exception as e:
+            return f"Error processing file: {e}"
 
         if chunks and self.collection and self.embedding_model:
             embeddings = self.embedding_model.encode(chunks).tolist()
@@ -65,6 +75,24 @@ class EngineeringRAGEngine:
             )
             return f"✅ Ingested {len(chunks)} chunks from {os.path.basename(file_path)}"
         return "⚠️ No valid text found in document."
+
+    def _process_text_to_chunks(self, text, chunks, metadatas, ids, file_path, subject, page_or_slide_num):
+        """Helper to break text into chunks and append to lists"""
+        if not text.strip():
+            return
+            
+        page_chunks = [text[i:i+1000] for i in range(0, len(text), 800)] # 20% overlap
+        
+        for i, chunk in enumerate(page_chunks):
+            if len(chunk.strip()) < 50: continue # Skip empty chunks
+            
+            chunks.append(chunk)
+            metadatas.append({
+                "source": os.path.basename(file_path),
+                "page": page_or_slide_num,
+                "subject": subject
+            })
+            ids.append(f"{os.path.basename(file_path)}_p{page_or_slide_num}_{i}")
 
     def retrieve_context(self, query, subject=None, n_results=4):
         """Retrieve relevant context for a query"""

@@ -1,41 +1,72 @@
 import logging
-import sys
-from logging.handlers import RotatingFileHandler
 import os
+from logging.handlers import RotatingFileHandler
+from datetime import datetime
 
-def setup_logger(name="AssistantRobot", log_file="logs/app.log", level=logging.INFO):
+class Logger:
     """
-    Sets up a logger with both console and file handlers.
+    Singleton Logger class with rotating file handlers and console output.
+    Supports log rotation (10MB per file, 5 backups).
     """
-    # Create logs directory if it doesn't exist
-    log_dir = os.path.dirname(log_file)
-    if log_dir and not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    _instance = None
 
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(Logger, cls).__new__(cls)
+            cls._instance._initialize_logger()
+        return cls._instance
 
-    # Formatters
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    def _initialize_logger(self):
+        self.logger = logging.getLogger("JARVIS_Logger")
+        self.logger.setLevel(logging.DEBUG)
 
-    # File Handler
-    file_handler = RotatingFileHandler(
-        log_file, maxBytes=10*1024*1024, backupCount=5
-    )
-    file_handler.setFormatter(formatter)
-    
-    # Console Handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
+        # Create logs directory if it doesn't exist
+        log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        log_file = os.path.join(log_dir, "jarvis.log")
 
-    # Add handlers if not already added
-    if not logger.handlers:
-        logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
+        # Formatter for timestamps and log levels
+        formatter = logging.Formatter(
+            '%(asctime)s - [%(levelname)s] - %(name)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
 
-    return logger
+        # 1. Console Handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)  # Default console level
+        console_handler.setFormatter(formatter)
 
-# Create a default logger instance
-logger = setup_logger()
+        # 2. Rotating File Handler (10MB size, 5 backup files)
+        file_handler = RotatingFileHandler(
+            log_file, maxBytes=10 * 1024 * 1024, backupCount=5
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+
+        # Add handlers to logger
+        if not self.logger.handlers:
+            self.logger.addHandler(console_handler)
+            self.logger.addHandler(file_handler)
+
+    def set_level(self, level_name: str):
+        """Allow dynamic level changes"""
+        level = getattr(logging, level_name.upper(), logging.INFO)
+        self.logger.setLevel(level)
+
+    def debug(self, message: str, *args, **kwargs):
+        self.logger.debug(message, *args, **kwargs)
+
+    def info(self, message: str, *args, **kwargs):
+        self.logger.info(message, *args, **kwargs)
+
+    def warning(self, message: str, *args, **kwargs):
+        self.logger.warning(message, *args, **kwargs)
+
+    def error(self, message: str, *args, **kwargs):
+        self.logger.error(message, *args, **kwargs)
+
+    def critical(self, message: str, *args, **kwargs):
+        self.logger.critical(message, *args, **kwargs)
+
+# Global instance to import
+logger = Logger()

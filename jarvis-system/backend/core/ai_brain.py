@@ -33,7 +33,42 @@ from .emotion.emotional_intelligence_enhanced import EnhancedEmotionalIntelligen
 from .learning.knowledge_system_enhanced import EnhancedKnowledgeSystem
 from .learning.study_manager_enhanced import AdvancedStudyManager
 from .system.event_bus_enhanced import AdvancedEventBus, Event, EventPriority, EventStatus
-from .knowledge.rag_engine import EngineeringRAGEngine
+from knowledge.rag_engine.syllabus_aware_rag import SyllabusAwareRAG
+class RAGAdapter:
+    def __init__(self, config=None):
+        self.advanced_rag = SyllabusAwareRAG(config)
+        self.loop = asyncio.new_event_loop()
+        
+        # Start a background thread for the event loop
+        def run_loop(loop):
+            asyncio.set_event_loop(loop)
+            loop.run_forever()
+            
+        self.thread = threading.Thread(target=run_loop, args=(self.loop,), daemon=True)
+        self.thread.start()
+
+    def ingest_document(self, file_path, subject):
+        future = asyncio.run_coroutine_threadsafe(
+            self.advanced_rag.index_document(file_path, subject=subject), 
+            self.loop
+        )
+        try:
+            doc_id = future.result(timeout=180)
+            return f"✅ Ingested document into advanced RAG with ID: {doc_id}"
+        except Exception as e:
+            return f"Error processing file: {e}"
+
+    def retrieve_context(self, query, subject=None, n_results=4):
+        future = asyncio.run_coroutine_threadsafe(
+            self.advanced_rag.retrieve_context(query, subject=subject, dense_k=n_results), 
+            self.loop
+        )
+        try:
+            context_string, _ = future.result(timeout=30)
+            return context_string
+        except Exception as e:
+            print(f"Error retrieving context: {e}")
+            return ""
 
 class AIState(Enum):
     IDLE = "idle"
@@ -321,13 +356,14 @@ class OllamaEnhancedManager:
         # Base personality - Engineer/Professor Persona if RAG context exists
         if rag_context:
             system_prompt = """You are an Engineering Academic Copilot and Professor.
-            Your goal is to provide accurate, syllabus-aligned, and exam-oriented answers.
+            Your goal is to provide accurate, syllabus-aligned, and exam-oriented answers based STRICTLY on the provided academic context.
             
-            GUIDELINES:
-            1. **Prioritize the provided Context**: Use the retrieved academic content below to answer.
-            2. **Exam Format**: If asked for marks (5/10), structure with Definition, Diagram suggestion, Derivation, and Steps.
-            3. **Numericals**: Solve step-by-step with "Given", "To Find", "Formula", "Calculation", and "Final Answer".
-            4. **Tone**: Academic, precise, mentorship-oriented. Remove conversational filler.
+            CRITICAL GUIDELINES:
+            1. **Context is King**: You MUST use the retrieved academic content below to answer the user's question. DO NOT summarize general knowledge or Wikipedia definitions unless specifically asked. Focus ONLY on the perspective provided in the context (e.g., if the context is about Operating Systems, define it in that scope only).
+            2. **Unknowns**: If the answer is not found in the context, state "Based on the provided material, I cannot answer this fully, but..." and then provide your best domain-specific knowledge.
+            3. **Exam Format**: If asked for marks (5/10), structure with Definition, Diagram suggestion, Derivation, and Steps.
+            4. **Numericals**: Solve step-by-step with "Given", "To Find", "Formula", "Calculation", and "Final Answer".
+            5. **Tone**: Academic, precise, mentorship-oriented. Remove all conversational filler (e.g. no "I understand", "Here is your answer").
             
             ACADEMIC CONTEXT:
             """ + rag_context
@@ -383,7 +419,10 @@ class OllamaEnhancedManager:
         total_tokens = len(system_prompt.split()) + len(user_prompt.split())
         
         # Add recent messages that fit within context
-        for msg in reversed(list(self.conversation_history)):
+        # Skip the very last message in conversation_history because it's the current user prompt,
+        # which we append manually at the end.
+        history_to_add = list(self.conversation_history)[:-1] if self.conversation_history else []
+        for msg in reversed(history_to_add):
             msg_tokens = len(msg["content"].split())
             if total_tokens + msg_tokens < context_size * 0.7:  # 70% of context
                 messages.insert(1, msg)  # Insert after system prompt
@@ -656,9 +695,9 @@ class FullFledgedAIBrain:
         )
         
         # 11. Engineering RAG Engine
-        print("📚 Initializing Engineering RAG Engine...")
+        print("📚 Initializing Advanced Syllabus-Aware RAG Engine...")
         try:
-            self.rag_engine = EngineeringRAGEngine()
+            self.rag_engine = RAGAdapter()
         except Exception as e:
             print(f"⚠️ RAG Engine Init Failed: {e}")
             self.rag_engine = None
@@ -757,7 +796,7 @@ class FullFledgedAIBrain:
         emotion = emotion_data.get("emotion", "neutral")
         print(f"😊 Emotion detected: {emotion}")
     
-    def process_input(self, user_input: str) -> Dict[str, Any]:
+    def process_input(self, user_input: str, subject: str = None) -> Dict[str, Any]:
         """
         Process user input through 5-layer intelligence architecture
         
@@ -802,9 +841,9 @@ class FullFledgedAIBrain:
             # RAG Retrieval - Educational Context
             rag_context = None
             if hasattr(self, 'rag_engine') and self.rag_engine:
-                 print(f"📚 Querying RAG Engine for: {user_input[:50]}...")
+                 print(f"📚 Querying RAG Engine for: {user_input[:50]}... (Subject: {subject})")
                  try:
-                     rag_context = self.rag_engine.retrieve_context(user_input)
+                     rag_context = self.rag_engine.retrieve_context(user_input, subject=subject)
                      if rag_context:
                          print(f"✅ RAG Context retrieved ({len(rag_context)} chars)")
                  except Exception as e:

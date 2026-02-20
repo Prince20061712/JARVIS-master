@@ -84,10 +84,31 @@
       "timestamp": "2026-02-17T20:22:51.680131",
       "priority": "info",
       "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Morning energy high - perfect for creative work!",
+      "timestamp": "2026-02-20T10:41:49.754696",
+      "priority": "info",
+      "confidence": 0.7
+    },
+    {
+      "event_type": "reminder",
+      "message": "Remember to stay hydrated! Your body needs water to function optimally.",
+      "timestamp": "2026-02-20T12:30:45.146468",
+      "priority": "info",
+      "confidence": 0.95
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Relaxation time: Want some calming music or sounds?",
+      "timestamp": "2026-02-20T20:39:19.849242",
+      "priority": "info",
+      "confidence": 0.7
     }
   ],
   "stats": {
-    "total_events_generated": 12,
+    "total_events_generated": 15,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -96,5 +117,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-02-20T01:19:38.172084"
+  "last_updated": "2026-02-20T20:40:16.287856"
 }

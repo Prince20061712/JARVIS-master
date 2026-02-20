@@ -1,5 +1,6 @@
 import Spline from '@splinetool/react-spline';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { RobotFace } from './RobotFace';
 
 export type RobotState =
   | "idle"
@@ -22,6 +23,28 @@ export interface RobotProps {
 
 export function Robot({ state, emotion = 'neutral' }: RobotProps) {
   const splineRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+
+  // Mirror the Spline cursor-tracking so the face overlay stays aligned
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    // Scale factor ≈ how far the Spline head shifts in screen pixels per unit offset
+    const scale = 0.08;
+    setMouseOffset({
+      x: (e.clientX - cx) * scale,
+      y: (e.clientY - cy) * scale,
+    });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [handleMouseMove]);
 
   function onLoad(splineApp: any) {
     splineRef.current = splineApp;
@@ -114,12 +137,15 @@ export function Robot({ state, emotion = 'neutral' }: RobotProps) {
   }, [state, emotion]);
 
   return (
-    <div className="w-full h-full relative overflow-hidden rounded-[30px]">
+    <div ref={containerRef} className="w-full h-full relative overflow-hidden rounded-[30px]">
       <Spline
         scene="https://prod.spline.design/Ge8D8rQPojoko8eQ/scene.splinecode"
         onLoad={onLoad}
         className="w-full h-full"
       />
+
+      {/* Animated face overlay – tracks cursor just like the Spline head does */}
+      <RobotFace state={state} emotion={emotion} mouseOffset={mouseOffset} />
 
       {/* Processing Indicator Overlay */}
       {state === 'processing' && (
@@ -130,8 +156,8 @@ export function Robot({ state, emotion = 'neutral' }: RobotProps) {
 
       {/* Listening Indicator */}
       {state === 'listening' && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-cyan-900/80 backdrop-blur border border-cyan-500/30 px-4 py-1 rounded-full pointer-events-none z-10">
-          <span className="text-cyan-300 text-sm font-mono tracking-widest animate-pulse">LISTENING...</span>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-yellow-900/80 backdrop-blur border border-yellow-500/30 px-4 py-1 rounded-full pointer-events-none z-10">
+          <span className="text-yellow-300 text-sm font-mono tracking-widest animate-pulse">LISTENING...</span>
         </div>
       )}
     </div>

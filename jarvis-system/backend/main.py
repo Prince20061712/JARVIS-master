@@ -68,7 +68,7 @@ import sqlite3
 import csv
 import xml.etree.ElementTree as ET
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
@@ -123,783 +123,15 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 # ========== ENHANCED AUDIO SYSTEM ==========
-class AudioSystem:
-    """Enhanced audio system for better speech control"""
-    
-    def __init__(self, websocket_manager=None, loop=None):
-        self.websocket_manager = websocket_manager
-        self.loop = loop
-        self.engine = None
-        try:
-            # Use Edge TTS for high quality voice
-            from core.system.tts_engine import EdgeTTSEngine
-            self.engine = EdgeTTSEngine(voice="en-US-ChristopherNeural")
-            print(f"{Fore.GREEN}🔊 Initialized Edge TTS (Voice: Christopher)")
-        except Exception as e:
-            print(f"{Fore.YELLOW}⚠️  Could not initialize Edge TTS engine: {e}")
-            print(f"{Fore.YELLOW}⚠️  Running in text-only mode (backend voice disabled)")
-        
-        self.volume_level = 80
-        self.speech_rate = 175
-        self.volume_level = 80
-        self.speech_rate = 175
-        self._ensure_audio_output()
-        
-    def _ensure_audio_output(self):
-        """Ensure audio output is properly configured"""
-        print(f"\n{Fore.CYAN}🔊 Configuring Audio System...")
-        if self.engine:
-            try:
-                # Simple test
-                pass
-            except Exception:
-                pass
-                # self.engine.runAndWait()
-                print(f"{Fore.GREEN}✅ Audio output configured")
-            except Exception as e:
-                print(f"{Fore.YELLOW}⚠️  Audio test warning: {e}")
-            
-            try:
-                self.engine.setProperty('volume', 0.9)
-                self.engine.setProperty('rate', 175)
-                print(f"{Fore.CYAN}🔊 Volume: 90% | Rate: 175 wpm")
-            except:
-                pass
-        else:
-            print(f"{Fore.YELLOW}🔊 Audio System: WebSocket-only mode")
-    
-    def configure_jarvis_voice(self):
-        """Configure pyttsx3 to sound more like JARVIS"""
-        if not self.engine: return
-        
-        try:
-            self.engine.setProperty('rate', 175)
-            self.engine.setProperty('volume', 0.9)
-            
-            voices = self.engine.getProperty('voices')
-            preferred_voices = ['daniel', 'alex', 'fred', 'samantha']
-            for voice in voices:
-                voice_name = voice.name.lower()
-                for pref in preferred_voices:
-                    if pref in voice_name:
-                        self.engine.setProperty('voice', voice.id)
-                        print(f"{Fore.CYAN}🔊 Selected voice: {voice.name}")
-                        return
-            
-            if len(voices) > 0:
-                self.engine.setProperty('voice', voices[0].id)
-                print(f"{Fore.CYAN}🔊 Using voice: {voices[0].name}")
-        except:
-            pass
-    
-    def set_volume(self, level):
-        """Set speech volume (0.0 to 1.0)"""
-        if not self.engine: return 0
-        
-        try:
-            level = max(0.0, min(1.0, level))
-            self.engine.setProperty('volume', level)
-            self.volume_level = level * 100
-            print(f"{Fore.CYAN}🔊 Volume set to: {self.volume_level:.0f}%")
-            return self.volume_level
-        except:
-            return 0
-    
-    def get_volume(self):
-        """Get current volume level"""
-        if not self.engine: return 0
-        try:
-            return self.engine.getProperty('volume')
-        except:
-            return 0
-    
-    def set_rate(self, rate):
-        """Set speech rate (words per minute)"""
-        if not self.engine: return
-        try:
-            self.engine.setProperty('rate', rate)
-            self.speech_rate = rate
-            print(f"{Fore.CYAN}🔊 Speech rate set to: {rate} wpm")
-        except:
-            pass
-    
-    def speak(self, text, play_beep=False, rate=None, on_complete=None, on_start=None):
-        """Speak text using Edge TTS (High Quality)"""
-        if not text:
-            if on_complete: on_complete()
-            return
-
-        print(f"{Fore.GREEN}{JARVIS_NAME}: {text}")
-        
-        # 1. Send text to frontend immediately (no animation)
-        if self.websocket_manager and self.loop:
-            try:
-                asyncio.run_coroutine_threadsafe(
-                    self.websocket_manager.broadcast({
-                        "type": "text",
-                        "text": text
-                    }),
-                    self.loop
-                )
-            except Exception as e:
-                print(f"{Fore.RED}Error broadcasting to WebSocket: {e}")
-
-        # 2. Speak audio locally
-        if self.engine:
-            try:
-                # Pass on_start to trigger animation exactly when audio starts
-                # Check signature compatibility
-                if 'on_start' in self.engine.speak.__code__.co_varnames:
-                    self.engine.speak(text, on_complete=on_complete, on_start=on_start)
-                else:
-                    # Fallback for older engine versions
-                    if on_start: on_start()
-                    self.engine.speak(text, on_complete=on_complete)
-            except Exception as e:
-                print(f"{Fore.RED}Error in speech synthesis: {e}")
-                if on_complete: on_complete()
-        else:
-             if on_complete: on_complete()
-    
-    def play_beep(self, type="response"):
-        """Play different beep sounds"""
-        try:
-            if type == "response":
-                print('\a', end='', flush=True)
-                # time.sleep(0.1)
-                # print('\a', end='', flush=True)
-            elif type == "listening":
-                print('\a', end='', flush=True)
-            elif type == "error":
-                print('\a', end='', flush=True)
-            elif type == "ai_processing":
-                print('\a', end='', flush=True)
-        except:
-            pass
-    
-    def test_speakers(self):
-        """Test audio output on all speakers"""
-        print(f"\n{Fore.CYAN}🔊 Testing audio system...")
-        test_messages = [
-            "Audio system test one.",
-            "Audio system test two.",
-            "Audio system test three.",
-            "Audio system verification complete."
-        ]
-        
-        for i, message in enumerate(test_messages, 1):
-            print(f"{Fore.CYAN}🔊 Test {i}: {message}")
-            self.speak(message)
-            time.sleep(0.8)
-        
-        self.speak("Audio system test complete. All speakers are functional.")
-        print(f"{Fore.GREEN}✅ Audio system test complete")
-        return True
-    
-    def adjust_system_volume(self, direction="up"):
-        """Adjust macOS system volume"""
-        try:
-            if direction == "up":
-                os.system("osascript -e 'set volume output volume (output volume of (get volume settings) + 10)'")
-                self.speak("System volume increased.")
-            elif direction == "down":
-                os.system("osascript -e 'set volume output volume (output volume of (get volume settings) - 10)'")
-                self.speak("System volume decreased.")
-            elif direction == "mute":
-                os.system("osascript -e 'set volume output muted true'")
-                self.speak("System audio muted.")
-            elif direction == "unmute":
-                os.system("osascript -e 'set volume output muted false'")
-                self.speak("System audio unmuted.")
-            elif direction == "max":
-                os.system("osascript -e 'set volume output volume 100'")
-                self.speak("System volume set to maximum.")
-        except Exception as e:
-            print(f"{Fore.YELLOW}⚠️  System volume adjustment failed: {e}")
-
-
-# ========== APPLICATION MANAGER ==========
-class ApplicationManager:
-    """Manages all macOS applications"""
-    
-    def __init__(self):
-        self.applications = {
-            # Productivity
-            "notes": "Notes",
-            "notepad": "TextEdit",
-            "textedit": "TextEdit",
-            "calculator": "Calculator",
-            "calendar": "Calendar",
-            "reminders": "Reminders",
-            "stickies": "Stickies",
-            
-            # Development
-            "vscode": "Visual Studio Code",
-            "code": "Visual Studio Code",
-            "terminal": "Terminal",
-            "iterm": "iTerm",
-            "xcode": "Xcode",
-            "pycharm": "PyCharm",
-            "sublime": "Sublime Text",
-            
-            # Browsers
-            "safari": "Safari",
-            "chrome": "Google Chrome",
-            "firefox": "Firefox",
-            "brave": "Brave Browser",
-            "edge": "Microsoft Edge",
-            
-            # Media & Camera
-            "camera": "Photo Booth",
-            "photo booth": "Photo Booth",
-            "photos": "Photos",
-            "quicktime": "QuickTime Player",
-            "facetime": "FaceTime",
-            
-            # Music & Video
-            "spotify": "Spotify",
-            "music": "Music",
-            "apple music": "Music",
-            "itunes": "Music",
-            "videos": "TV",
-            "tv": "TV",
-            
-            # Communication
-            "messages": "Messages",
-            "whatsapp": "WhatsApp",
-            "discord": "Discord",
-            "slack": "Slack",
-            "mail": "Mail",
-            "outlook": "Microsoft Outlook",
-            
-            # Utilities
-            "finder": "Finder",
-            "activity monitor": "Activity Monitor",
-            "disk utility": "Disk Utility",
-            "system preferences": "System Preferences",
-            "settings": "System Preferences",
-            
-            # Creative
-            "preview": "Preview",
-            "garageband": "GarageBand",
-            "imovie": "iMovie",
-            "keynote": "Keynote",
-            "pages": "Pages",
-            "numbers": "Numbers",
-            
-            # Other
-            "app store": "App Store",
-            "books": "Books",
-            "podcasts": "Podcasts",
-            "maps": "Maps",
-            "contacts": "Contacts",
-            "weather": "Weather"
-        }
-    
-    def open_application(self, app_name):
-        """Open a macOS application with web fallback"""
-        app_name_lower = app_name.lower()
-        
-        # Web fallbacks for common apps if not installed
-        web_fallbacks = {
-            "spotify": "https://open.spotify.com",
-            "whatsapp": "https://web.whatsapp.com",
-            "discord": "https://discord.com/app",
-            "slack": "https://app.slack.com/client",
-            "telegram": "https://web.telegram.org",
-            "instagram": "https://www.instagram.com",
-            "twitter": "https://twitter.com",
-            "x": "https://twitter.com",
-            "gmail": "https://mail.google.com",
-            "outlook": "https://outlook.office.com/mail"
-        }
-        
-        target_app = None
-        if app_name_lower in self.applications:
-            target_app = self.applications[app_name_lower]
-        else:
-            for key, app_command in self.applications.items():
-                if key in app_name_lower:
-                    target_app = app_command
-                    break
-        
-        if target_app:
-            try:
-                # Use subprocess to capture error instead of os.system printing to stderr
-                result = subprocess.run(
-                    ['open', '-a', target_app], 
-                    capture_output=True, 
-                    text=True
-                )
-                
-                if result.returncode == 0:
-                    return f"{target_app} opened successfully"
-                else:
-                    # App launch failed, check fallback
-                    if app_name_lower in web_fallbacks:
-                        webbrowser.open(web_fallbacks[app_name_lower])
-                        return f"Could not find {target_app} app. Opening web version."
-                    return f"Could not open {target_app}. It might not be installed."
-            except Exception as e:
-                return f"Error opening {target_app}: {e}"
-        
-        # Exact match not found, try generic web fallback
-        if app_name_lower in web_fallbacks:
-             webbrowser.open(web_fallbacks[app_name_lower])
-             return f"App not configured, but opening {app_name} web version."
-
-        return "Application not found"
-    
-    def close_application(self, app_name):
-        """Close a macOS application"""
-        try:
-            os.system(f'pkill -f "{app_name}"')
-            return f"{app_name} closed"
-        except:
-            return f"Could not close {app_name}"
-    
-    def list_applications(self):
-        """List all available applications"""
-        return list(self.applications.keys())
-
-# ========== BROWSER MANAGER ==========
-class BrowserManager:
-    """Manages web browsing and search"""
-    
-    def __init__(self):
-        self.browsers = {
-            "chrome": "Google Chrome",
-            "safari": "Safari",
-            "firefox": "Firefox",
-            "brave": "Brave Browser",
-            "edge": "Microsoft Edge"
-        }
-        self.default_browser = "chrome"
-    
-    def search_web(self, query, browser=None):
-        """Search the web"""
-        if not browser:
-            browser = self.default_browser
-        
-        search_url = f"https://www.google.com/search?q={urllib.parse.quote(query)}"
-        
-        if browser in self.browsers:
-            try:
-                os.system(f'open -a "{self.browsers[browser]}" "{search_url}"')
-                return f"Searching for '{query}' in {self.browsers[browser]}"
-            except:
-                webbrowser.open(search_url)
-                return f"Searching for '{query}' in default browser"
-        else:
-            webbrowser.open(search_url)
-            return f"Searching for '{query}' in default browser"
-    
-    def open_website(self, url, browser=None):
-        """Open a specific website"""
-        if not url.startswith(('http://', 'https://')):
-            url = 'https://' + url
-        
-        if browser and browser in self.browsers:
-            try:
-                os.system(f'open -a "{self.browsers[browser]}" "{url}"')
-                return f"Opening {url} in {self.browsers[browser]}"
-            except:
-                webbrowser.open(url)
-                return f"Opening {url} in default browser"
-        else:
-            webbrowser.open(url)
-            return f"Opening {url} in default browser"
-    
-    def open_youtube(self, query=None):
-        """Open YouTube"""
-        if query:
-            url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
-            message = f"Searching YouTube for '{query}'"
-        else:
-            url = "https://www.youtube.com"
-            message = "Opening YouTube"
-        
-        webbrowser.open(url)
-        return message
-    
-    def open_spotify(self, query=None):
-        """Open Spotify"""
-        if query:
-            url = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
-            message = f"Searching Spotify for '{query}'"
-        else:
-            try:
-                os.system('open -a "Spotify"')
-                return "Opening Spotify app"
-            except:
-                url = "https://open.spotify.com"
-                message = "Opening Spotify web player"
-        
-        webbrowser.open(url)
-        return message
-
-# ========== MEDIA MANAGER ==========
-class MediaManager:
-    """Manages media playback and control"""
-    
-    def play_youtube_video(self, query):
-        """Play YouTube video using pywhatkit"""
-        try:
-            pywhatkit.playonyt(query)
-            return f"Playing '{query}' on YouTube"
-        except Exception as e:
-            url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
-            webbrowser.open(url)
-            return f"Searching YouTube for '{query}'"
-    
-    def play_spotify_song(self, query):
-        """Play Spotify song (opens in web player)"""
-        url = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
-        webbrowser.open(url)
-        return f"Searching Spotify for '{query}'"
-    
-    def play_music(self, query, service="youtube"):
-        """Play music on specified service"""
-        if service.lower() == "spotify":
-            return self.play_spotify_song(query)
-        else:
-            return self.play_youtube_video(query)
-    
-    def control_media(self, action):
-        """Control media playback"""
-        actions = {
-            "play": "space",
-            "pause": "space",
-            "stop": "space",
-            "next": "right",
-            "previous": "left",
-            "volume up": "up",
-            "volume down": "down"
-        }
-        
-        if action in actions:
-            try:
-                pyautogui.press(actions[action])
-                return f"Media { action} executed"
-            except:
-                return f"Could not {action} media"
-        else:
-            return f"Unknown media action: {action}"
-
-# ========== SCREEN CAPTURE MANAGER ==========
-class ScreenCaptureManager:
-    """Manages screenshots and screen recording"""
-    
-    def take_screenshot(self, area="full"):
-        """Take a screenshot"""
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        if area == "full":
-            filename = f"screenshot_full_{timestamp}.png"
-            screenshot = pyautogui.screenshot()
-            screenshot.save(filename)
-            return f"Full screenshot saved as {filename}"
-        
-        elif area == "window":
-            filename = f"screenshot_window_{timestamp}.png"
-            active_window = gw.getActiveWindow()
-            if active_window:
-                screenshot = pyautogui.screenshot(region=(
-                    active_window.left,
-                    active_window.top,
-                    active_window.width,
-                    active_window.height
-                ))
-                screenshot.save(filename)
-                return f"Window screenshot saved as {filename}"
-            else:
-                return "No active window found"
-        
-        else:
-            try:
-                coords = [int(x.strip()) for x in area.split(",")]
-                if len(coords) == 4:
-                    filename = f"screenshot_region_{timestamp}.png"
-                    screenshot = pyautogui.screenshot(region=coords)
-                    screenshot.save(filename)
-                    return f"Region screenshot saved as {filename}"
-                else:
-                    return "Invalid region format. Use: x,y,width,height"
-            except:
-                return "Could not capture screenshot"
-    
-    def record_screen(self, duration=10):
-        """Record screen (limited functionality)"""
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"recording_{timestamp}.gif"
-        
-        frames = []
-        start_time = time.time()
-        
-        try:
-            with mss.mss() as sct:
-                monitor = sct.monitors[1]
-                
-                while time.time() - start_time < duration:
-                    sct_img = sct.grab(monitor)
-                    img = Image.frombytes("RGB", sct_img.size, sct_img.rgb)
-                    frames.append(img)
-                    time.sleep(0.1)
-                
-                if frames:
-                    frames[0].save(
-                        filename,
-                        save_all=True,
-                        append_images=frames[1:],
-                        duration=100,
-                        loop=0
-                    )
-                    return f"Screen recording saved as {filename}"
-                else:
-                    return "No frames captured"
-        except:
-            return "Screen recording failed. Try using QuickTime Player instead."
-
-# ========== CODE EDITOR MANAGER ==========
-class CodeEditorManager:
-    """Manages code editing and file creation"""
-    
-    def create_code_file(self, filename, language="python", content=""):
-        """Create a code file"""
-        if not '.' in filename:
-            if language == "python":
-                filename += ".py"
-            elif language == "javascript":
-                filename += ".js"
-            elif language == "html":
-                filename += ".html"
-            elif language == "css":
-                filename += ".css"
-            elif language == "java":
-                filename += ".java"
-            else:
-                filename += ".txt"
-        
-        try:
-            with open(filename, "w") as f:
-                if content:
-                    f.write(content)
-                else:
-                    if language == "python":
-                        f.write(f'#!/usr/bin/env python3\n"""\n{filename}\n"""\n\n')
-                    elif language == "html":
-                        f.write(f'<!DOCTYPE html>\n<html>\n<head>\n<title>{filename}</title>\n</head>\n<body>\n\n</body>\n</html>')
-            
-            return f"Created {filename} with {language} content"
-        except Exception as e:
-            return f"Could not create file: {e}"
-    
-    def open_in_vscode(self, filename=None):
-        """Open file or folder in VS Code"""
-        try:
-            if filename:
-                os.system(f'code "{filename}"')
-                return f"Opening {filename} in VS Code"
-            else:
-                os.system("code .")
-                return "Opening current directory in VS Code"
-        except:
-            return "VS Code not found. Install it from https://code.visualstudio.com/"
-    
-    def write_code(self, code, filename="code.py"):
-        """Write code to a file"""
-        try:
-            with open(filename, "a") as f:
-                f.write(code + "\n")
-            return f"Code written to {filename}"
-        except:
-            return "Could not write code"
-
-# ========== SYSTEM UTILITIES MANAGER ==========
-class SystemUtilitiesManager:
-    """Manages system utilities"""
-    
-    def get_system_info(self):
-        """Get detailed system information"""
-        info = {
-            "OS": platform.platform(),
-            "Processor": platform.processor(),
-            "CPU Cores": psutil.cpu_count(logical=False),
-            "CPU Threads": psutil.cpu_count(logical=True),
-            "CPU Usage": f"{psutil.cpu_percent()}%",
-            "Memory Total": f"{psutil.virtual_memory().total / (1024**3):.2f} GB",
-            "Memory Used": f"{psutil.virtual_memory().used / (1024**3):.2f} GB",
-            "Memory Free": f"{psutil.virtual_memory().free / (1024**3):.2f} GB",
-            "Memory Percent": f"{psutil.virtual_memory().percent}%",
-            "Disk Total": f"{psutil.disk_usage('/').total / (1024**3):.2f} GB",
-            "Disk Used": f"{psutil.disk_usage('/').used / (1024**3):.2f} GB",
-            "Disk Free": f"{psutil.disk_usage('/').free / (1024**3):.2f} GB",
-            "Disk Percent": f"{psutil.disk_usage('/').percent}%",
-            "Boot Time": datetime.datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
-        }
-        
-        return info
-    
-    def get_network_info(self):
-        """Get network information"""
-        try:
-            interfaces = psutil.net_if_addrs()
-            io_counters = psutil.net_io_counters()
-            
-            info = {
-                "Bytes Sent": f"{io_counters.bytes_sent / (1024**2):.2f} MB",
-                "Bytes Received": f"{io_counters.bytes_recv / (1024**2):.2f} MB",
-                "Packets Sent": io_counters.packets_sent,
-                "Packets Received": io_counters.packets_recv,
-                "Network Interfaces": list(interfaces.keys())
-            }
-            
-            return info
-        except:
-            return {"error": "Could not get network info"}
-    
-    def get_battery_info(self):
-        """Get battery information"""
-        try:
-            battery = psutil.sensors_battery()
-            if battery:
-                info = {
-                    "Percent": f"{battery.percent}%",
-                    "Plugged In": battery.power_plugged,
-                    "Time Left": f"{battery.secsleft // 3600}:{(battery.secsleft % 3600) // 60:02d}" if battery.secsleft != -1 else "Unknown"
-                }
-                return info
-            else:
-                return {"info": "No battery detected (desktop)"}
-        except:
-            return {"error": "Could not get battery info"}
-    
-    def cleanup_temp_files(self):
-        """Clean up temporary files"""
-        try:
-            temp_dir = "/tmp"
-            count = 0
-            
-            for filename in os.listdir(temp_dir):
-                filepath = os.path.join(temp_dir, filename)
-                try:
-                    if os.path.isfile(filepath):
-                        os.remove(filepath)
-                        count += 1
-                except:
-                    pass
-            
-            return f"Cleaned up {count} temporary files"
-        except:
-            return "Could not clean temporary files"
-
-    def get_weather(self, city):
-        """Get weather for a specific city"""
-        try:
-            # Use wttr.in service with robust headers and timeout
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            url = f"https://wttr.in/{urllib.parse.quote(city)}?format=%C+%t"
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            if response.status_code == 200:
-                weather_info = response.text.strip()
-                if not weather_info:
-                    return f"I couldn't retrieve the weather data for {city} right now."
-                return f"The weather in {city} is {weather_info}."
-            else:
-                return f"I couldn't get the weather for {city}. Service returned status {response.status_code}."
-        except requests.exceptions.Timeout:
-            return f"The weather service timed out for {city}. Please try again."
-        except Exception as e:
-            return f"I encountered an error getting the weather: {str(e)}"
-
-# ========== VOICE TYPING MANAGER ==========
-class VoiceTypingManager:
-    """Manages voice typing and text input"""
-    
-    def type_text(self, text):
-        """Type text using keyboard"""
-        try:
-            pyautogui.write(text, interval=0.05)
-            return f"Typed: {text[:50]}..." if len(text) > 50 else f"Typed: {text}"
-        except:
-            return "Could not type text"
-    
-    def type_from_clipboard(self):
-        """Type text from clipboard"""
-        try:
-            text = pyperclip.paste()
-            if text:
-                pyautogui.write(text, interval=0.05)
-                return f"Typed from clipboard: {text[:50]}..."
-            else:
-                return "Clipboard is empty"
-        except:
-            return "Could not type from clipboard"
-    
-    def voice_to_text(self, audio_system, recognizer):
-        """Convert voice to text and type it"""
-        try:
-            with sr.Microphone() as source:
-                audio_system.speak("Speak now, I'm listening...")
-                recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                audio = recognizer.listen(source, timeout=10, phrase_time_limit=30)
-                text = recognizer.recognize_google(audio)
-                
-                pyautogui.write(text, interval=0.05)
-                return f"Voice typed: {text[:100]}..."
-        except Exception as e:
-            return f"Voice typing failed: {str(e)}"
-
-# ========== FILE MANAGER ==========
-class FileManager:
-    """Manages file operations"""
-    
-    def list_files(self, directory="."):
-        """List files in directory"""
-        try:
-            files = os.listdir(directory)
-            return f"Files in {directory}: {', '.join(files[:10])}" + ("..." if len(files) > 10 else "")
-        except:
-            return f"Could not list files in {directory}"
-    
-    def create_file(self, filename):
-        """Create a new file"""
-        try:
-            with open(filename, 'w') as f:
-                pass
-            return f"Created file: {filename}"
-        except:
-            return f"Could not create file: {filename}"
-    
-    def delete_file(self, filename):
-        """Delete a file"""
-        try:
-            if os.path.exists(filename):
-                os.remove(filename)
-                return f"Deleted file: {filename}"
-            else:
-                return f"File not found: {filename}"
-        except:
-            return f"Could not delete file: {filename}"
-    
-    def copy_file(self, source, destination):
-        """Copy a file"""
-        try:
-            shutil.copy2(source, destination)
-            return f"Copied {source} to {destination}"
-        except:
-            return f"Could not copy {source} to {destination}"
-    
-    def move_file(self, source, destination):
-        """Move a file"""
-        try:
-            shutil.move(source, destination)
-            return f"Moved {source} to {destination}"
-        except:
-            return f"Could not move {source} to {destination}"
+from managers.audio_manager import AudioSystem
+from managers.app_manager import ApplicationManager
+from managers.browser_manager import BrowserManager
+from managers.media_manager import MediaManager
+from managers.screen_manager import ScreenCaptureManager
+from managers.code_manager import CodeEditorManager
+from managers.system_manager import SystemUtilitiesManager
+from managers.voice_manager import VoiceTypingManager
+from managers.file_manager import FileManager
 
 # ========== MAIN JARVIS CLASS ==========
 class JarvisAI:
@@ -938,6 +170,8 @@ class JarvisAI:
         self.voice_enabled = False # Start with voice disabled
         self.is_client_speaking = False # Track if client is speaking
         self.is_jarvis_speaking = False # Track if JARVIS is speaking
+        self.viva_mode = False
+        self.viva_question = ""
         
         print(f"\n{Fore.CYAN}🤖 Loading Enhanced AI Brain (Modular)...")
         # Initialize AI Brain
@@ -1204,7 +438,7 @@ class JarvisAI:
                         self.loop
                     )
     
-    async def process_command(self, command):
+    async def process_command(self, command, subject=None):
         """Process and execute commands"""
         if not command or not command.strip():
             self.speak("I didn't catch that. Could you please repeat?")
@@ -1218,6 +452,66 @@ class JarvisAI:
             if command_lower:
                 import random
                 self.speak(random.choice(self.jarvis_responses["affirmative"]))
+                
+        # ========== VIVA MODE COMMANDS ==========
+        if "start viva" in command_lower or "begin viva" in command_lower:
+            self.viva_mode = True
+            self.speak("Starting Viva mode based on your uploaded document. I am analyzing the text.")
+            
+            if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'rag_engine') and self.ai_brain.rag_engine:
+                # Retrieve some generic context to generate a question
+                # We can query with a generic search just to get a chunk
+                context = self.ai_brain.rag_engine.retrieve_context("key definitions concepts", subject="viva_doc")
+                if not context or not context.strip():
+                    self.speak("I couldn't find any uploaded document. Please upload one first.")
+                    self.viva_mode = False
+                    return
+                
+                prompt = f"Based on this academic context from the textbook, ask a single, concise viva question. Do not provide the answer.\nContext: {context}"
+                self.audio.play_beep("ai_processing")
+                # Wait, this is an async function calling synchronous code or is process_command async?
+                # Process command is async! Let's ensure we use run_in_executor for generate_response or if generate_response is synchronous, it will block. 
+                # generate_response in OllamaEnhancedManager is synchronous according to the signature. Let's just call it.
+                response = self.ai_brain.ollama.generate_response(prompt)
+                
+                if response:
+                    self.viva_question = response
+                    self.speak(response)
+                else:
+                    self.speak("Sorry, I could not generate a question right now.")
+            return
+            
+        elif "stop viva" in command_lower or "exit viva" in command_lower or "end viva" in command_lower:
+            self.viva_mode = False
+            self.viva_question = ""
+            self.speak("Viva mode ended.")
+            return
+            
+        elif self.viva_mode:
+            # We are evaluating the user's answer
+            if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'rag_engine') and self.ai_brain.rag_engine:
+                context = self.ai_brain.rag_engine.retrieve_context(self.viva_question, subject="viva_doc")
+                evaluation_prompt = f"""You are an examiner in a viva. 
+The question you asked was: "{self.viva_question}"
+The student answered: "{command}"
+
+Here is the textbook context for evaluation: 
+{context}
+
+1. Evaluate if the student's answer is correct. 
+2. If correct, praise the student and say it is correct. If incorrect, correct the user and explain briefly why.
+3. Then, ask ONE new, different viva question based on the context. Do not answer it.
+Keep your response conversational and concise."""
+
+                self.audio.play_beep("ai_processing")
+                response = self.ai_brain.ollama.generate_response(evaluation_prompt)
+                
+                if response:
+                    self.viva_question = response
+                    self.speak(response)
+                else:
+                    self.speak("I had trouble evaluating that. Let's try another question.")
+            return
         
         # ========== AUDIO/SPEECH COMMANDS ==========
         if "volume up" in command_lower or "increase volume" in command_lower:
@@ -1426,9 +720,9 @@ class JarvisAI:
             return
         
         # =========== AI RESPONSE FOR OTHER QUERIES ===========
-        await self.handle_ai_response(command_lower)
+        await self.handle_ai_response(command_lower, subject=subject)
     
-    async def handle_ai_response(self, query):
+    async def handle_ai_response(self, query, subject=None):
         """Handle queries with AI Brain intelligence"""
         if any(op in query for op in ['+', '-', '*', '/', 'plus', 'minus', 'times', 'divided', 'multiplied', 'multiply']):
             try:
@@ -1457,7 +751,7 @@ class JarvisAI:
                 pass
         
         try:
-            analysis = self.ai_brain.process_input(query)
+            analysis = self.ai_brain.process_input(query, subject=subject)
         except Exception as e:
             print(f"⚠️ AI Brain process_input error: {e}")
             import traceback
@@ -1631,10 +925,11 @@ async def websocket_endpoint(websocket: WebSocket):
             # Put handler logic here or route to jarvis
             if data.get("type") == "command":
                 content = data.get("content")
+                subject = data.get("subject")
                 if jarvis and content:
-                    print(f"Received command from Web UI: {content}")
+                    print(f"Received command from Web UI: {content} (Subject: {subject})")
                     # Process command using threadsafe execution on the main loop
-                    asyncio.run_coroutine_threadsafe(jarvis.process_command(content), jarvis.loop)
+                    asyncio.run_coroutine_threadsafe(jarvis.process_command(content, subject=subject), jarvis.loop)
             
             elif data.get("type") == "toggle_voice":
                 # Handle voice toggle preference if needed
@@ -1651,6 +946,109 @@ async def websocket_endpoint(websocket: WebSocket):
                 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+@app.post("/api/v1/upload-document")
+async def upload_document(file: UploadFile = File(...)):
+    global jarvis
+    if not jarvis or not hasattr(jarvis, 'ai_brain') or not hasattr(jarvis.ai_brain, 'rag_engine'):
+        raise HTTPException(status_code=503, detail="JARVIS AI Brain not initialized. Please wait for startup.")
+    
+    os.makedirs("temp_uploads", exist_ok=True)
+    file_path = f"temp_uploads/{file.filename}"
+    
+    try:
+        content = await file.read()
+        with open(file_path, "wb") as buffer:
+            buffer.write(content)
+            
+        print(f"📄 Processing uploaded document: {file.filename}")
+        
+        # Run the CPU-heavy ingestion in a separate thread so we don't block the event loop
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(
+            None, 
+            jarvis.ai_brain.rag_engine.ingest_document, 
+            file_path, 
+            "viva_doc"
+        )
+        return {"status": "success", "message": result}
+    except Exception as e:
+        print(f"❌ Error during document upload: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+# ========== FLASHCARD SYSTEM API ==========
+FLASHCARDS_FILE = "ai_brain_data/flashcards.json"
+
+def load_flashcards():
+    if not os.path.exists(FLASHCARDS_FILE):
+        return []
+    try:
+        with open(FLASHCARDS_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_flashcards(flashcards):
+    os.makedirs(os.path.dirname(FLASHCARDS_FILE), exist_ok=True)
+    with open(FLASHCARDS_FILE, "w") as f:
+        json.dump(flashcards, f)
+
+@app.get("/api/v1/flashcards")
+async def get_flashcards():
+    return {"flashcards": load_flashcards()}
+
+@app.post("/api/v1/flashcards")
+async def create_flashcard(request: Request):
+    data = await request.json()
+    name = data.get("name")
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+        
+    flashcards = load_flashcards()
+    if name in flashcards:
+        raise HTTPException(status_code=400, detail="Flashcard subject already exists")
+        
+    flashcards.append(name)
+    save_flashcards(flashcards)
+    return {"status": "success", "flashcards": flashcards}
+
+@app.post("/api/v1/flashcards/{subject}/upload")
+async def upload_flashcard_material(subject: str, file: UploadFile = File(...)):
+    global jarvis
+    if not jarvis or not hasattr(jarvis, 'ai_brain') or not hasattr(jarvis.ai_brain, 'rag_engine'):
+        raise HTTPException(status_code=503, detail="JARVIS AI Brain not initialized.")
+        
+    flashcards = load_flashcards()
+    if subject not in flashcards:
+        raise HTTPException(status_code=404, detail="Flashcard subject not found")
+        
+    os.makedirs("temp_uploads", exist_ok=True)
+    file_path = f"temp_uploads/{file.filename}"
+    
+    try:
+        content = await file.read()
+        with open(file_path, "wb") as buffer:
+            buffer.write(content)
+            
+        print(f"📄 Processing flashcard material for {subject}: {file.filename}")
+        
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(
+            None, 
+            jarvis.ai_brain.rag_engine.ingest_document, 
+            file_path, 
+            subject
+        )
+        return {"status": "success", "message": result}
+    except Exception as e:
+        print(f"❌ Error during flashcard material upload: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 # Mount static files (React build output)
 # Resolve absolute path to frontend dist
