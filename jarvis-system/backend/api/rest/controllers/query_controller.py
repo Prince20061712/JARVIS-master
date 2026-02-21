@@ -27,8 +27,8 @@ class QueryResponse(BaseModel):
 
 def get_engine():
     """Dependency to get engine instance. In a real app, this would be injected."""
-    from core.engine import JARVISCore
-    return JARVISCore()
+    from engine import JarvisFiveLayerEngine
+    return JarvisFiveLayerEngine()
 
 @router.post("/query", response_model=QueryResponse)
 async def process_query(request: QueryRequest):
@@ -39,19 +39,21 @@ async def process_query(request: QueryRequest):
         engine = get_engine()
         
         # Process query
-        result = await engine.process_query(
+        result = engine.process_student_query(
             query=request.query,
-            marks=request.marks,
-            subject=request.subject,
-            topic=request.topic
+            subject=request.subject
         )
         
+        proactive = result.get('proactive_interventions', [])
+        if not proactive:
+            proactive = []
+            
         return QueryResponse(
-            response=result.get('response', ""),
-            sources=result.get('sources', []),
-            confidence=result.get('confidence', 0.0),
-            suggested_topics=result.get('suggested_topics', []),
-            emotion_adapted=result.get('emotion_adapted', False)
+            response=result.get('final_response', ""),
+            sources=[],
+            confidence=1.0,
+            suggested_topics=proactive,
+            emotion_adapted=True
         )
     
     except Exception as e:
@@ -65,7 +67,11 @@ async def stream_query(request: QueryRequest):
     engine = get_engine()
     
     async def generate():
-        async for token in engine.stream_query(request.query):
-            yield f"data: {token}\n\n"
+        if hasattr(engine, 'stream_query'):
+            async for token in engine.stream_query(request.query):
+                yield f"data: {token}\n\n"
+        else:
+            result = engine.process_student_query(request.query, request.subject)
+            yield f"data: {result.get('final_response', '')}\n\n"
     
     return StreamingResponse(generate(), media_type="text/event-stream")

@@ -14,7 +14,7 @@ class AudioSystem:
         self.engine = None
         try:
             # Use Edge TTS for high quality voice
-            from core.system.tts_engine import EdgeTTSEngine
+            from system.tts_engine import EdgeTTSEngine
             self.engine = EdgeTTSEngine(voice="en-US-ChristopherNeural")
             print(f"{Fore.GREEN}🔊 Initialized Edge TTS (Voice: Christopher)")
         except Exception as e:

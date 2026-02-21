@@ -74,7 +74,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 
 import uvicorn
-from core.ai_brain import EnhancedAIBrain
+from ai_brain import EnhancedAIBrain
 
 # Initialize colorama
 init(autoreset=True)
@@ -763,6 +763,27 @@ Keep your response conversational and concise."""
         
         try:
             analysis = self.ai_brain.process_input(query, subject=subject)
+            
+            # Broadcast emotion state back to frontend via visual updates
+            if hasattr(self.audio, 'websocket_manager') and self.audio.websocket_manager and self.loop:
+                try:
+                    thought = analysis.get("thought_process", {})
+                    ei_data = thought.get("intermediate_results", {}).get("layer2", {}).get("emotion_analysis", {})
+                    emotion = ei_data.get("primary_emotion", "neutral")
+                    wellbeing = ei_data.get("wellbeing_score", 0.5)
+                    
+                    asyncio.run_coroutine_threadsafe(
+                        self.audio.websocket_manager.broadcast({
+                            "type": "emotion_state",
+                            "emotion": emotion,
+                            "wellbeing_score": wellbeing
+                        }),
+                        self.loop
+                    )
+                    print(f"{Fore.MAGENTA}😊 Emotion detected: {emotion} | Wellbeing: {wellbeing}")
+                except Exception as e:
+                    print(f"⚠️ Failed to broadcast emotion: {e}")
+                    
         except Exception as e:
             print(f"⚠️ AI Brain process_input error: {e}")
             import traceback

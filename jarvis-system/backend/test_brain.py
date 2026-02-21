@@ -4,7 +4,7 @@ import sys
 # Add backend dir to python path
 sys.path.append("/Users/princegupta/Downloads/JARVIS-master/jarvis-system/backend")
 
-from core.ai_brain import FullFledgedAIBrain
+from brain.ai_brain import FullFledgedAIBrain
 
 async def main():
     print("initializing AIBrain...")

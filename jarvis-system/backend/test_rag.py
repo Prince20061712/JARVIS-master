@@ -4,11 +4,11 @@ import os
 # Add parent dir to path to import backend modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from core.knowledge.rag_engine import EngineeringRAGEngine
+from knowledge.rag_engine import SyllabusAwareRAG
 
 def test_rag():
     print("Testing RAG Engine...")
-    rag = EngineeringRAGEngine()
+    rag = SyllabusAwareRAG()
     
     # 1. Ingest
     print("\n1. Ingesting Document...")

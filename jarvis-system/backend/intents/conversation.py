@@ -2,7 +2,7 @@ import logging
 import os
 from ai.llm_client import LLMClient
 from ai.emotion_detector import EmotionDetector
-from core.memory.context_manager import ContextManager
+from memory.context_manager import ContextManager
 
 logger = logging.getLogger("ConversationHandler")
 

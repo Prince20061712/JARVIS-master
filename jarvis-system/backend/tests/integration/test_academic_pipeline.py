@@ -1,5 +1,5 @@
 import pytest
-from core.engine import JARVISCore
+from engine import JARVISCore
 
 @pytest.mark.asyncio
 async def test_end_to_end_query_processing():
