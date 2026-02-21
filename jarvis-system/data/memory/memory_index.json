@@ -467,11 +467,23 @@
       "timestamp": "2026-02-20T20:39:49.860027",
       "user_id": "default",
       "user_input_preview": "what is process in operating system"
+    },
+    {
+      "memory_id": "a90d8e8963067045",
+      "timestamp": "2026-02-21T11:33:08.685275",
+      "user_id": "default",
+      "user_input_preview": "how was your day"
+    },
+    {
+      "memory_id": "2c4ce726e366c380",
+      "timestamp": "2026-02-21T11:34:05.833153",
+      "user_id": "default",
+      "user_input_preview": "tired i have"
     }
   ],
   "user_profiles": {
     "default": {
-      "total_conversations": 78,
+      "total_conversations": 80,
       "conversation_history": [
         {
           "memory_id": "10dfafe3248c1778",
@@ -862,14 +874,24 @@
           "memory_id": "a03edcace20f983a",
           "timestamp": "2026-02-20T20:39:49.860042",
           "preview": "what is process in operating s"
+        },
+        {
+          "memory_id": "a90d8e8963067045",
+          "timestamp": "2026-02-21T11:33:08.685288",
+          "preview": "how was your day"
+        },
+        {
+          "memory_id": "2c4ce726e366c380",
+          "timestamp": "2026-02-21T11:34:05.833167",
+          "preview": "tired i have"
         }
       ],
       "preferred_topics": {
         "topic_tech": 12
       },
       "conversation_patterns": {},
-      "last_interaction": "2026-02-20T20:39:49.860039"
+      "last_interaction": "2026-02-21T11:34:05.833165"
     }
   },
-  "last_updated": "2026-02-20T20:40:46.301742"
+  "last_updated": "2026-02-21T11:43:16.361772"
 }

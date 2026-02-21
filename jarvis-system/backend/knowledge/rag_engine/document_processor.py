@@ -27,11 +27,11 @@ from io import StringIO
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-import spacy
 import re
 
 # Try loading spaCy model
 try:
+    import spacy
     nlp = spacy.load("en_core_web_sm")
 except:
     nlp = None

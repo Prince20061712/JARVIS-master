@@ -29,3 +29,11 @@ chromadb
 sentence-transformers
 pymupdf
 langchain
+PyPDF2
+python-docx
+markdown
+pandas
+PyYAML
+rake-nltk
+yake
+textstat

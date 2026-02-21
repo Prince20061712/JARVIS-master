@@ -11,8 +11,6 @@ from sklearn.decomposition import LatentDirichletAllocation
 import networkx as nx
 from rake_nltk import Rake
 import yake
-from keybert import KeyBERT
-import spacy
 from textblob import TextBlob
 from dataclasses import dataclass, field
 import logging
@@ -20,6 +18,7 @@ from heapq import nlargest
 
 # Load spaCy model
 try:
+    import spacy
     nlp = spacy.load("en_core_web_sm")
 except:
     nlp = None
@@ -64,6 +63,7 @@ class TopicExtractor:
         )
         
         try:
+            from keybert import KeyBERT
             self.keybert = KeyBERT()
             self.use_keybert = True
         except:

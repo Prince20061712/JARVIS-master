@@ -9,11 +9,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 from textstat import textstat
-import spacy
 from collections import Counter
 
 # Load spaCy model
 try:
+    import spacy
     nlp = spacy.load("en_core_web_sm")
 except:
     nlp = None

@@ -7,10 +7,8 @@ from typing import List, Dict, Any, Optional, Tuple, Set
 from dataclasses import dataclass, field
 import numpy as np
 from collections import Counter
-import spacy
 from rake_nltk import Rake
 import yake
-from keybert import KeyBERT
 import nltk
 from nltk.corpus import wordnet
 import logging
@@ -22,6 +20,7 @@ except LookupError:
     nltk.download('wordnet')
 
 try:
+    import spacy
     nlp = spacy.load("en_core_web_sm")
 except:
     nlp = None
@@ -92,6 +91,7 @@ class QueryEnhancer:
         )
         
         try:
+            from keybert import KeyBERT
             self.keybert = KeyBERT()
             self.use_keybert = True
         except:

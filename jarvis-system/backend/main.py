@@ -170,6 +170,7 @@ class JarvisAI:
         self.voice_enabled = False # Start with voice disabled
         self.is_client_speaking = False # Track if client is speaking
         self.is_jarvis_speaking = False # Track if JARVIS is speaking
+        self.is_processing_command = False # Track if JARVIS is thinking/speaking
         self.viva_mode = False
         self.viva_question = ""
         
@@ -438,6 +439,16 @@ class JarvisAI:
                         self.loop
                     )
     
+    async def process_command_wrapper(self, command, subject=None):
+        """Wrapper to prevent simultaneous listening and processing"""
+        self.is_processing_command = True
+        try:
+            await self.process_command(command, subject=subject)
+        finally:
+            # Wait a tiny bit to ensure audio has completely finished
+            await asyncio.sleep(0.5)
+            self.is_processing_command = False
+
     async def process_command(self, command, subject=None):
         """Process and execute commands"""
         if not command or not command.strip():
@@ -872,20 +883,24 @@ Keep your response conversational and concise."""
         
         while self.is_running:
             try:
+                if getattr(self, 'is_processing_command', False):
+                    time.sleep(0.1)
+                    continue
+
                 if CONTINUOUS_MODE:
                     command = self.listen(timeout=None, phrase_time_limit=10)
                     if command:
                         if "exit" in command or "quit" in command or "goodbye" in command:
                             self.speak("Goodbye! Have a great day.")
                             break
-                        asyncio.run_coroutine_threadsafe(self.process_command(command), self.loop)
+                        asyncio.run_coroutine_threadsafe(self.process_command_wrapper(command), self.loop)
                 else:
                     command = self.listen(timeout=1, phrase_time_limit=5)
                     if command and WAKE_WORD in command:
                         self.speak("Yes, I'm listening.")
                         command = self.listen(timeout=10, phrase_time_limit=15)
                         if command:
-                            asyncio.run_coroutine_threadsafe(self.process_command(command), self.loop)
+                            asyncio.run_coroutine_threadsafe(self.process_command_wrapper(command), self.loop)
                 
                 time.sleep(0.1)
                 

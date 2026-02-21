@@ -105,10 +105,17 @@
       "timestamp": "2026-02-20T20:39:19.849242",
       "priority": "info",
       "confidence": 0.7
+    },
+    {
+      "event_type": "reminder",
+      "message": "Remember to stay hydrated! Your body needs water to function optimally.",
+      "timestamp": "2026-02-21T11:33:57.184432",
+      "priority": "info",
+      "confidence": 0.95
     }
   ],
   "stats": {
-    "total_events_generated": 15,
+    "total_events_generated": 16,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -117,5 +124,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-02-20T20:40:16.287856"
+  "last_updated": "2026-02-21T11:43:02.364447"
 }
