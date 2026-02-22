@@ -74,7 +74,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 
 import uvicorn
-from ai_brain import EnhancedAIBrain
+from brain.ai_brain import EnhancedAIBrain
 
 # Initialize colorama
 init(autoreset=True)

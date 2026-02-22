@@ -1,26 +1,13 @@
-from emotional_intelligence import EmotionalIntelligence
+from pipeline import (
+    ReactiveLayer, CognitiveLayer, MetacognitiveLayer, 
+    ProactiveLayer, CreativeLayer, CognitiveContext,
+    ResponseFormat, AcademicStyle
+)
 import json
 import asyncio
+import logging
 
-class MockLearningPatternTracker:
-    def log_interaction(self, subject, is_frustrated):
-        pass
-    def analyze_patterns(self):
-        return {"recommendations": ["Review basic concepts."]}
-
-class MockAcademicResponseFormatter:
-    def format_for_marks(self, raw_response, estimated_marks):
-        return raw_response
-
-class MockSyllabusAwareRAG:
-    def __init__(self, base_rag_engine=None, semester=1, branch="CS"):
-        pass
-    def get_context_with_syllabus(self, query, subject):
-        return {
-            "raw_context": "Maxwell's equations are a set of coupled partial differential equations...",
-            "estimated_marks": 10,
-            "question_type": "Derivation"
-        }
+logger = logging.getLogger(__name__)
 
 class JarvisFiveLayerEngine:
     """
@@ -31,66 +18,114 @@ class JarvisFiveLayerEngine:
     4. Proactive: Learning pattern analysis
     5. Creative: Generation & Formatting
     """
-    def __init__(self, base_rag_engine=None, user_id="default_student"):
-        self.rag = MockSyllabusAwareRAG(base_rag_engine, semester=1, branch="CS")
-        self.emotional_intelligence = EmotionalIntelligence(user_id)
-        self.learning_tracker = MockLearningPatternTracker()
-        self.formatter = MockAcademicResponseFormatter()
+    def __init__(self, config: dict = None, user_id: str = "default_student"):
+        self.config = config or {}
+        self.user_id = user_id
         
-    def process_student_query(self, query: str, subject: str = None) -> dict:
-        # Layer 1: Reactive (Is this a basic system command?)
-        if query.lower() in ["help", "stop", "clear"]:
-            return {"final_response": "Reactive command executed.", "layer": "Reactive"}
+        # Initialize the 5 layers
+        self.reactive = ReactiveLayer(self.config.get('reactive'))
+        self.cognitive = CognitiveLayer(self.config.get('cognitive'))
+        self.metacognitive = MetacognitiveLayer(self.config.get('metacognitive'))
+        self.proactive = ProactiveLayer(self.config.get('proactive'))
+        self.creative = CreativeLayer(self.config.get('creative'))
+        
+        logger.info("JarvisFiveLayerEngine initialized with all 5 enhanced layers.")
+        
+    async def process_student_query_async(self, query: str, subject: str = None, session_id: str = "default_session") -> dict:
+        """
+        Asynchronously process a student query through the 5-layer pipeline.
+        """
+        context = {
+            "subject": subject,
+            "user_id": self.user_id,
+            "session_id": session_id,
+            "timestamp": asyncio.get_event_loop().time()
+        }
 
-        # Layer 3: Metacognitive (Emotional State Detection)
-        # We use asyncio.run because process_interaction is async, while process_student_query is sync
+        # Layer 1: Reactive (Instant command processing)
+        reactive_response = await self.reactive.process(query, context=context, session_id=session_id)
+        if reactive_response.executed and reactive_response.command_type != None:
+            return {
+                "final_response": reactive_response.message,
+                "layer": "Reactive",
+                "metadata": reactive_response.metadata
+            }
+
+        # Layer 3: Metacognitive (Emotional State & Persona Adaptation)
+        metacognitive_insight = await self.metacognitive.process(query, session_id=session_id, context=context)
+        detected_emotion = metacognitive_insight.detected_state
+        persona_adjustments = metacognitive_insight.suggested_persona_adjustments
+
+        # Layer 4: Proactive (Pattern Detection & Suggestions)
+        # We pass recent interactions (simplified here as just the current one for now)
+        proactive_suggestions = await self.proactive.process(
+            user_id=self.user_id,
+            recent_interactions=[{"input": query, "emotion": detected_emotion.value}],
+            context=context
+        )
+
+        # Layer 2: Cognitive (Knowledge Retrieval / RAG)
+        cognitive_context = CognitiveContext(
+            query=query,
+            domain=subject,
+            user_id=self.user_id,
+            session_id=session_id
+        )
+        rag_result = await self.cognitive.process(cognitive_context)
+        
+        # Layer 5: Creative (Response Generation & Academic Styling)
+        # We use the RAG context window as the base content for the creative layer
+        creative_context = {
+            **context,
+            "emotion": detected_emotion.value,
+            "persona_adjustments": {k.value: v for k, v in persona_adjustments.items()},
+            "suggestions": [s.message for s in proactive_suggestions]
+        }
+        
+        # Determine recommended style and format
+        target_style = self.creative.get_style_recommendation(
+            user_level="intermediate", 
+            purpose="learning", 
+            emotional_state=detected_emotion.value
+        )
+        
+        creative_output = await self.creative.process(
+            content=rag_result.context_window,
+            context=creative_context,
+            target_format=ResponseFormat.MARKDOWN,
+            target_style=target_style
+        )
+
+        return {
+            "final_response": creative_output.content,
+            "detected_emotion": detected_emotion.value,
+            "confidence": metacognitive_insight.confidence,
+            "proactive_suggestions": [s.message for s in proactive_suggestions],
+            "academic_metrics": {
+                "word_count": creative_output.word_count,
+                "reading_time": creative_output.reading_time_minutes,
+                "has_math": creative_output.has_math,
+                "has_code": creative_output.has_code
+            },
+            "layer_metadata": {
+                "reactive": reactive_response.metadata,
+                "cognitive": rag_result.metadata,
+                "metacognitive": {
+                    "reasoning": metacognitive_insight.reasoning,
+                    "persona_adjustments": {k.value: v for k, v in persona_adjustments.items()}
+                }
+            }
+        }
+
+    def process_student_query(self, query: str, subject: str = None) -> dict:
+        """Synchronous wrapper for processing student queries."""
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
-        ei_result = loop.run_until_complete(
-            self.emotional_intelligence.process_interaction(text=query, context={"subject": subject})
-        )
-        detected_emotion = ei_result["state"]["current"]["primary_emotion"]
-        is_frustrated = detected_emotion in ["frustration", "anxiety", "overwhelmed", "burnout"]
-
-        # Layer 4 (Pre-process): Proactive (Log Interaction & Get Recommendations)
-        self.learning_tracker.log_interaction(subject or "General Engineering", is_frustrated)
-        proactive_insights = self.learning_tracker.analyze_patterns()
-
-        # Layer 2: Cognitive (Syllabus-Aware Knowledge Retrieval)
-        rag_payload = self.rag.get_context_with_syllabus(query, subject)
-        
-        # Layer 5: Creative (Generate raw LLM Response using RAG Context and format it)
-        raw_llm_response = f"Based on the context:\n{rag_payload['raw_context'][:100]}...\nThis answers the {rag_payload['question_type']} requirement."
-        
-        # Apply strict Academic Formatting (Marks allocator)
-        formatted_response = self.formatter.format_for_marks(raw_llm_response, rag_payload["estimated_marks"])
-        
-        # Apply Mentorship/Emotional Wrap if needed
-        # We adapt response based on the detected emotional state
-        formatted_response = self.emotional_intelligence.adapt_response(
-            formatted_response, context={"subject": subject}
-        )
-            
-        # Append Proactive Interventions (if any)
-        if proactive_insights["recommendations"]:
-            formatted_response += "\n\n🔔 **Proactive Suggestion:**\n" + proactive_insights["recommendations"][-1]
-            
-        # Append Proactive Emotional Message (if any)
-        if ei_result.get("proactive_message"):
-            formatted_response += "\n\n💙 **JARVIS:**\n" + ei_result["proactive_message"]
-
-        return {
-            "final_response": formatted_response,
-            "detected_emotion": detected_emotion,
-            "wellbeing_score": ei_result["wellbeing_score"],
-            "estimated_marks": rag_payload["estimated_marks"],
-            "question_type": rag_payload["question_type"],
-            "proactive_interventions": proactive_insights["recommendations"]
-        }
+        return loop.run_until_complete(self.process_student_query_async(query, subject))
 
 if __name__ == "__main__":
     # Test the pipeline

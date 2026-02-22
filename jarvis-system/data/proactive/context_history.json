@@ -112,10 +112,17 @@
       "timestamp": "2026-02-21T11:33:57.184432",
       "priority": "info",
       "confidence": 0.95
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Lunch time! Want restaurant suggestions based on your preferences?",
+      "timestamp": "2026-02-22T12:15:21.545143",
+      "priority": "medium",
+      "confidence": 0.8
     }
   ],
   "stats": {
-    "total_events_generated": 16,
+    "total_events_generated": 17,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -124,5 +131,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-02-21T11:43:02.364447"
+  "last_updated": "2026-02-22T12:21:42.448404"
 }
