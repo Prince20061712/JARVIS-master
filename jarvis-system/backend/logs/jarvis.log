@@ -1,0 +1,8 @@
+2026-02-22 05:07:18 - [INFO] - JARVIS_Logger - Initializing Enhanced Memory System...
+2026-02-22 05:07:19 - [INFO] - JARVIS_Logger - ChromaDB initialized at /Users/princegupta/Downloads/JARVIS-master/jarvis-system/data/memory/vector_db
+2026-02-22 05:07:22 - [INFO] - JARVIS_Logger - SentenceTransformer model loaded successfully.
+2026-02-22 05:07:22 - [DEBUG] - JARVIS_Logger - Collection 'conversations' ready.
+2026-02-22 05:07:22 - [DEBUG] - JARVIS_Logger - Collection 'facts' ready.
+2026-02-22 05:07:22 - [DEBUG] - JARVIS_Logger - Database schema initialized.
+2026-02-22 05:07:22 - [INFO] - JARVIS_Logger - No existing graph found. Starting fresh.
+2026-02-22 05:07:22 - [INFO] - JARVIS_Logger - Enhanced Memory System Initialized successfully.

@@ -681,6 +681,9 @@ class FullFledgedAIBrain:
         # 7. Emotional Intelligence (Empathy)
         self.emotion = EmotionalIntelligence(user_name)
         
+        # Link EI to Proactive Assistant
+        self.proactive.emotion_intelligence = self.emotion
+        
         # 8. Knowledge System (World knowledge)
         self.knowledge = EnhancedKnowledgeSystem()
         

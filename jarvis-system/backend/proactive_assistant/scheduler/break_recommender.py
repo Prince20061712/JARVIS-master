@@ -63,6 +63,8 @@ class WellnessMetrics:
     mental_fatigue: float  # 0-1
     hydration_level: float  # 0-1
     hours_since_break: float
+    emotional_state: Optional[str] = "neutral"
+    wellbeing_score: Optional[float] = 0.5
     context: Dict[str, Any] = field(default_factory=dict)
 
 class BreakRecommender:
@@ -249,6 +251,8 @@ class BreakRecommender:
                                      physical_discomfort: Optional[float] = None,
                                      mental_fatigue: Optional[float] = None,
                                      hydration_level: Optional[float] = None,
+                                     emotional_state: Optional[str] = None,
+                                     wellbeing_score: Optional[float] = None,
                                      context: Optional[Dict] = None) -> WellnessMetrics:
         """
         Update current wellness metrics.
@@ -278,6 +282,8 @@ class BreakRecommender:
             mental_fatigue=mental_fatigue or (1 - focus_level) * 0.7,
             hydration_level=hydration_level or 0.5,
             hours_since_break=hours_since_break,
+            emotional_state=emotional_state or "neutral",
+            wellbeing_score=wellbeing_score if wellbeing_score is not None else 0.5,
             context=context or {}
         )
         
@@ -492,6 +498,17 @@ class BreakRecommender:
         else:
             break_reason = "recent break taken"
         
+        # Factor 7: Emotional State
+        emotional_reason = ""
+        if metrics.emotional_state in ['frustration', 'anxiety', 'overwhelmed', 'burnout', 'stress']:
+            urgency_score += 2
+            emotional_reason = f"high {metrics.emotional_state} detected"
+            recommended_type = BreakType.MENTAL
+        elif metrics.wellbeing_score < 0.4:
+            urgency_score += 1
+            emotional_reason = "low wellbeing score"
+            recommended_type = BreakType.WELLNESS
+        
         # Combine reasons
         reasons = []
         if duration_worked > 0:
@@ -506,6 +523,8 @@ class BreakRecommender:
             reasons.append(physical_reason)
         if metrics.hours_since_break > 2:
             reasons.append(break_reason)
+        if emotional_reason:
+            reasons.append(emotional_reason)
         
         # Clamp urgency score
         urgency_score = max(1, min(4, urgency_score))

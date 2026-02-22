@@ -63,7 +63,7 @@ class EmotionalIntelligence:
             context
         )
     
-    def get_emotional_summary(self) -> Dict[str, Any]:
+    def get_emotional_summary(self, hours: Optional[int] = None) -> Dict[str, Any]:
         """
         Get summary of emotional state and patterns
         """

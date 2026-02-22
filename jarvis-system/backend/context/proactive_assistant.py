@@ -133,6 +133,7 @@ class AdvancedProactiveAssistant:
         # Load existing data
         self._load_learned_data()
         self._initialize_ml_models()
+        self.emotion_intelligence = None # Will be set by brain
     
     def _initialize_time_triggers(self) -> Dict[Tuple[int, int], Dict[str, Any]]:
         """Initialize intelligent time-based triggers"""
@@ -474,7 +475,15 @@ class AdvancedProactiveAssistant:
         
         # 2. Context-based triggers
         if current_context:
-            context_event = self._check_context_based_triggers(current_context, current_time)
+            # Sync emotional state if EI module is available
+            emotional_state = "neutral"
+            wellbeing_score = 0.5
+            if self.emotion_intelligence:
+                ei_summary = self.emotion_intelligence.get_emotional_summary()
+                emotional_state = ei_summary.get("current_mood", "neutral")
+                wellbeing_score = ei_summary.get("wellbeing", 0.5)
+
+            context_event = self._check_context_based_triggers(current_context, current_time, emotional_state, wellbeing_score)
             if context_event and self._should_trigger_event(context_event):
                 events.append(context_event)
         
@@ -553,7 +562,9 @@ class AdvancedProactiveAssistant:
         return None
     
     def _check_context_based_triggers(self, context: Dict[str, Any], 
-                                     current_time: datetime.datetime) -> Optional[ProactiveEvent]:
+                                     current_time: datetime.datetime,
+                                     emotional_state: str = "neutral",
+                                     wellbeing_score: float = 0.5) -> Optional[ProactiveEvent]:
         """Check context-based triggers"""
         activity_type = context.get("activity_type")
         if not activity_type:
@@ -567,8 +578,15 @@ class AdvancedProactiveAssistant:
         trigger_config = self.context_triggers[context_enum]
         activity_duration = context.get("activity_duration_minutes", 0)
         
+        # Adjust duration threshold based on emotional state
+        threshold = trigger_config["check_interval"]
+        if emotional_state in ['frustration', 'anxiety', 'burnout']:
+            threshold *= 0.7 # Suggest breaks 30% sooner
+        elif wellbeing_score < 0.4:
+            threshold *= 0.8 # Suggest breaks 20% sooner
+        
         # Check if activity duration exceeds threshold
-        if activity_duration >= trigger_config["check_interval"]:
+        if activity_duration >= threshold:
             # Calculate break suggestion probability based on duration
             probability = min(1.0, activity_duration / (trigger_config["check_interval"] * 2))
             
