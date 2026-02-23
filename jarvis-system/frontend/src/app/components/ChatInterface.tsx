@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Send, Mic, ChevronDown, Hash } from "lucide-react";
+import { Send, Mic, ChevronDown, Hash, Camera, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export interface Message {
@@ -35,7 +35,31 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, isListening
   const [showMarks, setShowMarks] = useState(false);
   const [showSubject, setShowSubject] = useState(false);
   const [flashcards, setFlashcards] = useState<string[]>([]);
+  const [isExtracting, setIsExtracting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleCaptureScreen = async () => {
+    setIsExtracting(true);
+    try {
+      const protocol = window.location.protocol;
+      const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
+      const res = await fetch(`${protocol}//${host}/api/v1/screen/extract-text`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "full_screen", language: "eng" })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.text) {
+          setInput(prev => prev + (prev ? "\n" : "") + data.text);
+        }
+      }
+    } catch (e) {
+      console.error("Screen capture failed", e);
+    } finally {
+      setIsExtracting(false);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -175,8 +199,25 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, isListening
           </div>
         </div>
 
-        {/* Input Row */}
         <form onSubmit={handleSubmit} className="flex gap-2 items-center pb-4">
+          <motion.button
+            type="button"
+            onClick={handleCaptureScreen}
+            disabled={isExtracting}
+            className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border transition-all ${isExtracting
+              ? "bg-purple-500/20 border-purple-500/50 shadow-[0_0_12px_rgba(168,85,247,0.3)]"
+              : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            whileTap={{ scale: 0.92 }}
+            title="Read Screen"
+          >
+            {isExtracting ? (
+              <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+            ) : (
+              <Camera className="w-4 h-4 text-white/60" />
+            )}
+          </motion.button>
+
           <motion.button
             type="button"
             onClick={onMicClick}
