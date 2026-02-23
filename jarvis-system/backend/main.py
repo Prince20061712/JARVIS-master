@@ -99,6 +99,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# === MOUNT MODULAR API ===
+from api.rest.routes import app as api_app
+app.mount("/api/v1", api_app)
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
