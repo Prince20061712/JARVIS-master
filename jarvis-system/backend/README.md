@@ -2,7 +2,7 @@
 
 An emotionally intelligent, syllabus-aware academic assistant for engineering students.
 
-## Features
+### Features
 
 - 📚 **Syllabus-aware RAG engine** for precise answers
 - 🎯 **Exam-oriented response formatting** (2/5/10/15 marks)
