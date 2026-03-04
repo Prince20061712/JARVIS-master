@@ -37,3 +37,10 @@ PyYAML
 rake-nltk
 yake
 textstat
+python-magic
+pyperclip
+watchdog
+humanize
+send2trash
+pyzipper
+mypy

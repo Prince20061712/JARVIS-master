@@ -19,16 +19,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
 import difflib
-import keyboard
 import pynput
 from pynput.keyboard import Key, Controller
 import pygetwindow as gw
 import applescript
 import Quartz
 import AppKit
-import accessibility
 import rpa as tagui
-import autohotkey
 from unidecode import unidecode
 import Levenshtein
 from rapidfuzz import fuzz, process
@@ -170,6 +167,7 @@ class VoiceTypingManager:
         self.is_paused = False
         self.typing_queue: queue.Queue = queue.Queue()
         self.typing_thread: Optional[threading.Thread] = None
+        self.hotkey_listener: Optional[pynput.keyboard.GlobalHotKeys] = None
         
         # Configuration
         self.default_language = DictationLanguage.ENGLISH_US
@@ -273,15 +271,32 @@ class VoiceTypingManager:
             logger.error(f"Failed to save config: {e}")
     
     def setup_keyboard_listeners(self) -> None:
-        """Setup global keyboard shortcuts"""
+        """Setup global keyboard shortcuts using pynput"""
         try:
-            # Register keyboard shortcuts
+            mapping = {}
             for action, shortcut in self.shortcuts.items():
-                try:
-                    keyboard.add_hotkey(shortcut, lambda a=action: self.handle_shortcut(a))
-                    logger.info(f"Registered shortcut {shortcut} for {action}")
-                except Exception as e:
-                    logger.error(f"Failed to register shortcut {shortcut}: {e}")
+                # Convert standard shortcut string to pynput format
+                # e.g., cmd+shift+d -> <cmd>+<shift>+d
+                parts = shortcut.split('+')
+                pynput_parts = []
+                for p in parts:
+                    if p in ('cmd', 'shift', 'ctrl', 'alt', 'option', 'command'):
+                        pynput_parts.append(f'<{p}>')
+                    else:
+                        pynput_parts.append(p)
+                pynput_shortcut = '+'.join(pynput_parts)
+                
+                mapping[pynput_shortcut] = lambda a=action: self.handle_shortcut(a)
+                logger.debug(f"Prepared shortcut {shortcut} -> {pynput_shortcut} for {action}")
+                
+            listener = pynput.keyboard.GlobalHotKeys(mapping)
+            self.hotkey_listener = listener
+            
+            if listener is not None:
+                # Type ignore since pynput threads inherit from threading.Thread which has daemon
+                listener.daemon = True # type: ignore
+                listener.start() # type: ignore
+            logger.info("Started pynput GlobalHotKeys listener")
         except Exception as e:
             logger.error(f"Failed to setup keyboard listeners: {e}")
     
@@ -307,7 +322,8 @@ class VoiceTypingManager:
         """Start background tasks"""
         # Start typing queue processor
         self.typing_thread = threading.Thread(target=self.process_typing_queue, daemon=True)
-        self.typing_thread.start()
+        if self.typing_thread:
+            self.typing_thread.start()
         
         # Start context monitor
         context_thread = threading.Thread(target=self.monitor_context, daemon=True)
@@ -350,15 +366,8 @@ class VoiceTypingManager:
             self.current_context.cursor_position = pyautogui.position()
             
             # Try to get selected text
-            try:
-                with pyautogui.hold('cmd'):
-                    pyautogui.press('c')
-                    time.sleep(0.1)
-                    selected = pyperclip.paste()
-                    if selected:
-                        self.current_context.selected_text = selected
-            except:
-                pass
+            # Disabled: Simulating Cmd+C every second continuously types 'c' and ruins the clipboard
+            self.current_context.selected_text = None
             
             # Store in history
             self.context_history.append(self.current_context)
@@ -446,14 +455,14 @@ class VoiceTypingManager:
                 return DictationResult("", 0.0)
             
             # Parse results
-            alternatives = []
-            words = []
+            alternatives: List[str] = []
+            words: List[Dict] = []
             
             if 'alternative' in results:
-                alternatives = [alt['transcript'] for alt in results['alternative']]
+                alternatives = [str(alt.get('transcript', '')) for alt in results['alternative']]
                 
                 # Get confidence if available
-                confidence = results['alternative'][0].get('confidence', 0.0)
+                confidence = float(results['alternative'][0].get('confidence', 0.0))
                 
                 # Get word-level details if available
                 if 'words' in results:
@@ -471,7 +480,7 @@ class VoiceTypingManager:
             return DictationResult(
                 text=main_text,
                 confidence=confidence,
-                alternatives=alternatives[1:self.max_alternatives],
+                alternatives=alternatives[1:self.max_alternatives], # type: ignore
                 words=words,
                 language=language,
                 duration=duration
@@ -550,8 +559,9 @@ class VoiceTypingManager:
             
             for word in words:
                 # Check custom vocabulary
-                if word.lower() in self.custom_vocabulary:
-                    corrected_words.append(self.custom_vocabulary[word.lower()][0])
+                vocab_match = self.custom_vocabulary.get(word.lower())
+                if vocab_match and len(vocab_match) > 0:
+                    corrected_words.append(str(vocab_match[0]))
                     continue
                 
                 # Check common corrections
@@ -578,7 +588,7 @@ class VoiceTypingManager:
                     new_text[i] = suggestion
                     suggestions.append(' '.join(new_text))
             
-            return suggestions[:self.max_alternatives]
+            return suggestions[:self.max_alternatives] # type: ignore
             
         except Exception as e:
             logger.error(f"Failed to get corrections: {e}")
@@ -591,8 +601,9 @@ class VoiceTypingManager:
             corrections = []
             
             # Check custom vocabulary
-            if word.lower() in self.custom_vocabulary:
-                corrections.extend(self.custom_vocabulary[word.lower()])
+            vocab_match = self.custom_vocabulary.get(word.lower())
+            if vocab_match:
+                corrections.extend([str(v) for v in vocab_match])
             
             # Use Levenshtein distance for spelling correction
             # This is a simplified version - in practice you'd use a dictionary
@@ -601,7 +612,7 @@ class VoiceTypingManager:
                 if Levenshtein.distance(word.lower(), common) <= 2:
                     corrections.append(common)
             
-            return list(set(corrections))[:self.max_alternatives]
+            return list(set(corrections))[:self.max_alternatives] # type: ignore
             
         except Exception as e:
             logger.error(f"Failed to get word corrections: {e}")
@@ -928,11 +939,11 @@ class VoiceTypingManager:
             style: Formatting style to apply
         """
         try:
-            if not self.current_context.selected_text:
+            text = self.current_context.selected_text
+            if not text:
                 logger.warning("No text selected")
                 return
             
-            text = self.current_context.selected_text
             style = style or FormattingStyle.PLAIN
             
             # Apply formatting
@@ -946,7 +957,7 @@ class VoiceTypingManager:
                 formatted = text.capitalize()
             elif style == FormattingStyle.CAMEL_CASE:
                 words = text.split()
-                formatted = words[0].lower() + ''.join(w.title() for w in words[1:])
+                formatted = words[0].lower() + ''.join(w.title() for w in words[1:]) # type: ignore
             elif style == FormattingStyle.PASCAL_CASE:
                 formatted = ''.join(w.title() for w in text.split())
             elif style == FormattingStyle.SNAKE_CASE:
@@ -967,15 +978,15 @@ class VoiceTypingManager:
     def correct_selected_text(self) -> None:
         """Correct selected text"""
         try:
-            if not self.current_context.selected_text:
+            text = self.current_context.selected_text
+            if not text:
                 logger.warning("No text selected")
                 return
             
-            text = self.current_context.selected_text
             corrected = self.auto_correct_text(text)
             
             # Replace with corrected text
-            if corrected != text:
+            if corrected and corrected != text:
                 # Delete selected text
                 self.keyboard_controller.press(Key.backspace)
                 self.keyboard_controller.release(Key.backspace)

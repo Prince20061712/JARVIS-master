@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+.mypy_cache/
+.pytest_cache/
+.pyre/
+
+# Logs
+*.log
+logs/
+
+# Frontend
+node_modules/
+dist/
+build/
+.next/
+.serverless/
+.DS_Store
+
+# Java specific
+jarvis-system/backend/cache/
+jarvis-system/jarvis_learning.json
+jarvis-system/jarvis_memory.json
+jarvis-system/backend/media/temp/
+
+# IDEs
+.vscode/
+.idea/

@@ -74,6 +74,21 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 
 import uvicorn
+
+# compatibility shim: some older dependencies (e.g. sentence-transformers 2.x)
+# expect `cached_download` exported from huggingface_hub.  newer versions removed
+# it, breaking imports.  Insert a simple alias so imports succeed even when the
+# installed hub is recent.
+try:
+    import huggingface_hub
+    if not hasattr(huggingface_hub, 'cached_download'):
+        from huggingface_hub import hf_hub_download
+        huggingface_hub.cached_download = hf_hub_download
+except ImportError:
+    # huggingface_hub may not even be installed yet; it will be brought in by
+    # downstream packages if required.
+    pass
+
 from brain.ai_brain import EnhancedAIBrain
 
 # Initialize colorama
@@ -245,7 +260,7 @@ class JarvisAI:
         print(f"{Fore.CYAN}User: {USER_NAME}")
         print(f"{Fore.CYAN}Ollama Auto-Start: {'Enabled' if ENABLE_LOCAL_AI else 'Disabled'}")
         
-        audio_vol = int(self.audio.get_volume() * 100)
+        audio_vol = int((self.audio.volume_level / 100.0) * 100) if hasattr(self.audio, 'volume_level') else 100
         print(f"{Fore.CYAN}🔊 Audio Status: Volume {audio_vol}%, Rate: {self.audio.speech_rate} wpm")
         print(f"{Fore.YELLOW}💡 Try saying 'test audio' to check your speakers")
         
@@ -254,10 +269,10 @@ class JarvisAI:
         ai_status = self.ai_brain.get_brain_status()
         if ai_status.get("local_ai", {}).get("available", False):
             welcome = f"Hello {USER_NAME}, I am JARVIS with enhanced AI capabilities. Ollama server started automatically. Local intelligence is online. All systems are ready to assist you."
-            self.audio.speak(welcome, play_beep=True)
+            self.speak(welcome, play_beep=True)
         else:
             welcome = f"Hello {USER_NAME}, I am JARVIS. Basic AI systems online. For advanced AI, I tried to start Ollama but it's not available. How can I help you?"
-            self.audio.speak(welcome, play_beep=True)
+            self.speak(welcome, play_beep=True)
     
     def cleanup(self):
         """Cleanup function"""
@@ -275,8 +290,11 @@ class JarvisAI:
 
     def speak(self, text, play_beep=False, rate=None):
         """Wrapper for audio system speak"""
+        if play_beep:
+            self.audio.play_beep("response")
+        
         if ENABLE_TERMINAL_VOICE:
-            self.audio.speak(text, play_beep, rate)
+            self.audio.speak(text, priority=rate if rate is not None else 0)
         elif self.audio.websocket_manager and self.loop:
             # If terminal voice disabled, still send to frontend
             print(f"{Fore.GREEN}{JARVIS_NAME} (Silent): {text}")
@@ -333,16 +351,13 @@ class JarvisAI:
                 )
             
         try:
-            # Check if AudioSystem.speak supports on_complete and on_start
+            # Check if AudioSystem.speak supports on_end and on_start
             if hasattr(self.audio, 'speak'):
                 # We assume we updated AudioSystem.speak to support both
-                self.audio.speak(text, play_beep, rate, on_complete=on_speech_complete, on_start=on_speech_start)
+                self.audio.speak(text, priority=rate if rate is not None else 0, on_end=on_speech_complete, on_start=on_speech_start)
             else:
                  # Fallback
-                 self.audio.speak(text, play_beep, rate)
-        except Exception as e:
-            print(f"Error in speech: {e}")
-            self.is_jarvis_speaking = False # Reset on error
+                 self.audio.speak(text, priority=rate if rate is not None else 0)
         except Exception as e:
             print(f"Error in speech: {e}")
             self.is_jarvis_speaking = False # Reset on error

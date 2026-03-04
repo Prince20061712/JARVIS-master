@@ -29,14 +29,12 @@ from git import Repo
 import requests
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import sublime
-import vscode
 import pygments
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
 import importlib
-import pkg_resources
+# import pkg_resources
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -195,10 +193,10 @@ class CodeEditorManager:
     
     def _find_editors(self) -> Dict[Editor, Optional[Path]]:
         """Find installed code editors"""
-        editor_paths = {}
+        editor_paths: Dict[Editor, Optional[Path]] = {}
         
-        # Common editor paths on macOS
-        editor_locations = {
+        # Common editor locations by OS (macOS paths for the test structure)
+        editor_locations: Dict[Editor, List[str]] = {
             Editor.VSCODE: [
                 "/Applications/Visual Studio Code.app",
                 "/usr/local/bin/code",
@@ -523,7 +521,7 @@ CREATE INDEX idx_{table_name}_created ON {table_name}(created_at);
     
     def create_code_file(self, filename: Union[str, Path],
                         language: Union[str, Language] = Language.PYTHON,
-                        template: Union[str, CodeTemplate] = None,
+                        template: Optional[Union[str, CodeTemplate]] = None,
                         content: str = "",
                         open_in_editor: bool = False,
                         editor: Union[str, Editor] = Editor.VSCODE) -> Dict[str, Any]:
@@ -636,7 +634,7 @@ CREATE INDEX idx_{table_name}_created ON {table_name}(created_at);
         Returns:
             Dictionary with open result
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "editor_used": None,
@@ -740,7 +738,7 @@ CREATE INDEX idx_{table_name}_created ON {table_name}(created_at);
         Returns:
             Dictionary with write result
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "file_path": None,
@@ -858,7 +856,7 @@ CREATE INDEX idx_{table_name}_created ON {table_name}(created_at);
         Returns:
             Dictionary with analysis results
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "file_info": None,
@@ -889,7 +887,7 @@ CREATE INDEX idx_{table_name}_created ON {table_name}(created_at);
             comment_lines = sum(1 for line in lines if line.strip().startswith(('#', '//', '/*')))
             blank_lines = total_lines - code_lines - comment_lines
             
-            file_info = {
+            file_info: Dict[str, Any] = {
                 "path": str(file_path),
                 "language": language.value,
                 "size": file_path.stat().st_size,
@@ -1004,7 +1002,7 @@ CREATE INDEX idx_{table_name}_created ON {table_name}(created_at);
         Returns:
             Dictionary with project creation result
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "project_path": None,
@@ -1206,7 +1204,7 @@ build/
         return templates.get(language, "# .gitignore\n")
     
     def run_code(self, file_path: Union[str, Path],
-                args: List[str] = None,
+                args: Optional[List[str]] = None,
                 capture_output: bool = False) -> Dict[str, Any]:
         """
         Run code file
@@ -1219,7 +1217,7 @@ build/
         Returns:
             Dictionary with execution result
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "stdout": "",
@@ -1299,7 +1297,7 @@ build/
     
     def get_snippet(self, language: Union[str, Language],
                    snippet_name: str,
-                   variables: Dict[str, str] = None) -> Optional[str]:
+                   variables: Optional[Dict[str, str]] = None) -> Optional[str]:
         """
         Get a code snippet
         
@@ -1578,7 +1576,7 @@ build/
         Returns:
             Formatting result
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "files_formatted": 0,
@@ -1638,7 +1636,7 @@ build/
     
     def get_workspace_info(self) -> Dict[str, Any]:
         """Get information about current workspace"""
-        info = {
+        info: Dict[str, Any] = {
             "workspace_dir": str(self.workspace_dir),
             "exists": self.workspace_dir.exists(),
             "projects": len(self.projects),

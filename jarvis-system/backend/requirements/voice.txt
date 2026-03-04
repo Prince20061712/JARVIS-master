@@ -1,5 +1,5 @@
 whisper==1.1.10
-faster-whisper==0.9.0
+# faster-whisper==0.9.0  # removed due to build issues on macOS arm64
 pyaudio==0.2.13
 pyttsx3==2.90
 TTS==0.21.0

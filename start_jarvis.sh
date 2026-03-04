@@ -18,14 +18,18 @@ cleanup() {
 # Trap SIGINT (Ctrl+C)
 trap cleanup SIGINT
 
-echo "🚀 Initializing JARVIS..."./start_jarvis.sh
+echo "🚀 Initializing JARVIS..."
 
-# check if .venv exists
-if [ -d ".venv" ]; then
+# check if venv exists
+VENV_PATH="jarvis-system/backend/venv"
+PYTHON_CMD="python3"
+
+if [ -d "$VENV_PATH" ]; then
     echo "🔵 Activating virtual environment..."
-    source .venv/bin/activate
+    source "$VENV_PATH/bin/activate"
+    PYTHON_CMD="$SCRIPT_DIR/$VENV_PATH/bin/python3"
 else
-    echo "⚠️  .venv not found! Ensure you have set up the python environment."
+    echo "⚠️  venv not found! Ensure you have set up the python environment."
 fi
 
 # Start Backend
@@ -36,7 +40,7 @@ if [ ! -f "main.py" ]; then
     echo "❌ Error: jarvis-system/backend/main.py not found!"
     exit 1
 fi
-python3 main.py &
+"$PYTHON_CMD" main.py &
 cd "$SCRIPT_DIR"
 
 # Start Frontend

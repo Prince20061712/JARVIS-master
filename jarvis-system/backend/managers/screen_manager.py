@@ -30,7 +30,7 @@ from screeninfo import get_monitors
 import Quartz
 import AppKit
 from Cocoa import NSWorkspace
-import CoreGraphics
+from Quartz import CoreGraphics
 import av
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -233,7 +233,9 @@ class ScreenCaptureManager:
                 # Get scale factor
                 mode = CoreGraphics.CGDisplayCopyDisplayMode(main_display_id)
                 if mode:
-                    screen.scale_factor = mode.pixelWidth / mode.width if mode.width > 0 else 1.0
+                    width = CoreGraphics.CGDisplayModeGetWidth(mode)
+                    pixel_width = CoreGraphics.CGDisplayModeGetPixelWidth(mode)
+                    screen.scale_factor = pixel_width / width if width > 0 else 1.0
         
         except Exception as e:
             logger.error(f"Error getting screen info: {e}")
@@ -430,9 +432,11 @@ class ScreenCaptureManager:
             
             elif mode == CaptureMode.SELECTED_REGION:
                 image = self._capture_selected_region(include_cursor)
-                if image and self.selection_start and self.selection_end:
-                    width = abs(self.selection_end[0] - self.selection_start[0])
-                    height = abs(self.selection_end[1] - self.selection_start[1])
+                start = self.selection_start
+                end = self.selection_end
+                if image and start is not None and end is not None:
+                    width = abs(end[0] - start[0])
+                    height = abs(end[1] - start[1])
                     result.size = (width, height)
             
             elif mode == CaptureMode.ALL_MONITORS:
@@ -461,7 +465,8 @@ class ScreenCaptureManager:
             
             elif mode == CaptureMode.SPECIFIC_MONITOR:
                 # Capture specific monitor (need monitor ID in metadata)
-                monitor_id = metadata.get('monitor_id', 0)
+                meta = metadata or {}
+                monitor_id = int(meta.get('monitor_id', 0))
                 image = self._capture_monitor(monitor_id, include_cursor)
                 if image and monitor_id < len(self.screens):
                     screen = self.screens[monitor_id]
@@ -495,7 +500,10 @@ class ScreenCaptureManager:
             # Update result
             result.success = True
             result.file_path = output_path
-            result.format = image_format.value
+            if isinstance(image_format, Enum):
+                result.format = str(image_format.value)
+            else:
+                result.format = str(image_format)
             result.message = f"Screenshot saved to {output_path}"
             
             # Add to history
@@ -504,7 +512,7 @@ class ScreenCaptureManager:
             
             # Trim history
             if len(self.capture_history) > self.max_history:
-                self.capture_history = self.capture_history[-self.max_history:]
+                self.capture_history = self.capture_history[-self.max_history:] # type: ignore
             
             logger.info(result.message)
         
@@ -574,13 +582,15 @@ class ScreenCaptureManager:
     def _capture_selected_region(self, include_cursor: bool = True) -> Optional[Image.Image]:
         """Capture selected region"""
         try:
-            if not self.selection_start or not self.selection_end:
+            start = self.selection_start
+            end = self.selection_end
+            if start is None or end is None:
                 # If no region selected, start interactive selection
                 self.start_region_selection()
                 return None
             
-            x1, y1 = self.selection_start
-            x2, y2 = self.selection_end
+            x1, y1 = start
+            x2, y2 = end
             
             left = min(x1, x2)
             top = min(y1, y2)
@@ -839,7 +849,7 @@ class ScreenCaptureManager:
         Returns:
             Dictionary with recording info
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "recording_id": None,
@@ -881,7 +891,8 @@ class ScreenCaptureManager:
                 target=self._recording_worker,
                 args=(mode, output_path, format, fps, width, height, with_audio, max_duration)
             )
-            self.recording_thread.start()
+            if self.recording_thread is not None:
+                self.recording_thread.start()
             
             result["success"] = True
             result["message"] = f"Recording started: {output_path}"
@@ -947,15 +958,15 @@ class ScreenCaptureManager:
                 frames_written += 1
                 
                 # Check duration
-                if max_duration:
-                    elapsed = time.time() - self.recording_start_time
-                    if elapsed >= max_duration:
+                if max_duration is not None and self.recording_start_time is not None:
+                    elapsed = float(time.time() - self.recording_start_time)
+                    if elapsed >= float(max_duration):
                         self.stop_recording()
                         break
                 
                 # Maintain frame rate
-                elapsed = time.time() - frame_start
-                sleep_time = max(0, frame_interval - elapsed)
+                elapsed_frame = float(time.time() - frame_start)
+                sleep_time = float(max(0.0, float(frame_interval) - elapsed_frame))
                 time.sleep(sleep_time)
             
             # Flush encoder
@@ -971,7 +982,7 @@ class ScreenCaptureManager:
     
     def stop_recording(self) -> Dict[str, Any]:
         """Stop the current recording"""
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "duration": None,
@@ -985,10 +996,10 @@ class ScreenCaptureManager:
             
             self.recording_in_progress = False
             
-            if self.recording_thread:
+            if self.recording_thread is not None:
                 self.recording_thread.join(timeout=10)
             
-            duration = time.time() - self.recording_start_time if self.recording_start_time else 0
+            duration = float(time.time() - self.recording_start_time) if self.recording_start_time is not None else 0.0
             
             result["success"] = True
             result["message"] = "Recording stopped"
@@ -1023,7 +1034,7 @@ class ScreenCaptureManager:
         Returns:
             Dictionary with extracted text and metadata
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "message": "",
             "text": "",
@@ -1056,23 +1067,25 @@ class ScreenCaptureManager:
             # Get confidence data
             data = pytesseract.image_to_data(img, lang=lang, config=custom_config, output_type=pytesseract.Output.DICT)
             
-            words = []
+            words: List[Dict[str, Any]] = []
+            confidences: List[float] = []
             for i in range(len(data['text'])):
-                if int(data['conf'][i]) > 0:  # Filter out low confidence
+                conf_val = float(data['conf'][i])
+                if conf_val > 0:  # Filter out low confidence
                     words.append({
-                        'text': data['text'][i],
-                        'confidence': float(data['conf'][i]),
+                        'text': str(data['text'][i]),
+                        'confidence': conf_val,
                         'bbox': (
-                            data['left'][i],
-                            data['top'][i],
-                            data['width'][i],
-                            data['height'][i]
+                            int(data['left'][i]),
+                            int(data['top'][i]),
+                            int(data['width'][i]),
+                            int(data['height'][i])
                         )
                     })
+                    confidences.append(conf_val)
             
             # Calculate average confidence
-            confidences = [w['confidence'] for w in words if w['confidence'] > 0]
-            avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+            avg_confidence = float(sum(confidences)) / len(confidences) if confidences else 0.0
             
             result["success"] = True
             result["text"] = text.strip()
@@ -1248,7 +1261,7 @@ class ScreenCaptureManager:
         
         return result
     
-    def schedule_capture(self, interval: int, count: int = None,
+    def schedule_capture(self, interval: int, count: Optional[int] = None,
                         mode: CaptureMode = CaptureMode.FULL_SCREEN,
                         until: Optional[datetime.datetime] = None) -> str:
         """
@@ -1289,7 +1302,7 @@ class ScreenCaptureManager:
     
     def get_capture_history(self, limit: int = 10) -> List[CaptureResult]:
         """Get recent capture history"""
-        return self.capture_history[-limit:]
+        return self.capture_history[-limit:] # type: ignore
     
     def undo_last_capture(self) -> Optional[CaptureResult]:
         """Undo/delete last capture"""

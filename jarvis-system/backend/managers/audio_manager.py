@@ -748,7 +748,7 @@ class AudioSystem:
     def play_beep(self, beep_type: str = "response", frequency: int = 440, duration: float = 0.1):
         """Play beep sound with various types"""
         try:
-            beep_configs = {
+            beep_configs: Dict[str, Dict[str, Any]] = {
                 "response": {"frequency": 523, "duration": 0.1},  # C5
                 "listening": {"frequency": 659, "duration": 0.15},  # E5
                 "processing": {"frequency": 392, "duration": 0.2},  # G4
@@ -804,6 +804,10 @@ class AudioSystem:
         
         self.speak(f"Volume set to {self.volume_level} percent")
         return self.volume_level
+    
+    def get_volume(self) -> float:
+        """Get current volume as a float between 0.0 and 1.0"""
+        return self.volume_level / 100.0
     
     def set_rate(self, rate: int) -> int:
         """

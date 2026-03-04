@@ -15,7 +15,24 @@ from functools import lru_cache
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import hnswlib
-from sentence_transformers import SentenceTransformer
+
+# sentence-transformers will try to import cached_download from huggingface_hub
+# which was removed in recent releases.  Provide a clear error if the environment
+# has an incompatible hub version and hint at the required pin in requirements.
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError as e:
+    msg = str(e)
+    if 'cached_download' in msg or 'huggingface_hub' in msg:
+        raise ImportError(
+            "Failed to import SentenceTransformer due to incompatible "
+            "huggingface_hub version.\n"
+            "Please install a compatible release (e.g. `huggingface_hub<0.17`). "
+            "Updating `requirements/rag.txt` and reinstalling the RAG dependencies "
+            "typically resolves this issue."
+        ) from e
+    raise
+
 import torch
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import normalize

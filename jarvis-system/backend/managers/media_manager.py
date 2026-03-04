@@ -10,6 +10,7 @@ import time
 import json
 import logging
 import re
+import os
 from typing import Dict, List, Optional, Tuple, Union, Any
 from dataclasses import dataclass, field
 from enum import Enum
@@ -18,7 +19,7 @@ from datetime import datetime, timedelta
 import pywhatkit
 import pyautogui
 import requests
-import applecript
+import applescript
 import psutil
 from bs4 import BeautifulSoup
 import spotipy
@@ -165,6 +166,15 @@ class MediaManager:
         # Initialize pygame for audio
         pygame.mixer.init()
         
+        self.default_service: MediaService = MediaService.LOCAL
+        
+        # Audio configuration
+        self.sample_rate = 44100
+        self.channels = 2
+        
+        # Spotify client
+        self.spotify_client: Optional[spotipy.Spotify] = None
+        
         # Load configuration
         self._load_config()
         
@@ -294,7 +304,7 @@ class MediaManager:
         Returns:
             Parsed query components
         """
-        result = {
+        result: Dict[str, Any] = {
             "action": "play",  # Default action
             "query": query,
             "service": None,
@@ -650,18 +660,18 @@ class MediaManager:
                     if artist:
                         search_query = f"track:{song} artist:{artist}"
                     
-                    results = self.spotify_client.search(q=search_query, type='track', limit=1)
+                    results = self.spotify_client.search(q=search_query, type='track', limit=1)  # pyre-ignore[16]
                     
                     if results['tracks']['items']:
                         track = results['tracks']['items'][0]
                         track_uri = track['uri']
                         
                         # Get active devices
-                        devices = self.spotify_client.devices()
+                        devices = self.spotify_client.devices()  # pyre-ignore[16]
                         
                         if devices['devices']:
                             # Play on first available device
-                            self.spotify_client.start_playback(
+                            self.spotify_client.start_playback(  # pyre-ignore[16]
                                 uris=[track_uri],
                                 device_id=devices['devices'][0]['id']
                             )
@@ -742,15 +752,15 @@ class MediaManager:
             # Try API first
             if self.services[MediaService.SPOTIFY].get('api_enabled'):
                 try:
-                    results = self.spotify_client.search(q=playlist_name, type='playlist', limit=1)
+                    results = self.spotify_client.search(q=playlist_name, type='playlist', limit=1)  # pyre-ignore[16]
                     
                     if results['playlists']['items']:
                         playlist = results['playlists']['items'][0]
                         playlist_uri = playlist['uri']
                         
-                        devices = self.spotify_client.devices()
+                        devices = self.spotify_client.devices()  # pyre-ignore[16]
                         if devices['devices']:
-                            self.spotify_client.start_playback(
+                            self.spotify_client.start_playback(  # pyre-ignore[16]
                                 context_uri=playlist_uri,
                                 device_id=devices['devices'][0]['id']
                             )
@@ -1012,15 +1022,15 @@ class MediaManager:
                 if self.services[MediaService.SPOTIFY].get('api_enabled'):
                     try:
                         if action == "play":
-                            self.spotify_client.start_playback()
+                            self.spotify_client.start_playback()  # pyre-ignore[16]
                         elif action == "pause":
-                            self.spotify_client.pause_playback()
+                            self.spotify_client.pause_playback()  # pyre-ignore[16]
                         elif action == "next":
-                            self.spotify_client.next_track()
+                            self.spotify_client.next_track()  # pyre-ignore[16]
                         elif action == "previous":
-                            self.spotify_client.previous_track()
+                            self.spotify_client.previous_track()  # pyre-ignore[16]
                         elif action == "shuffle":
-                            self.spotify_client.shuffle(True)
+                            self.spotify_client.shuffle(True)  # pyre-ignore[16]
                         
                         service_controlled = True
                         result["success"] = True
@@ -1156,7 +1166,7 @@ class MediaManager:
             # Try to get info from active services
             if self._is_service_active(MediaService.SPOTIFY) and self.services[MediaService.SPOTIFY].get('api_enabled'):
                 try:
-                    playback = self.spotify_client.current_playback()
+                    playback = self.spotify_client.current_playback()  # pyre-ignore[16]
                     if playback:
                         item = playback.get('item', {})
                         result["success"] = True
@@ -1438,7 +1448,7 @@ class MediaManager:
                 
                 elif svc == MediaService.SPOTIFY and self.services[svc].get('api_enabled'):
                     # Spotify search
-                    spotify_results = self.spotify_client.search(q=query, limit=limit)
+                    spotify_results = self.spotify_client.search(q=query, limit=limit)  # pyre-ignore[16]
                     
                     for track in spotify_results['tracks']['items']:
                         results.append({

@@ -4,7 +4,7 @@ Proactive Layer - Analyzes learning patterns and generates proactive interventio
 
 import asyncio
 import logging
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -101,7 +101,7 @@ class ProactiveLayer:
         
         logger.info("Proactive Layer initialized")
     
-    def _init_pattern_detectors(self) -> Dict[str, callable]:
+    def _init_pattern_detectors(self) -> Dict[str, Callable]:
         """Initialize pattern detection functions"""
         return {
             'struggle_cycles': self._detect_struggle_cycles,
@@ -198,16 +198,16 @@ class ProactiveLayer:
                                      patterns: List[LearningPattern],
                                      context: Dict[str, Any]) -> List[ProactiveSuggestion]:
         """Detect cycles of struggle with specific topics"""
-        suggestions = []
+        suggestions: List[ProactiveSuggestion] = []
         
         # Track struggles by topic
-        struggle_counts = defaultdict(int)
+        struggle_counts: Dict[str, int] = {}
         recent_struggles = []
         
         for interaction in interactions[-20:]:  # Look at last 20 interactions
             if interaction.get('emotional_state') in ['frustrated', 'confused']:
                 topic = interaction.get('topic', 'unknown')
-                struggle_counts[topic] += 1
+                struggle_counts[topic] = struggle_counts.get(topic, 0) + 1
                 recent_struggles.append({
                     'topic': topic,
                     'timestamp': interaction.get('timestamp', datetime.now())
@@ -234,7 +234,7 @@ class ProactiveLayer:
                                        patterns: List[LearningPattern],
                                        context: Dict[str, Any]) -> List[ProactiveSuggestion]:
         """Detect learning velocity changes and provide appropriate interventions"""
-        suggestions = []
+        suggestions: List[ProactiveSuggestion] = []
         
         if len(interactions) < 5:
             return suggestions
@@ -288,7 +288,7 @@ class ProactiveLayer:
                                       patterns: List[LearningPattern],
                                       context: Dict[str, Any]) -> List[ProactiveSuggestion]:
         """Detect session-based patterns and provide reminders"""
-        suggestions = []
+        suggestions: List[ProactiveSuggestion] = []
         
         if len(interactions) < 2:
             return suggestions
@@ -311,11 +311,11 @@ class ProactiveLayer:
         
         # Detect optimal learning times
         if len(interactions) > 10:
-            hour_counts = defaultdict(int)
+            hour_counts: Dict[int, int] = {}
             for interaction in interactions:
                 if 'timestamp' in interaction:
                     hour = interaction['timestamp'].hour
-                    hour_counts[hour] += 1
+                    hour_counts[hour] = hour_counts.get(hour, 0) + 1
             
             if hour_counts:
                 optimal_hour = max(hour_counts.items(), key=lambda x: x[1])[0]
@@ -339,7 +339,7 @@ class ProactiveLayer:
                                        patterns: List[LearningPattern],
                                        context: Dict[str, Any]) -> List[ProactiveSuggestion]:
         """Detect transitions between topics and suggest connections"""
-        suggestions = []
+        suggestions: List[ProactiveSuggestion] = []
         
         if len(interactions) < 3:
             return suggestions
@@ -355,10 +355,10 @@ class ProactiveLayer:
             return suggestions
         
         # Find common transitions
-        transitions = defaultdict(int)
+        transitions: Dict[str, int] = {}
         for i in range(len(topics)-1):
             transition = f"{topics[i]} -> {topics[i+1]}"
-            transitions[transition] += 1
+            transitions[transition] = transitions.get(transition, 0) + 1
         
         if transitions:
             most_common = max(transitions.items(), key=lambda x: x[1])
@@ -417,21 +417,22 @@ class ProactiveLayer:
                                          patterns: List[LearningPattern],
                                          context: Dict[str, Any]) -> List[ProactiveSuggestion]:
         """Detect engagement patterns and provide motivational interventions"""
-        suggestions = []
+        suggestions: List[ProactiveSuggestion] = []
         
         if len(interactions) < 5:
             return suggestions
         
         # Calculate engagement trend
-        recent_engagement = []
+        recent_engagement: List[float] = []
         for interaction in interactions[-10:]:
             if 'engagement_level' in interaction:
-                recent_engagement.append(interaction['engagement_level'])
+                recent_engagement.append(float(interaction['engagement_level']))
         
         if len(recent_engagement) > 3:
             # Check for declining engagement
-            first_half = recent_engagement[:len(recent_engagement)//2]
-            second_half = recent_engagement[len(recent_engagement)//2:]
+            half: int = len(recent_engagement) // 2
+            first_half = [recent_engagement[i] for i in range(half)]
+            second_half = [recent_engagement[i] for i in range(half, len(recent_engagement))]
             
             if first_half and second_half:
                 avg_first = np.mean(first_half)
@@ -630,9 +631,9 @@ class ProactiveLayer:
             return {}
         
         # Count by type
-        type_counts = defaultdict(int)
+        type_counts: Dict[str, int] = {}
         for intervention in interventions:
-            type_counts[intervention['type']] += 1
+            type_counts[intervention['type']] = type_counts.get(intervention['type'], 0) + 1
         
         # Calculate acceptance rate (simplified)
         total = len(interventions)

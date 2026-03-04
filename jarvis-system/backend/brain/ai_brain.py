@@ -1893,9 +1893,12 @@ class FullFledgedAIBrain:
         print("\n💾 Saving AI Brain state...")
         
         # Save each module's state
-        self.memory.save_memory()
-        self.learning.save_learning()
-        self.proactive.save_learning_data()
+        if hasattr(self.memory, 'save_memory'):
+            self.memory.save_memory()
+        if hasattr(self.learning, 'save_learning'):
+            self.learning.save_learning()
+        if hasattr(self.proactive, 'save_learning_data'):
+            self.proactive.save_learning_data()
         
         # Save conversation history
         history_file = os.path.join(self.data_dir, "conversation_history.json")

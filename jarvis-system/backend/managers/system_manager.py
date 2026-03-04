@@ -6,7 +6,7 @@ Handles system monitoring, hardware info, process management, and system operati
 import os
 import platform
 import psutil
-import datetime
+
 import urllib.parse
 import requests
 import subprocess
@@ -545,17 +545,16 @@ class SystemUtilitiesManager:
             log_file.parent.mkdir(parents=True, exist_ok=True)
             
             # Append to log file
+            logs: List[Dict[str, Any]] = []
             if log_file.exists():
                 with open(log_file, 'r') as f:
                     logs = json.load(f)
-            else:
-                logs = []
             
             logs.append(log_entry)
             
             # Keep last 1000 entries
             if len(logs) > 1000:
-                logs = logs[-1000:]
+                logs = [logs[i] for i in range(len(logs) - 1000, len(logs))]
             
             with open(log_file, 'w') as f:
                 json.dump(logs, f, indent=2)
@@ -603,7 +602,7 @@ class SystemUtilitiesManager:
                     "Disk Partitions": self.get_disk_partitions(),
                     "Network Interfaces": self.get_network_interfaces(),
                     "Environment Variables": dict(os.environ),
-                    "Loaded Modules": list(sys.modules.keys())[:100]  # Limit to 100
+                    "Loaded Modules": [str(k) for i, k in enumerate(sys.modules.keys()) if i < 100]  # Limit to 100
                 })
             
             return info
@@ -993,12 +992,13 @@ class SystemUtilitiesManager:
             List of process information dictionaries
         """
         try:
-            processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 
-                                           'status', 'create_time', 'username']):
+            processes: List[Dict[str, Any]] = []
+            for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_percent', 'status', 'create_time']):
                 try:
                     pinfo = proc.info
-                    pinfo['create_time'] = datetime.fromtimestamp(pinfo['create_time']).strftime("%Y-%m-%d %H:%M:%S")
+                    create_t = pinfo.get('create_time', 0)
+                    if create_t:
+                        pinfo['create_time'] = datetime.fromtimestamp(create_t).strftime("%Y-%m-%d %H:%M:%S")
                     processes.append(pinfo)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
@@ -1013,7 +1013,7 @@ class SystemUtilitiesManager:
             elif sort_by == "pid":
                 processes.sort(key=lambda x: x.get('pid', 0))
             
-            return processes[:limit]
+            return [processes[i] for i in range(min(limit, len(processes)))]
             
         except Exception as e:
             return [{"error": str(e)}]
@@ -1334,7 +1334,7 @@ class SystemUtilitiesManager:
                 }
             else:
                 # Extract packet loss
-                packet_loss = 100
+                packet_loss: int = 100
                 for line in result.stdout.split('\n'):
                     if "packet loss" in line.lower():
                         match = re.search(r'(\d+)%', line)
@@ -1345,7 +1345,7 @@ class SystemUtilitiesManager:
                 return {
                     "host": host,
                     "packets_sent": count,
-                    "packets_received": count - int(count * packet_loss / 100),
+                    "packets_received": count - ((count * packet_loss) // 100),  # pyre-ignore
                     "packet_loss": packet_loss,
                     "error": "Host unreachable" if packet_loss == 100 else "Partial packet loss",
                     "output": result.stdout
@@ -1366,7 +1366,7 @@ class SystemUtilitiesManager:
         Returns:
             List of hops
         """
-        hops = []
+        hops: List[Dict[str, Any]] = []
         
         try:
             # Determine traceroute command based on OS
@@ -1385,7 +1385,7 @@ class SystemUtilitiesManager:
                         # Simplified parsing
                         parts = line.split()
                         if len(parts) >= 2:
-                            hop = {
+                            hop: Dict[str, Any] = {
                                 "hop": len(hops) + 1,
                                 "host": parts[1] if len(parts) > 1 else "Unknown",
                                 "ip": parts[1] if len(parts) > 1 else "Unknown",
@@ -1583,12 +1583,10 @@ class SystemUtilitiesManager:
                 str(Path.home() / "Downloads")
             ]
             
-            stats = {
-                "files_deleted": 0,
-                "directories_deleted": 0,
-                "space_freed": 0,
-                "errors": []
-            }
+            files_deleted: int = 0
+            directories_deleted: int = 0
+            space_freed: int = 0
+            errors: List[str] = []
             
             cutoff_time = time.time() - (days_old * 24 * 3600)
             
@@ -1604,10 +1602,10 @@ class SystemUtilitiesManager:
                             if os.path.getmtime(filepath) < cutoff_time:
                                 size = os.path.getsize(filepath)
                                 os.remove(filepath)
-                                stats["files_deleted"] += 1
-                                stats["space_freed"] += size
+                                files_deleted += 1  # pyre-ignore
+                                space_freed += size  # pyre-ignore
                         except Exception as e:
-                            stats["errors"].append(f"Error deleting {filepath}: {e}")
+                            errors.append(f"Error deleting {filepath}: {e}")
                     
                     # Check directories (if empty and old)
                     for dir in dirs:
@@ -1615,19 +1613,26 @@ class SystemUtilitiesManager:
                             dirpath = os.path.join(root, dir)
                             if os.path.getmtime(dirpath) < cutoff_time and not os.listdir(dirpath):
                                 os.rmdir(dirpath)
-                                stats["directories_deleted"] += 1
+                                directories_deleted += 1  # pyre-ignore
                         except Exception as e:
-                            stats["errors"].append(f"Error deleting {dirpath}: {e}")
+                            errors.append(f"Error deleting {dirpath}: {e}")
             
             # Format space freed
-            if stats["space_freed"] > 1024**3:
-                stats["space_freed_formatted"] = f"{stats['space_freed'] / (1024**3):.2f} GB"
-            elif stats["space_freed"] > 1024**2:
-                stats["space_freed_formatted"] = f"{stats['space_freed'] / (1024**2):.2f} MB"
+            space_freed_formatted = ""
+            if space_freed > 1024**3:
+                space_freed_formatted = f"{space_freed / (1024**3):.2f} GB"  # pyre-ignore
+            elif space_freed > 1024**2:
+                space_freed_formatted = f"{space_freed / (1024**2):.2f} MB"  # pyre-ignore
             else:
-                stats["space_freed_formatted"] = f"{stats['space_freed'] / 1024:.2f} KB"
+                space_freed_formatted = f"{space_freed / 1024:.2f} KB"  # pyre-ignore
             
-            return stats
+            return {
+                "files_deleted": files_deleted,
+                "directories_deleted": directories_deleted,
+                "space_freed": space_freed,
+                "space_freed_formatted": space_freed_formatted,
+                "errors": errors
+            }
             
         except Exception as e:
             return {"error": str(e)}
@@ -1643,7 +1648,7 @@ class SystemUtilitiesManager:
             List of directories with usage
         """
         try:
-            usage = []
+            usage: List[Dict[str, Any]] = []
             
             for item in os.listdir(path):
                 try:
@@ -1659,8 +1664,8 @@ class SystemUtilitiesManager:
                     continue
             
             # Sort by size descending
-            usage.sort(key=lambda x: x["size"], reverse=True)
-            return usage[:20]  # Return top 20
+            usage.sort(key=lambda x: float(str(x.get("size", 0))), reverse=True)
+            return [usage[i] for i in range(min(20, len(usage)))]  # Return top 20
             
         except Exception as e:
             return [{"error": str(e)}]
