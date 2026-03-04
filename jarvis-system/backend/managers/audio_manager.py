@@ -659,8 +659,14 @@ class AudioSystem:
     
     def _play_audio_file(self, file_path: Path):
         """Play audio file"""
+        import platform
         try:
-            # Use pygame for playback
+            # Bypass pygame on macOS to prevent SDL initialization conflicts with OpenCV
+            if platform.system() == "Darwin":
+                subprocess.run(['afplay', str(file_path)], check=True)
+                return
+
+            # Use pygame for playback on other systems
             pygame.mixer.init()
             pygame.mixer.music.load(str(file_path))
             pygame.mixer.music.play()

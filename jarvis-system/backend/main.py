@@ -100,7 +100,7 @@ JARVIS_NAME = "Jarvis"
 CONTINUOUS_MODE = True
 WAKE_WORD = "jarvis"
 ENABLE_LOCAL_AI = True
-OLLAMA_MODEL = "llama3.1"
+OLLAMA_MODEL = "llama3.1:latest"
 ENABLE_TERMINAL_VOICE = False # Set to False to prevent backend from speaking (prevents feedback loop)
 
 # ========== FASTAPI & WEBSOCKET SETUP ==========
@@ -655,6 +655,40 @@ Keep your response conversational and concise."""
             
             result = self.screen_capture.take_screenshot(area)
             self.speak(result)
+            return
+
+        if "read screen" in command_lower or "what is on my screen" in command_lower:
+            try:
+                self.speak("Reading your screen now. Please wait a moment.")
+                capture_result = self.screen_capture.take_screenshot("full_screen")
+                if capture_result.success:
+                    ocr_res = self.screen_capture.extract_text(capture_result.file_path)
+                    if ocr_res.get("success") and ocr_res.get("text"):
+                        text = ocr_res["text"]
+                        # Run async AI response logic
+                        import asyncio
+                        summary = ""
+                        try:
+                            # Use ai_brain to summarize the on-screen text
+                            future = asyncio.run_coroutine_threadsafe(
+                                self.ai_brain.generate_response(
+                                    f"Please summarize what is on my screen based on this OCR text:\n\n{text[:2000]}", 
+                                    context={}
+                                ),
+                                self.loop
+                            )
+                            summary = future.result(timeout=10)
+                            self.speak(f"On your screen: {summary}")
+                        except Exception as ai_e:
+                            logger.error(f"AI summarizing error: {ai_e}")
+                            self.speak("I read the screen, but couldn't summarize it properly.")
+                    else:
+                        self.speak("I couldn't read any text on the screen.")
+                else:
+                    self.speak("I failed to capture the screen.")
+            except Exception as e:
+                logger.error(f"Screen reading error: {e}")
+                self.speak("I encountered an error while trying to read your screen.")
             return
         
         # ========== CODE COMMANDS ==========
