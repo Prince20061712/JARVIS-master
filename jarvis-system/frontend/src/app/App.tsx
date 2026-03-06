@@ -538,6 +538,7 @@ export default function App() {
               onSendMessage={handleSendMessage}
               onMicClick={handleMicClick}
               isListening={isListening}
+              isProcessing={robotState === "processing"}
             />
           </div>
         </div>

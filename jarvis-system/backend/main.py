@@ -198,7 +198,7 @@ class JarvisAI:
         try:
             # Use centralized data directory
             data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
-            self.ai_brain = EnhancedAIBrain(USER_NAME, data_dir=data_dir)
+            self.ai_brain = EnhancedAIBrain(USER_NAME, data_dir=data_dir, primary_model=OLLAMA_MODEL)
             print(f"{Fore.GREEN}✅ AI Brain loaded successfully")
         except Exception as e:
             print(f"{Fore.RED}❌ Error loading AI Brain: {e}")
@@ -636,13 +636,15 @@ Keep your response conversational and concise."""
         if "play " in command_lower and ("youtube" in command_lower or "on youtube" in command_lower):
             query = command_lower.replace("play ", "").replace("on youtube", "").strip()
             result = self.media_manager.play_youtube_video(query)
-            self.speak(result)
+            msg = result.get("message", str(result)) if isinstance(result, dict) else str(result)
+            self.speak(msg)
             return
         
         if "play " in command_lower and "spotify" in command_lower:
             query = command_lower.replace("play ", "").replace("on spotify", "").strip()
             result = self.media_manager.play_spotify_song(query)
-            self.speak(result)
+            msg = result.get("message", str(result)) if isinstance(result, dict) else str(result)
+            self.speak(msg)
             return
         
         # ========== SCREENSHOT COMMANDS ==========

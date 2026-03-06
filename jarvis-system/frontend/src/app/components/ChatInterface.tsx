@@ -16,6 +16,7 @@ interface ChatInterfaceProps {
   onSendMessage: (text: string, marks: number | null, subject: string) => void;
   onMicClick: () => void;
   isListening: boolean;
+  isProcessing?: boolean;
 }
 
 const MARKS_OPTIONS = [0, 2, 5, 10, 15];
@@ -28,7 +29,7 @@ function formatMarkdownLike(text: string) {
     .replace(/\n/g, '<br/>');
 }
 
-export function ChatInterface({ messages, onSendMessage, onMicClick, isListening }: ChatInterfaceProps) {
+export function ChatInterface({ messages, onSendMessage, onMicClick, isListening, isProcessing }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [marks, setMarks] = useState<number>(0);
   const [subject, setSubject] = useState<string>("General");
@@ -63,7 +64,7 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, isListening
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isProcessing]);
 
   useEffect(() => {
     // Fetch flashcards to populate the subject dropdown
@@ -132,13 +133,25 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, isListening
                       }`}
                     dangerouslySetInnerHTML={{ __html: formatMarkdownLike(message.text) }}
                   />
-                  <div className={`text-[10px] mt-1 px-1 opacity-30 ${message.type === "user" ? "text-right" : "text-left"}`}>
-                    {message.timestamp.toLocaleTimeString()}
+                  <div className={`text-[10px] mt-1.5 px-1 font-medium text-white/40 ${message.type === "user" ? "text-right" : "text-left"}`}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                   </div>
                 </div>
               )}
             </motion.div>
           ))}
+          {isProcessing && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="bg-black/40 border-white/10 text-white/50 px-4 py-3 rounded-2xl rounded-bl-sm backdrop-blur-md border text-xs flex items-center gap-3">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                <span className="tracking-wide">JARVIS is thinking...</span>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
         <div ref={messagesEndRef} />
       </div>

@@ -277,10 +277,22 @@ class OllamaEnhancedManager:
                 print(f"✅ Available models: {available_models}")
                 
                 # Check if primary model is available
-                if self.primary_model not in available_models:
+                # Smart matching: check for exact match or model:latest vs model
+                def model_match(name, available_list):
+                    if name in available_list: return name
+                    # Try matching prefix (e.g. 'llama3.1' matches 'llama3.1:latest')
+                    for model in available_list:
+                        if model == f"{name}:latest" or f"{model}:latest" == name: return model
+                        if model.startswith(name + ":"): return model
+                        if name.startswith(model + ":"): return model
+                    return None
+
+                matched_model = model_match(self.primary_model, available_models)
+                if not matched_model:
                     print(f"⚠️  Primary model {self.primary_model} not found")
-                    if self.fallback_model in available_models:
-                        self.primary_model = self.fallback_model
+                    matched_fallback = model_match(self.fallback_model, available_models)
+                    if matched_fallback:
+                        self.primary_model = matched_fallback
                         print(f"   Using fallback model: {self.primary_model}")
                     elif available_models:
                         self.primary_model = available_models[0]
@@ -289,6 +301,8 @@ class OllamaEnhancedManager:
                         print("❌ No models available")
                         self.is_available = False
                         return
+                else:
+                    self.primary_model = matched_model
                 
                 print(f"✅ Using model: {self.primary_model}")
                 
@@ -341,7 +355,7 @@ class OllamaEnhancedManager:
                 
         except requests.exceptions.Timeout:
             print("⚠️  Ollama response timeout")
-            self.response_times.append(30)  # Assume timeout at 30s
+            self.response_times.append(120)  # Assume timeout at 120s
             return None
         except Exception as e:
             print(f"⚠️  Ollama error: {e}")
@@ -511,7 +525,7 @@ class OllamaEnhancedManager:
             response = requests.post(
                 f"{self.base_url}/api/chat",
                 json=payload,
-                timeout=30
+                timeout=120
             )
             
             if response.status_code == 200:
@@ -628,7 +642,7 @@ class FullFledgedAIBrain:
     Layer 5: Creative - Generation, innovation
     """
     
-    def __init__(self, user_name="User", data_dir="ai_brain_data"):
+    def __init__(self, user_name="User", data_dir="ai_brain_data", primary_model="llama3.1", fallback_model="mistral"):
         self.user_name = user_name
         self.data_dir = data_dir
         os.makedirs(data_dir, exist_ok=True)
@@ -653,9 +667,12 @@ class FullFledgedAIBrain:
         
         # 2. Memory System (Long-term, Short-term, Working)
         class MockMemory:
-            def get_memory_statistics(self): return {"total_memories": 0}
+            def get_memory_statistics(self): return {"total_memories": 0, "memories_by_type": {}, "memory_health_percentage": 100, "recall_success_rate": 0}
             def store_memory(self, *args, **kwargs): pass
             def recall_memories(self, *args, **kwargs): return []
+            def remember_conversation(self, *args, **kwargs): return "mock_memory_id"
+            def get_detailed_user_summary(self, *args, **kwargs): return "User profile not available."
+            def recall_similar(self, *args, **kwargs): return []
             
         self.memory = MockMemory()
         
@@ -695,8 +712,8 @@ class FullFledgedAIBrain:
         # 10. Ollama Manager (Local LLM)
         print("\n🤖 Initializing Local AI (Ollama)...")
         self.ollama = OllamaEnhancedManager(
-            primary_model="llama3.1",
-            fallback_model="mistral"
+            primary_model=primary_model,
+            fallback_model=fallback_model
         )
         
         # 11. Engineering RAG Engine
@@ -1429,7 +1446,11 @@ class FullFledgedAIBrain:
         return text.lower().startswith("close ")
     
     def _is_play_command(self, text):
-        return text.lower().startswith("play ")
+        # Only treat it as a basic command if it's strictly a simple play command
+        t = text.lower().strip()
+        if t in ["play", "play next", "play pause", "resume", "play media"]:
+            return True
+        return False
     
     def _is_stop_command(self, text):
         return any(word in text.lower() for word in ["stop", "pause", "halt"])

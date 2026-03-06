@@ -973,6 +973,13 @@ class MediaManager:
         
         return result
     
+    def play_spotify_song(self, query: str) -> Dict[str, Any]:
+        """
+        Specialized method for playing a Spotify song by query, 
+        mapping directly from the main JARVIS command loop.
+        """
+        return self.play_media(query, service=MediaService.SPOTIFY)
+
     def control_playback(self, action: str, **kwargs) -> Dict[str, Any]:
         """
         Control media playback across services
