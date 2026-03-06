@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Send, Mic, ChevronDown, Hash, Camera, Loader2 } from "lucide-react";
+import { Send, Mic, ChevronDown, Hash, Camera, Loader2, Square } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export interface Message {
@@ -15,8 +15,10 @@ interface ChatInterfaceProps {
   messages: Message[];
   onSendMessage: (text: string, marks: number | null, subject: string) => void;
   onMicClick: () => void;
+  onStopClick: () => void;
   isListening: boolean;
   isProcessing?: boolean;
+  isSpeaking?: boolean;
 }
 
 const MARKS_OPTIONS = [0, 2, 5, 10, 15];
@@ -29,7 +31,7 @@ function formatMarkdownLike(text: string) {
     .replace(/\n/g, '<br/>');
 }
 
-export function ChatInterface({ messages, onSendMessage, onMicClick, isListening, isProcessing }: ChatInterfaceProps) {
+export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick, isListening, isProcessing, isSpeaking }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [marks, setMarks] = useState<number>(0);
   const [subject, setSubject] = useState<string>("General");
@@ -242,6 +244,23 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, isListening
           >
             <Mic className={`w-4 h-4 ${isListening ? "text-red-400 animate-pulse" : "text-white/60"}`} />
           </motion.button>
+          
+          <AnimatePresence>
+            {(isProcessing || isSpeaking || isListening) && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                type="button"
+                onClick={onStopClick}
+                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border transition-all bg-red-500/20 border-red-500/50 hover:bg-red-500/30 text-red-500"
+                whileTap={{ scale: 0.92 }}
+                title="Stop JARVIS"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           <input
             type="text"

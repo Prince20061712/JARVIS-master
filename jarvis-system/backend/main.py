@@ -279,6 +279,31 @@ class JarvisAI:
         print(f"\n{Fore.CYAN}🧹 Cleaning up...")
         if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'save_state'):
             self.ai_brain.save_state()
+            
+    def cancel_current(self):
+        """Immediately stop speaking and abort current AI request"""
+        print(f"{Fore.RED}🛑 Executing hard cancel on current operations...{Style.RESET_ALL}")
+        # Stop speech playback instantly
+        if hasattr(self, 'audio'):
+            self.audio.stop_speech()
+        
+        # Abort any ongoing AI generation logic
+        if hasattr(self, 'ai_brain'):
+            self.ai_brain.cancel_current_request = True
+            
+        # Reset state flags
+        self.is_processing_command = False
+        self.is_jarvis_speaking = False
+        
+        # Broadcast safe state to frontend
+        if hasattr(self, 'audio') and self.audio.websocket_manager and self.loop:
+            asyncio.run_coroutine_threadsafe(
+                self.audio.websocket_manager.broadcast({
+                    "type": "voice_status",
+                    "listening": False
+                }),
+                self.loop
+            )
     
     def set_client_speaking(self, speaking):
         """Set client speaking status to prevent feedback loop"""
@@ -432,6 +457,14 @@ class JarvisAI:
                             "type": "response",
                             "content": text,
                             "sender": "user"
+                        }),
+                        self.loop
+                    )
+                    
+                    # Switch UI to processing mode immediately
+                    asyncio.run_coroutine_threadsafe(
+                        self.audio.websocket_manager.broadcast({
+                            "type": "processing"
                         }),
                         self.loop
                     )
@@ -1034,6 +1067,11 @@ async def websocket_endpoint(websocket: WebSocket):
                         jarvis.set_client_speaking(True)
                     elif status == "finished":
                         jarvis.set_client_speaking(False)
+            
+            elif data.get("type") == "cancel":
+                if jarvis:
+                    print(f"{Fore.YELLOW}User sent STOP command. Cancelling current operation...{Style.RESET_ALL}")
+                    jarvis.cancel_current()
                 
     except WebSocketDisconnect:
         manager.disconnect(websocket)

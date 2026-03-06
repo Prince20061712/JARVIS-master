@@ -173,7 +173,13 @@ export default function App() {
         break;
       case "voice_status":
         setIsListening(data.listening);
-        setRobotState(data.listening ? "listening" : "idle");
+        setRobotState((prev) => {
+          if (data.listening) return "listening";
+          // If we finished listening but we are already processing the response, keep processing
+          if (prev === "processing") return "processing";
+          // Otherwise go to idle
+          return "idle";
+        });
         break;
       case "processing":
         setRobotState("processing");
@@ -264,6 +270,15 @@ export default function App() {
   const handleMicClick = () => {
     if (isConnected && socketRef.current) {
       socketRef.current.send(JSON.stringify({ type: "toggle_voice" }));
+    }
+  };
+
+  const handleStopClick = () => {
+    if (isConnected && socketRef.current) {
+      socketRef.current.send(JSON.stringify({ type: "cancel" }));
+      setRobotState("idle");
+      setRobotEmotion("neutral");
+      setIsListening(false);
     }
   };
 
@@ -537,8 +552,10 @@ export default function App() {
               messages={messages}
               onSendMessage={handleSendMessage}
               onMicClick={handleMicClick}
+              onStopClick={handleStopClick}
               isListening={isListening}
               isProcessing={robotState === "processing"}
+              isSpeaking={robotState === "speaking"}
             />
           </div>
         </div>

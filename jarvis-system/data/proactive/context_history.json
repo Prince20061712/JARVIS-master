@@ -154,10 +154,17 @@
       "timestamp": "2026-03-06T20:00:42.358970",
       "priority": "low",
       "confidence": 0.8
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Winding down for sleep? Need calming sounds or meditation guidance?",
+      "timestamp": "2026-03-06T22:03:20.112702",
+      "priority": "medium",
+      "confidence": 0.8
     }
   ],
   "stats": {
-    "total_events_generated": 22,
+    "total_events_generated": 23,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -166,5 +173,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-03-06T20:29:50.841866"
+  "last_updated": "2026-03-06T22:36:03.369182"
 }

@@ -497,6 +497,12 @@ class OllamaEnhancedManager:
                                 full_response += chunk
                                 if callback:
                                     callback(chunk)
+                            
+                            # Check for cancellation during streaming
+                            if getattr(self, "cancel_current_request", False):
+                                print(f"{Fore.RED}⚠️ Generation aborted by user cancellation.{Style.RESET_ALL}")
+                                return full_response
+
                         except json.JSONDecodeError:
                             continue
                 
