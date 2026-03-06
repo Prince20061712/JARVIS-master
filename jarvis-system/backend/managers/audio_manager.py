@@ -488,6 +488,11 @@ class AudioSystem:
             ]
             
             for fallback in fallback_providers:
+                # Check if speech was cancelled (is_speaking is False when stop_speech is called)
+                if not self.is_speaking:
+                    logger.info("Speech cancelled, aborting fallback chain.")
+                    return
+                
                 if fallback in self.engines and self.engines[fallback]["available"]:
                     logger.info(f"Falling back to {fallback.value}")
                     if self._synthesize_with_provider(fallback, text, config):
@@ -537,6 +542,10 @@ class AudioSystem:
             
             asyncio.run(synthesize())
             
+            # Fast exit if speech was cancelled
+            if not self.is_speaking:
+                return True
+                
             # Play audio
             self._play_audio_file(temp_file)
             
@@ -660,10 +669,15 @@ class AudioSystem:
     def _play_audio_file(self, file_path: Path):
         """Play audio file"""
         import platform
+        
+        # Fast exit if speech was cancelled before playback
+        if not self.is_speaking:
+            return
+
         try:
             # Bypass pygame on macOS to prevent SDL initialization conflicts with OpenCV
             if platform.system() == "Darwin":
-                subprocess.run(['afplay', str(file_path)], check=True)
+                subprocess.run(['afplay', str(file_path)], check=False)
                 return
 
             # Use pygame for playback on other systems
@@ -683,9 +697,9 @@ class AudioSystem:
             # Fallback to system command
             try:
                 if file_path.suffix == '.mp3':
-                    subprocess.run(['afplay', str(file_path)], check=True)
+                    subprocess.run(['afplay', str(file_path)], check=False)
                 else:
-                    subprocess.run(['play', str(file_path)], check=True)
+                    subprocess.run(['play', str(file_path)], check=False)
             except:
                 pass
     
@@ -895,6 +909,10 @@ class AudioSystem:
         
         # Stop current playback
         try:
+            import platform
+            if platform.system() == "Darwin":
+                import subprocess
+                subprocess.run(['pkill', '-f', 'afplay'], capture_output=True)
             pygame.mixer.music.stop()
         except:
             pass

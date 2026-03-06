@@ -18,6 +18,7 @@ class EdgeTTSEngine:
         self.volume = volume
         self.temp_dir = tempfile.gettempdir()
         self.pygame_available = False
+        self.is_cancelled = False
         
         # Initialize pygame mixer for audio playback
         try:
@@ -48,6 +49,8 @@ class EdgeTTSEngine:
         Convert text to speech and play it immediately.
         Handles both synchronous and asynchronous contexts.
         """
+        self.is_cancelled = False
+        
         if not text:
             if on_complete:
                 on_complete()
@@ -71,6 +74,10 @@ class EdgeTTSEngine:
                          loop.run_until_complete(self._generate_audio(text, output_file))
                          if on_start:
                              on_start()
+                             
+                         if self.is_cancelled:
+                             return
+                             
                          self._play_audio(output_file)
                          if on_complete:
                              on_complete()
@@ -82,6 +89,10 @@ class EdgeTTSEngine:
                     loop.close()
                     if on_start:
                         on_start()
+                        
+                    if self.is_cancelled:
+                        return
+                        
                     self._play_audio(output_file)
                     if on_complete:
                         on_complete()
@@ -113,7 +124,8 @@ class EdgeTTSEngine:
                  except Exception as e:
                      print(f"Error in start callback: {e}")
              
-             self._play_audio(output_file)
+             if not self.is_cancelled:
+                 self._play_audio(output_file)
         except Exception as e:
              print(f"Error in background TTS thread: {e}")
         finally:
@@ -157,7 +169,7 @@ class EdgeTTSEngine:
             try:
                 print("Falling back to system player (afplay)...")
                 import subprocess
-                subprocess.run(["afplay", file_path], check=True)
+                subprocess.run(["afplay", file_path], check=False)
                 print("afplay playback successful.")
             except Exception as e:
                 print(f"System playback error: {e}")
@@ -184,7 +196,11 @@ class EdgeTTSEngine:
 
     def stop(self):
         """Stop current playback"""
+        self.is_cancelled = True
         try:
+            if platform.system() == "Darwin":
+                import subprocess
+                subprocess.run(['pkill', '-f', 'afplay'], capture_output=True)
             if pygame.mixer.get_init():
                 pygame.mixer.music.stop()
         except:
