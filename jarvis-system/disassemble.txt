@@ -1,0 +1,2010 @@
+--- Analyzing /Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/__pycache__/flashcard_controller.cpython-314.pyc ---
+  0           RESUME                   0
+
+  1           LOAD_SMALL_INT           0
+              LOAD_CONST               1 (('APIRouter', 'HTTPException', 'Depends', 'UploadFile', 'File', 'BackgroundTasks'))
+              IMPORT_NAME              0 (fastapi)
+              IMPORT_FROM              1 (APIRouter)
+              STORE_NAME               1 (APIRouter)
+              IMPORT_FROM              2 (HTTPException)
+              STORE_NAME               2 (HTTPException)
+              IMPORT_FROM              3 (Depends)
+              STORE_NAME               3 (Depends)
+              IMPORT_FROM              4 (UploadFile)
+              STORE_NAME               4 (UploadFile)
+              IMPORT_FROM              5 (File)
+              STORE_NAME               5 (File)
+              IMPORT_FROM              6 (BackgroundTasks)
+              STORE_NAME               6 (BackgroundTasks)
+              POP_TOP
+
+  2           LOAD_SMALL_INT           0
+              LOAD_CONST               2 (('List', 'Dict', 'Any', 'Optional'))
+              IMPORT_NAME              7 (typing)
+              IMPORT_FROM              8 (List)
+              STORE_NAME               8 (List)
+              IMPORT_FROM              9 (Dict)
+              STORE_NAME               9 (Dict)
+              IMPORT_FROM             10 (Any)
+              STORE_NAME              10 (Any)
+              IMPORT_FROM             11 (Optional)
+              STORE_NAME              11 (Optional)
+              POP_TOP
+
+  3           LOAD_SMALL_INT           0
+              LOAD_CONST               3 (('BaseModel',))
+              IMPORT_NAME             12 (pydantic)
+              IMPORT_FROM             13 (BaseModel)
+              STORE_NAME              13 (BaseModel)
+              POP_TOP
+
+  4           LOAD_SMALL_INT           0
+              LOAD_CONST               4 (('SQLiteStore',))
+              IMPORT_NAME             14 (memory_system.long_term.sqlite_store)
+              IMPORT_FROM             15 (SQLiteStore)
+              STORE_NAME              15 (SQLiteStore)
+              POP_TOP
+
+  5           LOAD_SMALL_INT           0
+              LOAD_CONST               5 (('FlashcardGenerator',))
+              IMPORT_NAME             16 (adaptive_learning.flashcards.generator)
+              IMPORT_FROM             17 (FlashcardGenerator)
+              STORE_NAME              17 (FlashcardGenerator)
+              POP_TOP
+
+  6           LOAD_SMALL_INT           0
+              LOAD_CONST               6 (None)
+              IMPORT_NAME             18 (uuid)
+              STORE_NAME              18 (uuid)
+
+  7           LOAD_SMALL_INT           0
+              LOAD_CONST               6 (None)
+              IMPORT_NAME             19 (os)
+              STORE_NAME              19 (os)
+
+  9           LOAD_NAME                1 (APIRouter)
+              PUSH_NULL
+              CALL                     0
+              STORE_NAME              20 (router)
+
+ 10           LOAD_NAME               15 (SQLiteStore)
+              PUSH_NULL
+              CALL                     0
+              STORE_NAME              21 (store)
+
+ 11           LOAD_NAME               17 (FlashcardGenerator)
+              PUSH_NULL
+              CALL                     0
+              STORE_NAME              22 (generator)
+
+ 13           LOAD_BUILD_CLASS
+              PUSH_NULL
+              LOAD_CONST               7 (<code object FolderCreate at 0x107621ac0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 13>)
+              MAKE_FUNCTION
+              LOAD_CONST               8 ('FolderCreate')
+              LOAD_NAME               13 (BaseModel)
+              CALL                     3
+              STORE_NAME              23 (FolderCreate)
+
+ 18           LOAD_BUILD_CLASS
+              PUSH_NULL
+              LOAD_CONST               9 (<code object FlashcardCreate at 0x107622560, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 18>)
+              MAKE_FUNCTION
+              LOAD_CONST              10 ('FlashcardCreate')
+              LOAD_NAME               13 (BaseModel)
+              CALL                     3
+              STORE_NAME              24 (FlashcardCreate)
+
+ 25           LOAD_NAME               20 (router)
+              LOAD_ATTR               51 (get + NULL|self)
+              LOAD_CONST              11 ('/')
+              CALL                     1
+
+ 26           LOAD_CONST              12 (<code object list_folders at 0x10756a470, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 25>)
+              MAKE_FUNCTION
+
+ 25           CALL                     0
+
+ 26           STORE_NAME              26 (list_folders)
+
+ 31           LOAD_NAME               20 (router)
+              LOAD_ATTR               55 (post + NULL|self)
+              LOAD_CONST              11 ('/')
+              CALL                     1
+
+ 32           LOAD_CONST              13 (<code object __annotate__ at 0x107427d30, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 32>)
+              MAKE_FUNCTION
+              LOAD_CONST              14 (<code object create_folder_alt at 0xbfaccdf80, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 31>)
+              MAKE_FUNCTION
+              SET_FUNCTION_ATTRIBUTE  16 (annotate)
+
+ 31           CALL                     0
+
+ 32           STORE_NAME              28 (create_folder_alt)
+
+ 47           LOAD_NAME               20 (router)
+              LOAD_ATTR               55 (post + NULL|self)
+              LOAD_CONST              15 ('/{subject}/upload')
+              CALL                     1
+
+ 48           LOAD_NAME                5 (File)
+              PUSH_NULL
+              LOAD_CONST              16 (Ellipsis)
+              CALL                     1
+              LOAD_CONST               6 (None)
+              BUILD_TUPLE              2
+              LOAD_CONST              17 (<code object __annotate__ at 0x107622670, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 48>)
+              MAKE_FUNCTION
+              LOAD_CONST              18 (<code object upload_material at 0xbfb1d2f80, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 47>)
+              MAKE_FUNCTION
+              SET_FUNCTION_ATTRIBUTE  16 (annotate)
+              SET_FUNCTION_ATTRIBUTE   1 (defaults)
+
+ 47           CALL                     0
+
+ 48           STORE_NAME              29 (upload_material)
+
+ 93           LOAD_NAME               20 (router)
+              LOAD_ATTR               55 (post + NULL|self)
+              LOAD_CONST              19 ('/folders')
+              CALL                     1
+
+ 94           LOAD_CONST              20 (<code object __annotate__ at 0x1075e7730, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 94>)
+              MAKE_FUNCTION
+              LOAD_CONST              21 (<code object create_folder at 0x1075f9630, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 93>)
+              MAKE_FUNCTION
+              SET_FUNCTION_ATTRIBUTE  16 (annotate)
+
+ 93           CALL                     0
+
+ 94           STORE_NAME              30 (create_folder)
+
+102           LOAD_NAME               20 (router)
+              LOAD_ATTR               55 (post + NULL|self)
+              LOAD_CONST              22 ('/folders/{folder_id}/cards')
+              CALL                     1
+
+103           LOAD_CONST              23 (<code object __annotate__ at 0x1075e7830, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 103>)
+              MAKE_FUNCTION
+              LOAD_CONST              24 (<code object add_card at 0x10746ba50, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 102>)
+              MAKE_FUNCTION
+              SET_FUNCTION_ATTRIBUTE  16 (annotate)
+
+102           CALL                     0
+
+103           STORE_NAME              31 (add_card)
+
+110           LOAD_NAME               20 (router)
+              LOAD_ATTR               51 (get + NULL|self)
+              LOAD_CONST              25 ('/folders/{folder_id}/due')
+              CALL                     1
+
+111           LOAD_CONST              28 ((20,))
+              LOAD_CONST              26 (<code object __annotate__ at 0x1075e7930, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 111>)
+              MAKE_FUNCTION
+              LOAD_CONST              27 (<code object get_due_cards at 0x107622780, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 110>)
+              MAKE_FUNCTION
+              SET_FUNCTION_ATTRIBUTE  16 (annotate)
+              SET_FUNCTION_ATTRIBUTE   1 (defaults)
+
+110           CALL                     0
+
+111           STORE_NAME              32 (get_due_cards)
+              LOAD_CONST               6 (None)
+              RETURN_VALUE
+
+Disassembly of <code object FolderCreate at 0x107621ac0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 13>:
+  --           MAKE_CELL                0 (__classdict__)
+
+  13           RESUME                   0
+               LOAD_NAME                0 (__name__)
+               STORE_NAME               1 (__module__)
+               LOAD_CONST               0 ('FolderCreate')
+               STORE_NAME               2 (__qualname__)
+               LOAD_SMALL_INT          13
+               STORE_NAME               3 (__firstlineno__)
+               LOAD_LOCALS
+               STORE_DEREF              0 (__classdict__)
+
+  15           LOAD_CONST               1 (None)
+               STORE_NAME               4 (subject)
+
+  16           LOAD_CONST               2 ('')
+               STORE_NAME               5 (description)
+
+  13           LOAD_FAST_BORROW         0 (__classdict__)
+               BUILD_TUPLE              1
+               LOAD_CONST               3 (<code object __annotate__ at 0x1075e03c0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 13>)
+               MAKE_FUNCTION
+               SET_FUNCTION_ATTRIBUTE   8 (closure)
+               STORE_NAME               6 (__annotate_func__)
+               LOAD_CONST               4 (())
+               STORE_NAME               7 (__static_attributes__)
+               LOAD_FAST_BORROW         0 (__classdict__)
+               STORE_NAME               8 (__classdictcell__)
+               LOAD_CONST               1 (None)
+               RETURN_VALUE
+
+Disassembly of <code object __annotate__ at 0x1075e03c0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 13>:
+  --           COPY_FREE_VARS           1
+
+  13           RESUME                   0
+               LOAD_FAST_BORROW         0 (format)
+               LOAD_SMALL_INT           2
+               COMPARE_OP             132 (>)
+               POP_JUMP_IF_FALSE        3 (to L1)
+               NOT_TAKEN
+               LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+               RAISE_VARARGS            1
+       L1:     BUILD_MAP                0
+
+  14           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               COPY                     2
+               LOAD_CONST               1 ('name')
+
+  13           STORE_SUBSCR
+
+  15           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               2 ('subject')
+
+  13           STORE_SUBSCR
+
+  16           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               3 ('description')
+
+  13           STORE_SUBSCR
+               RETURN_VALUE
+
+Disassembly of <code object FlashcardCreate at 0x107622560, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 18>:
+  --           MAKE_CELL                0 (__classdict__)
+
+  18           RESUME                   0
+               LOAD_NAME                0 (__name__)
+               STORE_NAME               1 (__module__)
+               LOAD_CONST               0 ('FlashcardCreate')
+               STORE_NAME               2 (__qualname__)
+               LOAD_SMALL_INT          18
+               STORE_NAME               3 (__firstlineno__)
+               LOAD_LOCALS
+               STORE_DEREF              0 (__classdict__)
+
+  21           LOAD_CONST               1 ('')
+               STORE_NAME               4 (topic)
+
+  22           LOAD_SMALL_INT           5
+               STORE_NAME               5 (difficulty)
+
+  23           LOAD_CONST               1 ('')
+               STORE_NAME               6 (tags)
+
+  18           LOAD_FAST_BORROW         0 (__classdict__)
+               BUILD_TUPLE              1
+               LOAD_CONST               2 (<code object __annotate__ at 0x1074375d0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 18>)
+               MAKE_FUNCTION
+               SET_FUNCTION_ATTRIBUTE   8 (closure)
+               STORE_NAME               7 (__annotate_func__)
+               LOAD_CONST               3 (())
+               STORE_NAME               8 (__static_attributes__)
+               LOAD_FAST_BORROW         0 (__classdict__)
+               STORE_NAME               9 (__classdictcell__)
+               LOAD_CONST               4 (None)
+               RETURN_VALUE
+
+Disassembly of <code object __annotate__ at 0x1074375d0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 18>:
+  --           COPY_FREE_VARS           1
+
+  18           RESUME                   0
+               LOAD_FAST_BORROW         0 (format)
+               LOAD_SMALL_INT           2
+               COMPARE_OP             132 (>)
+               POP_JUMP_IF_FALSE        3 (to L1)
+               NOT_TAKEN
+               LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+               RAISE_VARARGS            1
+       L1:     BUILD_MAP                0
+
+  19           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               COPY                     2
+               LOAD_CONST               1 ('front')
+
+  18           STORE_SUBSCR
+
+  20           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               COPY                     2
+               LOAD_CONST               2 ('back')
+
+  18           STORE_SUBSCR
+
+  21           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               3 ('topic')
+
+  18           STORE_SUBSCR
+
+  22           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 2 (int)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               4 ('difficulty')
+
+  18           STORE_SUBSCR
+
+  23           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               5 ('tags')
+
+  18           STORE_SUBSCR
+               RETURN_VALUE
+
+Disassembly of <code object list_folders at 0x10756a470, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 25>:
+  25           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+  27           LOAD_GLOBAL              0 (store)
+               LOAD_ATTR                3 (get_flashcard_folders + NULL|self)
+               CALL                     0
+               STORE_FAST               0 (folders)
+
+  29           LOAD_CONST               0 ('flashcards')
+               LOAD_FAST_BORROW         0 (folders)
+               GET_ITER
+               LOAD_FAST_AND_CLEAR      1 (f)
+               SWAP                     2
+       L2:     BUILD_LIST               0
+               SWAP                     2
+       L3:     FOR_ITER                11 (to L4)
+               STORE_FAST_LOAD_FAST    17 (f, f)
+               LOAD_CONST               1 ('name')
+               BINARY_OP               26 ([])
+               LIST_APPEND              2
+               JUMP_BACKWARD           13 (to L3)
+       L4:     END_FOR
+               POP_ITER
+       L5:     SWAP                     2
+               STORE_FAST               1 (f)
+               BUILD_MAP                1
+               RETURN_VALUE
+
+  --   L6:     SWAP                     2
+               POP_TOP
+
+  29           SWAP                     2
+               STORE_FAST               1 (f)
+               RERAISE                  0
+
+  --   L7:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L7 [0] lasti
+  L2 to L5 -> L6 [3]
+  L5 to L7 -> L7 [0] lasti
+
+Disassembly of <code object __annotate__ at 0x107427d30, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 32>:
+ 32           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('req')
+              LOAD_GLOBAL              0 (FolderCreate)
+              BUILD_MAP                1
+              RETURN_VALUE
+
+Disassembly of <code object create_folder_alt at 0xbfaccdf80, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 31>:
+  --            MAKE_CELL                0 (req)
+
+  31            RETURN_GENERATOR
+                POP_TOP
+        L1:     RESUME                   0
+
+  34            LOAD_GLOBAL              0 (store)
+                LOAD_ATTR                3 (get_flashcard_folders + NULL|self)
+                CALL                     0
+                STORE_FAST               1 (all_folders)
+
+  35            LOAD_GLOBAL              4 (any)
+                COPY                     1
+                LOAD_COMMON_CONSTANT     4 (<built-in function any>)
+                IS_OP                    0 (is)
+                POP_JUMP_IF_FALSE       31 (to L6)
+                NOT_TAKEN
+                POP_TOP
+                LOAD_FAST_BORROW         0 (req)
+                BUILD_TUPLE              1
+                LOAD_CONST               0 (<code object <genexpr> at 0x107437e10, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 35>)
+                MAKE_FUNCTION
+                SET_FUNCTION_ATTRIBUTE   8 (closure)
+                LOAD_FAST_BORROW         1 (all_folders)
+                GET_ITER
+                CALL                     0
+        L2:     FOR_ITER                12 (to L5)
+                TO_BOOL
+                POP_JUMP_IF_TRUE         3 (to L4)
+        L3:     NOT_TAKEN
+                JUMP_BACKWARD           11 (to L2)
+        L4:     POP_ITER
+                LOAD_CONST               1 (True)
+                JUMP_FORWARD            20 (to L7)
+        L5:     END_FOR
+                POP_ITER
+                LOAD_CONST               2 (False)
+                JUMP_FORWARD            16 (to L7)
+        L6:     PUSH_NULL
+                LOAD_FAST_BORROW         0 (req)
+                BUILD_TUPLE              1
+                LOAD_CONST               0 (<code object <genexpr> at 0x107437e10, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 35>)
+                MAKE_FUNCTION
+                SET_FUNCTION_ATTRIBUTE   8 (closure)
+                LOAD_FAST_BORROW         1 (all_folders)
+                GET_ITER
+                CALL                     0
+                CALL                     1
+        L7:     TO_BOOL
+                POP_JUMP_IF_FALSE       14 (to L10)
+        L8:     NOT_TAKEN
+
+  36    L9:     LOAD_GLOBAL              7 (HTTPException + NULL)
+                LOAD_CONST               3 (400)
+                LOAD_CONST               4 ('Folder already exists')
+                LOAD_CONST               5 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  38   L10:     LOAD_GLOBAL              9 (str + NULL)
+                LOAD_GLOBAL             10 (uuid)
+                LOAD_ATTR               12 (uuid4)
+                PUSH_NULL
+                CALL                     0
+                CALL                     1
+                STORE_FAST               2 (folder_id)
+
+  39            LOAD_DEREF               0 (req)
+                LOAD_ATTR               14 (subject)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       13 (to L11)
+                NOT_TAKEN
+                LOAD_DEREF               0 (req)
+                LOAD_ATTR               14 (subject)
+                JUMP_FORWARD            11 (to L12)
+       L11:     LOAD_DEREF               0 (req)
+                LOAD_ATTR               16 (name)
+       L12:     STORE_FAST               3 (subject)
+
+  40            LOAD_GLOBAL              0 (store)
+                LOAD_ATTR               19 (create_flashcard_folder + NULL|self)
+                LOAD_FAST_BORROW         2 (folder_id)
+                LOAD_DEREF               0 (req)
+                LOAD_ATTR               16 (name)
+                LOAD_FAST_BORROW         3 (subject)
+                LOAD_DEREF               0 (req)
+                LOAD_ATTR               20 (description)
+                CALL                     4
+                STORE_FAST               4 (success)
+
+  41            LOAD_FAST_BORROW         4 (success)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       49 (to L19)
+       L13:     NOT_TAKEN
+
+  43   L14:     LOAD_GLOBAL              0 (store)
+                LOAD_ATTR                3 (get_flashcard_folders + NULL|self)
+                CALL                     0
+                STORE_FAST               5 (updated_folders)
+
+  44            LOAD_CONST               6 ('flashcards')
+                LOAD_FAST_BORROW         5 (updated_folders)
+                GET_ITER
+                LOAD_FAST_AND_CLEAR      6 (f)
+                SWAP                     2
+       L15:     BUILD_LIST               0
+                SWAP                     2
+       L16:     FOR_ITER                11 (to L17)
+                STORE_FAST_LOAD_FAST   102 (f, f)
+                LOAD_CONST               7 ('name')
+                BINARY_OP               26 ([])
+                LIST_APPEND              2
+                JUMP_BACKWARD           13 (to L16)
+       L17:     END_FOR
+                POP_ITER
+       L18:     SWAP                     2
+                STORE_FAST               6 (f)
+                LOAD_CONST               8 ('id')
+                LOAD_FAST_BORROW         2 (folder_id)
+                BUILD_MAP                2
+                RETURN_VALUE
+
+  45   L19:     LOAD_GLOBAL              7 (HTTPException + NULL)
+                LOAD_CONST               9 (500)
+                LOAD_CONST              10 ('Failed to create folder')
+                LOAD_CONST               5 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  --   L20:     SWAP                     2
+                POP_TOP
+
+  44            SWAP                     2
+                STORE_FAST               6 (f)
+                RERAISE                  0
+
+  --   L21:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+                RERAISE                  1
+ExceptionTable:
+  L1 to L3 -> L21 [0] lasti
+  L4 to L8 -> L21 [0] lasti
+  L9 to L13 -> L21 [0] lasti
+  L14 to L15 -> L21 [0] lasti
+  L15 to L18 -> L20 [3]
+  L18 to L21 -> L21 [0] lasti
+
+Disassembly of <code object <genexpr> at 0x107437e10, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 35>:
+  --           COPY_FREE_VARS           1
+
+  35           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+               LOAD_FAST                0 (.0)
+       L2:     FOR_ITER                54 (to L3)
+               STORE_FAST_LOAD_FAST    17 (f, f)
+               LOAD_CONST               0 ('name')
+               BINARY_OP               26 ([])
+               LOAD_ATTR                1 (lower + NULL|self)
+               CALL                     0
+               LOAD_DEREF               2 (req)
+               LOAD_ATTR                2 (name)
+               LOAD_ATTR                1 (lower + NULL|self)
+               CALL                     0
+               COMPARE_OP              72 (==)
+               YIELD_VALUE              0
+               RESUME                   5
+               POP_TOP
+               JUMP_BACKWARD           56 (to L2)
+       L3:     END_FOR
+               POP_ITER
+               LOAD_CONST               1 (None)
+               RETURN_VALUE
+
+  --   L4:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L4 -> L4 [0] lasti
+
+Disassembly of <code object __annotate__ at 0x107622670, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 48>:
+ 48           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('subject')
+              LOAD_GLOBAL              0 (str)
+              LOAD_CONST               2 ('file')
+              LOAD_GLOBAL              2 (UploadFile)
+              LOAD_CONST               3 ('background_tasks')
+              LOAD_GLOBAL              4 (BackgroundTasks)
+              BUILD_MAP                3
+              RETURN_VALUE
+
+Disassembly of <code object upload_material at 0xbfb1d2f80, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 47>:
+  --            MAKE_CELL                0 (subject)
+                MAKE_CELL                6 (folder)
+                MAKE_CELL                7 (text)
+
+  47            RETURN_GENERATOR
+                POP_TOP
+        L1:     RESUME                   0
+
+  50            LOAD_GLOBAL              0 (store)
+                LOAD_ATTR                3 (get_flashcard_folder_by_name + NULL|self)
+                LOAD_DEREF               0 (subject)
+                CALL                     1
+                STORE_DEREF              6 (folder)
+
+  51            LOAD_DEREF               6 (folder)
+                TO_BOOL
+                POP_JUMP_IF_TRUE        18 (to L2)
+                NOT_TAKEN
+
+  52            LOAD_GLOBAL              5 (HTTPException + NULL)
+                LOAD_CONST               0 (404)
+                LOAD_CONST               1 ("Subject foldre '")
+                LOAD_DEREF               0 (subject)
+                FORMAT_SIMPLE
+                LOAD_CONST               2 ("' not found")
+                BUILD_STRING             3
+                LOAD_CONST               3 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  55    L2:     NOP
+
+  56    L3:     LOAD_FAST_BORROW         1 (file)
+                LOAD_ATTR                7 (read + NULL|self)
+                CALL                     0
+                GET_AWAITABLE            0
+                LOAD_CONST               4 (None)
+        L4:     SEND                     3 (to L7)
+        L5:     YIELD_VALUE              1
+        L6:     RESUME                   3
+                JUMP_BACKWARD_NO_INTERRUPT 5 (to L4)
+        L7:     END_SEND
+                STORE_FAST               3 (content)
+
+  57            LOAD_FAST_BORROW         3 (content)
+                LOAD_ATTR                9 (decode + NULL|self)
+                LOAD_CONST               5 ('utf-8')
+                LOAD_CONST               6 ('ignore')
+                LOAD_CONST               7 (('errors',))
+                CALL_KW                  2
+                STORE_DEREF              7 (text)
+
+  62    L8:     LOAD_FAST                6 (folder)
+                LOAD_FAST                0 (subject)
+                LOAD_FAST                7 (text)
+                BUILD_TUPLE              3
+                LOAD_CONST              10 (<code object process_upload at 0xbfacce300, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 62>)
+                MAKE_FUNCTION
+                SET_FUNCTION_ATTRIBUTE   8 (closure)
+                STORE_FAST               5 (process_upload)
+
+  86            LOAD_FAST                2 (background_tasks)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       19 (to L11)
+        L9:     NOT_TAKEN
+
+  87   L10:     LOAD_FAST                2 (background_tasks)
+                LOAD_ATTR               13 (add_task + NULL|self)
+                LOAD_FAST                5 (process_upload)
+                CALL                     1
+                POP_TOP
+                JUMP_FORWARD            15 (to L16)
+
+  89   L11:     LOAD_FAST                5 (process_upload)
+                PUSH_NULL
+                CALL                     0
+                GET_AWAITABLE            0
+                LOAD_CONST               4 (None)
+       L12:     SEND                     3 (to L15)
+       L13:     YIELD_VALUE              1
+       L14:     RESUME                   3
+                JUMP_BACKWARD_NO_INTERRUPT 5 (to L12)
+       L15:     END_SEND
+                POP_TOP
+
+  91   L16:     LOAD_CONST              11 ('status')
+                LOAD_CONST              12 ('success')
+                LOAD_CONST              13 ('message')
+                LOAD_CONST              14 ('Material uploaded to ')
+                LOAD_DEREF               0 (subject)
+                FORMAT_SIMPLE
+                LOAD_CONST              15 ('! You can now select this subject in chat.')
+                BUILD_STRING             3
+                BUILD_MAP                2
+                RETURN_VALUE
+
+  56   L17:     CLEANUP_THROW
+       L18:     JUMP_BACKWARD_NO_INTERRUPT 82 (to L7)
+
+  --   L19:     PUSH_EXC_INFO
+
+  58            LOAD_GLOBAL             10 (Exception)
+                CHECK_EXC_MATCH
+                POP_JUMP_IF_FALSE       22 (to L22)
+                NOT_TAKEN
+                STORE_FAST               4 (e)
+
+  59   L20:     LOAD_GLOBAL              5 (HTTPException + NULL)
+                LOAD_CONST               8 (400)
+                LOAD_CONST               9 ('Error reading file: ')
+                LOAD_FAST                4 (e)
+                FORMAT_SIMPLE
+                BUILD_STRING             2
+                LOAD_CONST               3 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  --   L21:     LOAD_CONST               4 (None)
+                STORE_FAST               4 (e)
+                DELETE_FAST              4 (e)
+                RERAISE                  1
+
+  58   L22:     RERAISE                  0
+
+  --   L23:     COPY                     3
+                POP_EXCEPT
+                RERAISE                  1
+
+  89   L24:     CLEANUP_THROW
+       L25:     JUMP_BACKWARD_NO_INTERRUPT 51 (to L15)
+
+  --   L26:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+                RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L26 [0] lasti
+  L3 to L5 -> L19 [0]
+  L5 to L6 -> L17 [2]
+  L6 to L8 -> L19 [0]
+  L8 to L9 -> L26 [0] lasti
+  L10 to L13 -> L26 [0] lasti
+  L13 to L14 -> L24 [2]
+  L14 to L17 -> L26 [0] lasti
+  L17 to L18 -> L19 [0]
+  L19 to L20 -> L23 [1] lasti
+  L20 to L21 -> L21 [1] lasti
+  L21 to L23 -> L23 [1] lasti
+  L23 to L25 -> L26 [0] lasti
+
+Disassembly of <code object process_upload at 0xbfacce300, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 62>:
+  --            COPY_FREE_VARS           3
+
+  62            RETURN_GENERATOR
+                POP_TOP
+        L1:     RESUME                   0
+
+  63    L2:     NOP
+
+  66    L3:     LOAD_GLOBAL              0 (generator)
+                LOAD_ATTR                3 (generate_from_text + NULL|self)
+                LOAD_DEREF               7 (text)
+                LOAD_DEREF               6 (subject)
+                CALL                     2
+                GET_AWAITABLE            0
+                LOAD_CONST               0 (None)
+        L4:     SEND                     3 (to L7)
+        L5:     YIELD_VALUE              1
+        L6:     RESUME                   3
+                JUMP_BACKWARD_NO_INTERRUPT 5 (to L4)
+        L7:     END_SEND
+                STORE_FAST               0 (flashcard_set)
+
+  68            LOAD_FAST_BORROW         0 (flashcard_set)
+                LOAD_ATTR                4 (flashcards)
+                GET_ITER
+        L8:     FOR_ITER               154 (to L14)
+                STORE_FAST               1 (card)
+
+  69            LOAD_GLOBAL              7 (str + NULL)
+                LOAD_GLOBAL              8 (uuid)
+                LOAD_ATTR               10 (uuid4)
+                PUSH_NULL
+                CALL                     0
+                CALL                     1
+                STORE_FAST               2 (card_id)
+
+  71            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               12 (tags)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       28 (to L9)
+                NOT_TAKEN
+                LOAD_CONST               1 (',')
+                LOAD_ATTR               15 (join + NULL|self)
+                LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               12 (tags)
+                CALL                     1
+                JUMP_FORWARD             1 (to L10)
+        L9:     LOAD_CONST               2 ('')
+       L10:     STORE_FAST               3 (tags_str)
+
+  73            LOAD_GLOBAL             16 (store)
+                LOAD_ATTR               19 (add_flashcard + NULL|self)
+
+  74            LOAD_FAST                2 (card_id)
+
+  75            LOAD_DEREF               5 (folder)
+                LOAD_CONST               3 ('id')
+                BINARY_OP               26 ([])
+
+  76            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               20 (front)
+
+  77            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               22 (back)
+
+  78            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               24 (topic)
+                COPY                     1
+                TO_BOOL
+                POP_JUMP_IF_TRUE         3 (to L13)
+       L11:     NOT_TAKEN
+       L12:     POP_TOP
+                LOAD_DEREF               6 (subject)
+
+  79   L13:     LOAD_SMALL_INT           5
+
+  80            LOAD_FAST_BORROW         3 (tags_str)
+
+  73            CALL                     7
+                POP_TOP
+                JUMP_BACKWARD          156 (to L8)
+
+  68   L14:     END_FOR
+                POP_ITER
+
+  82            LOAD_GLOBAL             26 (logger)
+                LOAD_ATTR               29 (info + NULL|self)
+                LOAD_CONST               4 ('Successfully generated ')
+                LOAD_GLOBAL             31 (len + NULL)
+                LOAD_FAST_BORROW         0 (flashcard_set)
+                LOAD_ATTR                4 (flashcards)
+                CALL                     1
+                FORMAT_SIMPLE
+                LOAD_CONST               5 (' cards for ')
+                LOAD_DEREF               6 (subject)
+                FORMAT_SIMPLE
+                BUILD_STRING             4
+                CALL                     1
+                POP_TOP
+       L15:     LOAD_CONST               0 (None)
+                RETURN_VALUE
+
+  66   L16:     CLEANUP_THROW
+       L17:     JUMP_BACKWARD_NO_INTERRUPT 222 (to L7)
+
+  --   L18:     PUSH_EXC_INFO
+
+  83            LOAD_GLOBAL             32 (Exception)
+                CHECK_EXC_MATCH
+                POP_JUMP_IF_FALSE       48 (to L22)
+                NOT_TAKEN
+                STORE_FAST               4 (e)
+
+  84   L19:     LOAD_GLOBAL             26 (logger)
+                LOAD_ATTR               35 (error + NULL|self)
+                LOAD_CONST               6 ('Error in background upload processing for ')
+                LOAD_DEREF               6 (subject)
+                FORMAT_SIMPLE
+                LOAD_CONST               7 (': ')
+                LOAD_GLOBAL             37 (repr + NULL)
+                LOAD_FAST                4 (e)
+                CALL                     1
+                FORMAT_SIMPLE
+                BUILD_STRING             4
+                CALL                     1
+                POP_TOP
+       L20:     POP_EXCEPT
+                LOAD_CONST               0 (None)
+                STORE_FAST               4 (e)
+                DELETE_FAST              4 (e)
+                LOAD_CONST               0 (None)
+                RETURN_VALUE
+
+  --   L21:     LOAD_CONST               0 (None)
+                STORE_FAST               4 (e)
+                DELETE_FAST              4 (e)
+                RERAISE                  1
+
+  83   L22:     RERAISE                  0
+
+  --   L23:     COPY                     3
+                POP_EXCEPT
+                RERAISE                  1
+       L24:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+                RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L24 [0] lasti
+  L3 to L5 -> L18 [0]
+  L5 to L6 -> L16 [2]
+  L6 to L11 -> L18 [0]
+  L12 to L15 -> L18 [0]
+  L15 to L16 -> L24 [0] lasti
+  L16 to L17 -> L18 [0]
+  L18 to L19 -> L23 [1] lasti
+  L19 to L20 -> L21 [1] lasti
+  L20 to L21 -> L24 [0] lasti
+  L21 to L23 -> L23 [1] lasti
+  L23 to L24 -> L24 [0] lasti
+
+Disassembly of <code object __annotate__ at 0x1075e7730, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 94>:
+ 94           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('req')
+              LOAD_GLOBAL              0 (FolderCreate)
+              BUILD_MAP                1
+              RETURN_VALUE
+
+Disassembly of <code object create_folder at 0x1075f9630, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 93>:
+  93           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+  95           LOAD_GLOBAL              1 (str + NULL)
+               LOAD_GLOBAL              2 (uuid)
+               LOAD_ATTR                4 (uuid4)
+               PUSH_NULL
+               CALL                     0
+               CALL                     1
+               STORE_FAST               1 (folder_id)
+
+  96           LOAD_FAST_BORROW         0 (req)
+               LOAD_ATTR                6 (subject)
+               TO_BOOL
+               POP_JUMP_IF_FALSE       13 (to L2)
+               NOT_TAKEN
+               LOAD_FAST_BORROW         0 (req)
+               LOAD_ATTR                6 (subject)
+               JUMP_FORWARD            11 (to L3)
+       L2:     LOAD_FAST_BORROW         0 (req)
+               LOAD_ATTR                8 (name)
+       L3:     STORE_FAST               2 (subject)
+
+  97           LOAD_GLOBAL             10 (store)
+               LOAD_ATTR               13 (create_flashcard_folder + NULL|self)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 16 (folder_id, req)
+               LOAD_ATTR                8 (name)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 32 (subject, req)
+               LOAD_ATTR               14 (description)
+               CALL                     4
+               STORE_FAST               3 (success)
+
+  98           LOAD_FAST_BORROW         3 (success)
+               TO_BOOL
+               POP_JUMP_IF_FALSE        7 (to L4)
+               NOT_TAKEN
+
+  99           LOAD_CONST               0 ('id')
+               LOAD_FAST_BORROW         1 (folder_id)
+               LOAD_CONST               1 ('message')
+               LOAD_CONST               2 ('Folder created successfully')
+               BUILD_MAP                2
+               RETURN_VALUE
+
+ 100   L4:     LOAD_GLOBAL             17 (HTTPException + NULL)
+               LOAD_CONST               3 (500)
+               LOAD_CONST               4 ('Failed to create folder')
+               LOAD_CONST               5 (('status_code', 'detail'))
+               CALL_KW                  2
+               RAISE_VARARGS            1
+
+  --   L5:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L5 -> L5 [0] lasti
+
+Disassembly of <code object __annotate__ at 0x1075e7830, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 103>:
+103           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('folder_id')
+              LOAD_GLOBAL              0 (str)
+              LOAD_CONST               2 ('req')
+              LOAD_GLOBAL              2 (FlashcardCreate)
+              BUILD_MAP                2
+              RETURN_VALUE
+
+Disassembly of <code object add_card at 0x10746ba50, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 102>:
+ 102           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+ 104           LOAD_GLOBAL              1 (str + NULL)
+               LOAD_GLOBAL              2 (uuid)
+               LOAD_ATTR                4 (uuid4)
+               PUSH_NULL
+               CALL                     0
+               CALL                     1
+               STORE_FAST               2 (card_id)
+
+ 105           LOAD_GLOBAL              6 (store)
+               LOAD_ATTR                9 (add_flashcard + NULL|self)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 32 (card_id, folder_id)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               10 (front)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               12 (back)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               14 (topic)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               16 (difficulty)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               18 (tags)
+               CALL                     7
+               STORE_FAST               3 (success)
+
+ 106           LOAD_FAST_BORROW         3 (success)
+               TO_BOOL
+               POP_JUMP_IF_FALSE        7 (to L2)
+               NOT_TAKEN
+
+ 107           LOAD_CONST               0 ('id')
+               LOAD_FAST_BORROW         2 (card_id)
+               LOAD_CONST               1 ('message')
+               LOAD_CONST               2 ('Flashcard added successfully')
+               BUILD_MAP                2
+               RETURN_VALUE
+
+ 108   L2:     LOAD_GLOBAL             21 (HTTPException + NULL)
+               LOAD_CONST               3 (500)
+               LOAD_CONST               4 ('Failed to add flashcard')
+               LOAD_CONST               5 (('status_code', 'detail'))
+               CALL_KW                  2
+               RAISE_VARARGS            1
+
+  --   L3:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L3 -> L3 [0] lasti
+
+Disassembly of <code object __annotate__ at 0x1075e7930, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 111>:
+111           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('folder_id')
+              LOAD_GLOBAL              0 (str)
+              LOAD_CONST               2 ('limit')
+              LOAD_GLOBAL              2 (int)
+              BUILD_MAP                2
+              RETURN_VALUE
+
+Disassembly of <code object get_due_cards at 0x107622780, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 110>:
+ 110           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+ 112           LOAD_GLOBAL              0 (store)
+               LOAD_ATTR                3 (get_due_flashcards + NULL|self)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (folder_id, limit)
+               CALL                     2
+               STORE_FAST               2 (cards)
+
+ 113           LOAD_CONST               0 ('cards')
+               LOAD_FAST_BORROW         2 (cards)
+               BUILD_MAP                1
+               RETURN_VALUE
+
+  --   L2:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L2 [0] lasti
+
+--- Function: FolderCreate ---
+  --           MAKE_CELL                0 (__classdict__)
+
+  13           RESUME                   0
+               LOAD_NAME                0 (__name__)
+               STORE_NAME               1 (__module__)
+               LOAD_CONST               0 ('FolderCreate')
+               STORE_NAME               2 (__qualname__)
+               LOAD_SMALL_INT          13
+               STORE_NAME               3 (__firstlineno__)
+               LOAD_LOCALS
+               STORE_DEREF              0 (__classdict__)
+
+  15           LOAD_CONST               1 (None)
+               STORE_NAME               4 (subject)
+
+  16           LOAD_CONST               2 ('')
+               STORE_NAME               5 (description)
+
+  13           LOAD_FAST_BORROW         0 (__classdict__)
+               BUILD_TUPLE              1
+               LOAD_CONST               3 (<code object __annotate__ at 0x1075e03c0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 13>)
+               MAKE_FUNCTION
+               SET_FUNCTION_ATTRIBUTE   8 (closure)
+               STORE_NAME               6 (__annotate_func__)
+               LOAD_CONST               4 (())
+               STORE_NAME               7 (__static_attributes__)
+               LOAD_FAST_BORROW         0 (__classdict__)
+               STORE_NAME               8 (__classdictcell__)
+               LOAD_CONST               1 (None)
+               RETURN_VALUE
+
+Disassembly of <code object __annotate__ at 0x1075e03c0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 13>:
+  --           COPY_FREE_VARS           1
+
+  13           RESUME                   0
+               LOAD_FAST_BORROW         0 (format)
+               LOAD_SMALL_INT           2
+               COMPARE_OP             132 (>)
+               POP_JUMP_IF_FALSE        3 (to L1)
+               NOT_TAKEN
+               LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+               RAISE_VARARGS            1
+       L1:     BUILD_MAP                0
+
+  14           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               COPY                     2
+               LOAD_CONST               1 ('name')
+
+  13           STORE_SUBSCR
+
+  15           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               2 ('subject')
+
+  13           STORE_SUBSCR
+
+  16           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               3 ('description')
+
+  13           STORE_SUBSCR
+               RETURN_VALUE
+
+--- Function: FlashcardCreate ---
+  --           MAKE_CELL                0 (__classdict__)
+
+  18           RESUME                   0
+               LOAD_NAME                0 (__name__)
+               STORE_NAME               1 (__module__)
+               LOAD_CONST               0 ('FlashcardCreate')
+               STORE_NAME               2 (__qualname__)
+               LOAD_SMALL_INT          18
+               STORE_NAME               3 (__firstlineno__)
+               LOAD_LOCALS
+               STORE_DEREF              0 (__classdict__)
+
+  21           LOAD_CONST               1 ('')
+               STORE_NAME               4 (topic)
+
+  22           LOAD_SMALL_INT           5
+               STORE_NAME               5 (difficulty)
+
+  23           LOAD_CONST               1 ('')
+               STORE_NAME               6 (tags)
+
+  18           LOAD_FAST_BORROW         0 (__classdict__)
+               BUILD_TUPLE              1
+               LOAD_CONST               2 (<code object __annotate__ at 0x1074375d0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 18>)
+               MAKE_FUNCTION
+               SET_FUNCTION_ATTRIBUTE   8 (closure)
+               STORE_NAME               7 (__annotate_func__)
+               LOAD_CONST               3 (())
+               STORE_NAME               8 (__static_attributes__)
+               LOAD_FAST_BORROW         0 (__classdict__)
+               STORE_NAME               9 (__classdictcell__)
+               LOAD_CONST               4 (None)
+               RETURN_VALUE
+
+Disassembly of <code object __annotate__ at 0x1074375d0, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 18>:
+  --           COPY_FREE_VARS           1
+
+  18           RESUME                   0
+               LOAD_FAST_BORROW         0 (format)
+               LOAD_SMALL_INT           2
+               COMPARE_OP             132 (>)
+               POP_JUMP_IF_FALSE        3 (to L1)
+               NOT_TAKEN
+               LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+               RAISE_VARARGS            1
+       L1:     BUILD_MAP                0
+
+  19           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               COPY                     2
+               LOAD_CONST               1 ('front')
+
+  18           STORE_SUBSCR
+
+  20           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               COPY                     2
+               LOAD_CONST               2 ('back')
+
+  18           STORE_SUBSCR
+
+  21           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               3 ('topic')
+
+  18           STORE_SUBSCR
+
+  22           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 2 (int)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               4 ('difficulty')
+
+  18           STORE_SUBSCR
+
+  23           LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 1 (Optional)
+               LOAD_DEREF               1 (__classdict__)
+               LOAD_FROM_DICT_OR_GLOBALS 0 (str)
+               BINARY_OP               26 ([])
+               COPY                     2
+               LOAD_CONST               5 ('tags')
+
+  18           STORE_SUBSCR
+               RETURN_VALUE
+
+--- Function: list_folders ---
+  25           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+  27           LOAD_GLOBAL              0 (store)
+               LOAD_ATTR                3 (get_flashcard_folders + NULL|self)
+               CALL                     0
+               STORE_FAST               0 (folders)
+
+  29           LOAD_CONST               0 ('flashcards')
+               LOAD_FAST_BORROW         0 (folders)
+               GET_ITER
+               LOAD_FAST_AND_CLEAR      1 (f)
+               SWAP                     2
+       L2:     BUILD_LIST               0
+               SWAP                     2
+       L3:     FOR_ITER                11 (to L4)
+               STORE_FAST_LOAD_FAST    17 (f, f)
+               LOAD_CONST               1 ('name')
+               BINARY_OP               26 ([])
+               LIST_APPEND              2
+               JUMP_BACKWARD           13 (to L3)
+       L4:     END_FOR
+               POP_ITER
+       L5:     SWAP                     2
+               STORE_FAST               1 (f)
+               BUILD_MAP                1
+               RETURN_VALUE
+
+  --   L6:     SWAP                     2
+               POP_TOP
+
+  29           SWAP                     2
+               STORE_FAST               1 (f)
+               RERAISE                  0
+
+  --   L7:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L7 [0] lasti
+  L2 to L5 -> L6 [3]
+  L5 to L7 -> L7 [0] lasti
+
+--- Function: __annotate__ ---
+ 32           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('req')
+              LOAD_GLOBAL              0 (FolderCreate)
+              BUILD_MAP                1
+              RETURN_VALUE
+
+--- Function: create_folder_alt ---
+  --            MAKE_CELL                0 (req)
+
+  31            RETURN_GENERATOR
+                POP_TOP
+        L1:     RESUME                   0
+
+  34            LOAD_GLOBAL              0 (store)
+                LOAD_ATTR                3 (get_flashcard_folders + NULL|self)
+                CALL                     0
+                STORE_FAST               1 (all_folders)
+
+  35            LOAD_GLOBAL              4 (any)
+                COPY                     1
+                LOAD_COMMON_CONSTANT     4 (<built-in function any>)
+                IS_OP                    0 (is)
+                POP_JUMP_IF_FALSE       31 (to L6)
+                NOT_TAKEN
+                POP_TOP
+                LOAD_FAST_BORROW         0 (req)
+                BUILD_TUPLE              1
+                LOAD_CONST               0 (<code object <genexpr> at 0x107437e10, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 35>)
+                MAKE_FUNCTION
+                SET_FUNCTION_ATTRIBUTE   8 (closure)
+                LOAD_FAST_BORROW         1 (all_folders)
+                GET_ITER
+                CALL                     0
+        L2:     FOR_ITER                12 (to L5)
+                TO_BOOL
+                POP_JUMP_IF_TRUE         3 (to L4)
+        L3:     NOT_TAKEN
+                JUMP_BACKWARD           11 (to L2)
+        L4:     POP_ITER
+                LOAD_CONST               1 (True)
+                JUMP_FORWARD            20 (to L7)
+        L5:     END_FOR
+                POP_ITER
+                LOAD_CONST               2 (False)
+                JUMP_FORWARD            16 (to L7)
+        L6:     PUSH_NULL
+                LOAD_FAST_BORROW         0 (req)
+                BUILD_TUPLE              1
+                LOAD_CONST               0 (<code object <genexpr> at 0x107437e10, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 35>)
+                MAKE_FUNCTION
+                SET_FUNCTION_ATTRIBUTE   8 (closure)
+                LOAD_FAST_BORROW         1 (all_folders)
+                GET_ITER
+                CALL                     0
+                CALL                     1
+        L7:     TO_BOOL
+                POP_JUMP_IF_FALSE       14 (to L10)
+        L8:     NOT_TAKEN
+
+  36    L9:     LOAD_GLOBAL              7 (HTTPException + NULL)
+                LOAD_CONST               3 (400)
+                LOAD_CONST               4 ('Folder already exists')
+                LOAD_CONST               5 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  38   L10:     LOAD_GLOBAL              9 (str + NULL)
+                LOAD_GLOBAL             10 (uuid)
+                LOAD_ATTR               12 (uuid4)
+                PUSH_NULL
+                CALL                     0
+                CALL                     1
+                STORE_FAST               2 (folder_id)
+
+  39            LOAD_DEREF               0 (req)
+                LOAD_ATTR               14 (subject)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       13 (to L11)
+                NOT_TAKEN
+                LOAD_DEREF               0 (req)
+                LOAD_ATTR               14 (subject)
+                JUMP_FORWARD            11 (to L12)
+       L11:     LOAD_DEREF               0 (req)
+                LOAD_ATTR               16 (name)
+       L12:     STORE_FAST               3 (subject)
+
+  40            LOAD_GLOBAL              0 (store)
+                LOAD_ATTR               19 (create_flashcard_folder + NULL|self)
+                LOAD_FAST_BORROW         2 (folder_id)
+                LOAD_DEREF               0 (req)
+                LOAD_ATTR               16 (name)
+                LOAD_FAST_BORROW         3 (subject)
+                LOAD_DEREF               0 (req)
+                LOAD_ATTR               20 (description)
+                CALL                     4
+                STORE_FAST               4 (success)
+
+  41            LOAD_FAST_BORROW         4 (success)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       49 (to L19)
+       L13:     NOT_TAKEN
+
+  43   L14:     LOAD_GLOBAL              0 (store)
+                LOAD_ATTR                3 (get_flashcard_folders + NULL|self)
+                CALL                     0
+                STORE_FAST               5 (updated_folders)
+
+  44            LOAD_CONST               6 ('flashcards')
+                LOAD_FAST_BORROW         5 (updated_folders)
+                GET_ITER
+                LOAD_FAST_AND_CLEAR      6 (f)
+                SWAP                     2
+       L15:     BUILD_LIST               0
+                SWAP                     2
+       L16:     FOR_ITER                11 (to L17)
+                STORE_FAST_LOAD_FAST   102 (f, f)
+                LOAD_CONST               7 ('name')
+                BINARY_OP               26 ([])
+                LIST_APPEND              2
+                JUMP_BACKWARD           13 (to L16)
+       L17:     END_FOR
+                POP_ITER
+       L18:     SWAP                     2
+                STORE_FAST               6 (f)
+                LOAD_CONST               8 ('id')
+                LOAD_FAST_BORROW         2 (folder_id)
+                BUILD_MAP                2
+                RETURN_VALUE
+
+  45   L19:     LOAD_GLOBAL              7 (HTTPException + NULL)
+                LOAD_CONST               9 (500)
+                LOAD_CONST              10 ('Failed to create folder')
+                LOAD_CONST               5 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  --   L20:     SWAP                     2
+                POP_TOP
+
+  44            SWAP                     2
+                STORE_FAST               6 (f)
+                RERAISE                  0
+
+  --   L21:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+                RERAISE                  1
+ExceptionTable:
+  L1 to L3 -> L21 [0] lasti
+  L4 to L8 -> L21 [0] lasti
+  L9 to L13 -> L21 [0] lasti
+  L14 to L15 -> L21 [0] lasti
+  L15 to L18 -> L20 [3]
+  L18 to L21 -> L21 [0] lasti
+
+Disassembly of <code object <genexpr> at 0x107437e10, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 35>:
+  --           COPY_FREE_VARS           1
+
+  35           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+               LOAD_FAST                0 (.0)
+       L2:     FOR_ITER                54 (to L3)
+               STORE_FAST_LOAD_FAST    17 (f, f)
+               LOAD_CONST               0 ('name')
+               BINARY_OP               26 ([])
+               LOAD_ATTR                1 (lower + NULL|self)
+               CALL                     0
+               LOAD_DEREF               2 (req)
+               LOAD_ATTR                2 (name)
+               LOAD_ATTR                1 (lower + NULL|self)
+               CALL                     0
+               COMPARE_OP              72 (==)
+               YIELD_VALUE              0
+               RESUME                   5
+               POP_TOP
+               JUMP_BACKWARD           56 (to L2)
+       L3:     END_FOR
+               POP_ITER
+               LOAD_CONST               1 (None)
+               RETURN_VALUE
+
+  --   L4:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L4 -> L4 [0] lasti
+
+--- Function: __annotate__ ---
+ 48           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('subject')
+              LOAD_GLOBAL              0 (str)
+              LOAD_CONST               2 ('file')
+              LOAD_GLOBAL              2 (UploadFile)
+              LOAD_CONST               3 ('background_tasks')
+              LOAD_GLOBAL              4 (BackgroundTasks)
+              BUILD_MAP                3
+              RETURN_VALUE
+
+--- Function: upload_material ---
+  --            MAKE_CELL                0 (subject)
+                MAKE_CELL                6 (folder)
+                MAKE_CELL                7 (text)
+
+  47            RETURN_GENERATOR
+                POP_TOP
+        L1:     RESUME                   0
+
+  50            LOAD_GLOBAL              0 (store)
+                LOAD_ATTR                3 (get_flashcard_folder_by_name + NULL|self)
+                LOAD_DEREF               0 (subject)
+                CALL                     1
+                STORE_DEREF              6 (folder)
+
+  51            LOAD_DEREF               6 (folder)
+                TO_BOOL
+                POP_JUMP_IF_TRUE        18 (to L2)
+                NOT_TAKEN
+
+  52            LOAD_GLOBAL              5 (HTTPException + NULL)
+                LOAD_CONST               0 (404)
+                LOAD_CONST               1 ("Subject foldre '")
+                LOAD_DEREF               0 (subject)
+                FORMAT_SIMPLE
+                LOAD_CONST               2 ("' not found")
+                BUILD_STRING             3
+                LOAD_CONST               3 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  55    L2:     NOP
+
+  56    L3:     LOAD_FAST_BORROW         1 (file)
+                LOAD_ATTR                7 (read + NULL|self)
+                CALL                     0
+                GET_AWAITABLE            0
+                LOAD_CONST               4 (None)
+        L4:     SEND                     3 (to L7)
+        L5:     YIELD_VALUE              1
+        L6:     RESUME                   3
+                JUMP_BACKWARD_NO_INTERRUPT 5 (to L4)
+        L7:     END_SEND
+                STORE_FAST               3 (content)
+
+  57            LOAD_FAST_BORROW         3 (content)
+                LOAD_ATTR                9 (decode + NULL|self)
+                LOAD_CONST               5 ('utf-8')
+                LOAD_CONST               6 ('ignore')
+                LOAD_CONST               7 (('errors',))
+                CALL_KW                  2
+                STORE_DEREF              7 (text)
+
+  62    L8:     LOAD_FAST                6 (folder)
+                LOAD_FAST                0 (subject)
+                LOAD_FAST                7 (text)
+                BUILD_TUPLE              3
+                LOAD_CONST              10 (<code object process_upload at 0xbfacce300, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 62>)
+                MAKE_FUNCTION
+                SET_FUNCTION_ATTRIBUTE   8 (closure)
+                STORE_FAST               5 (process_upload)
+
+  86            LOAD_FAST                2 (background_tasks)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       19 (to L11)
+        L9:     NOT_TAKEN
+
+  87   L10:     LOAD_FAST                2 (background_tasks)
+                LOAD_ATTR               13 (add_task + NULL|self)
+                LOAD_FAST                5 (process_upload)
+                CALL                     1
+                POP_TOP
+                JUMP_FORWARD            15 (to L16)
+
+  89   L11:     LOAD_FAST                5 (process_upload)
+                PUSH_NULL
+                CALL                     0
+                GET_AWAITABLE            0
+                LOAD_CONST               4 (None)
+       L12:     SEND                     3 (to L15)
+       L13:     YIELD_VALUE              1
+       L14:     RESUME                   3
+                JUMP_BACKWARD_NO_INTERRUPT 5 (to L12)
+       L15:     END_SEND
+                POP_TOP
+
+  91   L16:     LOAD_CONST              11 ('status')
+                LOAD_CONST              12 ('success')
+                LOAD_CONST              13 ('message')
+                LOAD_CONST              14 ('Material uploaded to ')
+                LOAD_DEREF               0 (subject)
+                FORMAT_SIMPLE
+                LOAD_CONST              15 ('! You can now select this subject in chat.')
+                BUILD_STRING             3
+                BUILD_MAP                2
+                RETURN_VALUE
+
+  56   L17:     CLEANUP_THROW
+       L18:     JUMP_BACKWARD_NO_INTERRUPT 82 (to L7)
+
+  --   L19:     PUSH_EXC_INFO
+
+  58            LOAD_GLOBAL             10 (Exception)
+                CHECK_EXC_MATCH
+                POP_JUMP_IF_FALSE       22 (to L22)
+                NOT_TAKEN
+                STORE_FAST               4 (e)
+
+  59   L20:     LOAD_GLOBAL              5 (HTTPException + NULL)
+                LOAD_CONST               8 (400)
+                LOAD_CONST               9 ('Error reading file: ')
+                LOAD_FAST                4 (e)
+                FORMAT_SIMPLE
+                BUILD_STRING             2
+                LOAD_CONST               3 (('status_code', 'detail'))
+                CALL_KW                  2
+                RAISE_VARARGS            1
+
+  --   L21:     LOAD_CONST               4 (None)
+                STORE_FAST               4 (e)
+                DELETE_FAST              4 (e)
+                RERAISE                  1
+
+  58   L22:     RERAISE                  0
+
+  --   L23:     COPY                     3
+                POP_EXCEPT
+                RERAISE                  1
+
+  89   L24:     CLEANUP_THROW
+       L25:     JUMP_BACKWARD_NO_INTERRUPT 51 (to L15)
+
+  --   L26:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+                RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L26 [0] lasti
+  L3 to L5 -> L19 [0]
+  L5 to L6 -> L17 [2]
+  L6 to L8 -> L19 [0]
+  L8 to L9 -> L26 [0] lasti
+  L10 to L13 -> L26 [0] lasti
+  L13 to L14 -> L24 [2]
+  L14 to L17 -> L26 [0] lasti
+  L17 to L18 -> L19 [0]
+  L19 to L20 -> L23 [1] lasti
+  L20 to L21 -> L21 [1] lasti
+  L21 to L23 -> L23 [1] lasti
+  L23 to L25 -> L26 [0] lasti
+
+Disassembly of <code object process_upload at 0xbfacce300, file "/Users/princegupta09372gmail.com/Downloads/JARVIS-master-main/jarvis-system/backend/adaptive_learning/api/flashcard_controller.py", line 62>:
+  --            COPY_FREE_VARS           3
+
+  62            RETURN_GENERATOR
+                POP_TOP
+        L1:     RESUME                   0
+
+  63    L2:     NOP
+
+  66    L3:     LOAD_GLOBAL              0 (generator)
+                LOAD_ATTR                3 (generate_from_text + NULL|self)
+                LOAD_DEREF               7 (text)
+                LOAD_DEREF               6 (subject)
+                CALL                     2
+                GET_AWAITABLE            0
+                LOAD_CONST               0 (None)
+        L4:     SEND                     3 (to L7)
+        L5:     YIELD_VALUE              1
+        L6:     RESUME                   3
+                JUMP_BACKWARD_NO_INTERRUPT 5 (to L4)
+        L7:     END_SEND
+                STORE_FAST               0 (flashcard_set)
+
+  68            LOAD_FAST_BORROW         0 (flashcard_set)
+                LOAD_ATTR                4 (flashcards)
+                GET_ITER
+        L8:     FOR_ITER               154 (to L14)
+                STORE_FAST               1 (card)
+
+  69            LOAD_GLOBAL              7 (str + NULL)
+                LOAD_GLOBAL              8 (uuid)
+                LOAD_ATTR               10 (uuid4)
+                PUSH_NULL
+                CALL                     0
+                CALL                     1
+                STORE_FAST               2 (card_id)
+
+  71            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               12 (tags)
+                TO_BOOL
+                POP_JUMP_IF_FALSE       28 (to L9)
+                NOT_TAKEN
+                LOAD_CONST               1 (',')
+                LOAD_ATTR               15 (join + NULL|self)
+                LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               12 (tags)
+                CALL                     1
+                JUMP_FORWARD             1 (to L10)
+        L9:     LOAD_CONST               2 ('')
+       L10:     STORE_FAST               3 (tags_str)
+
+  73            LOAD_GLOBAL             16 (store)
+                LOAD_ATTR               19 (add_flashcard + NULL|self)
+
+  74            LOAD_FAST                2 (card_id)
+
+  75            LOAD_DEREF               5 (folder)
+                LOAD_CONST               3 ('id')
+                BINARY_OP               26 ([])
+
+  76            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               20 (front)
+
+  77            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               22 (back)
+
+  78            LOAD_FAST_BORROW         1 (card)
+                LOAD_ATTR               24 (topic)
+                COPY                     1
+                TO_BOOL
+                POP_JUMP_IF_TRUE         3 (to L13)
+       L11:     NOT_TAKEN
+       L12:     POP_TOP
+                LOAD_DEREF               6 (subject)
+
+  79   L13:     LOAD_SMALL_INT           5
+
+  80            LOAD_FAST_BORROW         3 (tags_str)
+
+  73            CALL                     7
+                POP_TOP
+                JUMP_BACKWARD          156 (to L8)
+
+  68   L14:     END_FOR
+                POP_ITER
+
+  82            LOAD_GLOBAL             26 (logger)
+                LOAD_ATTR               29 (info + NULL|self)
+                LOAD_CONST               4 ('Successfully generated ')
+                LOAD_GLOBAL             31 (len + NULL)
+                LOAD_FAST_BORROW         0 (flashcard_set)
+                LOAD_ATTR                4 (flashcards)
+                CALL                     1
+                FORMAT_SIMPLE
+                LOAD_CONST               5 (' cards for ')
+                LOAD_DEREF               6 (subject)
+                FORMAT_SIMPLE
+                BUILD_STRING             4
+                CALL                     1
+                POP_TOP
+       L15:     LOAD_CONST               0 (None)
+                RETURN_VALUE
+
+  66   L16:     CLEANUP_THROW
+       L17:     JUMP_BACKWARD_NO_INTERRUPT 222 (to L7)
+
+  --   L18:     PUSH_EXC_INFO
+
+  83            LOAD_GLOBAL             32 (Exception)
+                CHECK_EXC_MATCH
+                POP_JUMP_IF_FALSE       48 (to L22)
+                NOT_TAKEN
+                STORE_FAST               4 (e)
+
+  84   L19:     LOAD_GLOBAL             26 (logger)
+                LOAD_ATTR               35 (error + NULL|self)
+                LOAD_CONST               6 ('Error in background upload processing for ')
+                LOAD_DEREF               6 (subject)
+                FORMAT_SIMPLE
+                LOAD_CONST               7 (': ')
+                LOAD_GLOBAL             37 (repr + NULL)
+                LOAD_FAST                4 (e)
+                CALL                     1
+                FORMAT_SIMPLE
+                BUILD_STRING             4
+                CALL                     1
+                POP_TOP
+       L20:     POP_EXCEPT
+                LOAD_CONST               0 (None)
+                STORE_FAST               4 (e)
+                DELETE_FAST              4 (e)
+                LOAD_CONST               0 (None)
+                RETURN_VALUE
+
+  --   L21:     LOAD_CONST               0 (None)
+                STORE_FAST               4 (e)
+                DELETE_FAST              4 (e)
+                RERAISE                  1
+
+  83   L22:     RERAISE                  0
+
+  --   L23:     COPY                     3
+                POP_EXCEPT
+                RERAISE                  1
+       L24:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+                RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L24 [0] lasti
+  L3 to L5 -> L18 [0]
+  L5 to L6 -> L16 [2]
+  L6 to L11 -> L18 [0]
+  L12 to L15 -> L18 [0]
+  L15 to L16 -> L24 [0] lasti
+  L16 to L17 -> L18 [0]
+  L18 to L19 -> L23 [1] lasti
+  L19 to L20 -> L21 [1] lasti
+  L20 to L21 -> L24 [0] lasti
+  L21 to L23 -> L23 [1] lasti
+  L23 to L24 -> L24 [0] lasti
+
+--- Function: __annotate__ ---
+ 94           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('req')
+              LOAD_GLOBAL              0 (FolderCreate)
+              BUILD_MAP                1
+              RETURN_VALUE
+
+--- Function: create_folder ---
+  93           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+  95           LOAD_GLOBAL              1 (str + NULL)
+               LOAD_GLOBAL              2 (uuid)
+               LOAD_ATTR                4 (uuid4)
+               PUSH_NULL
+               CALL                     0
+               CALL                     1
+               STORE_FAST               1 (folder_id)
+
+  96           LOAD_FAST_BORROW         0 (req)
+               LOAD_ATTR                6 (subject)
+               TO_BOOL
+               POP_JUMP_IF_FALSE       13 (to L2)
+               NOT_TAKEN
+               LOAD_FAST_BORROW         0 (req)
+               LOAD_ATTR                6 (subject)
+               JUMP_FORWARD            11 (to L3)
+       L2:     LOAD_FAST_BORROW         0 (req)
+               LOAD_ATTR                8 (name)
+       L3:     STORE_FAST               2 (subject)
+
+  97           LOAD_GLOBAL             10 (store)
+               LOAD_ATTR               13 (create_flashcard_folder + NULL|self)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 16 (folder_id, req)
+               LOAD_ATTR                8 (name)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 32 (subject, req)
+               LOAD_ATTR               14 (description)
+               CALL                     4
+               STORE_FAST               3 (success)
+
+  98           LOAD_FAST_BORROW         3 (success)
+               TO_BOOL
+               POP_JUMP_IF_FALSE        7 (to L4)
+               NOT_TAKEN
+
+  99           LOAD_CONST               0 ('id')
+               LOAD_FAST_BORROW         1 (folder_id)
+               LOAD_CONST               1 ('message')
+               LOAD_CONST               2 ('Folder created successfully')
+               BUILD_MAP                2
+               RETURN_VALUE
+
+ 100   L4:     LOAD_GLOBAL             17 (HTTPException + NULL)
+               LOAD_CONST               3 (500)
+               LOAD_CONST               4 ('Failed to create folder')
+               LOAD_CONST               5 (('status_code', 'detail'))
+               CALL_KW                  2
+               RAISE_VARARGS            1
+
+  --   L5:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L5 -> L5 [0] lasti
+
+--- Function: __annotate__ ---
+103           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('folder_id')
+              LOAD_GLOBAL              0 (str)
+              LOAD_CONST               2 ('req')
+              LOAD_GLOBAL              2 (FlashcardCreate)
+              BUILD_MAP                2
+              RETURN_VALUE
+
+--- Function: add_card ---
+ 102           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+ 104           LOAD_GLOBAL              1 (str + NULL)
+               LOAD_GLOBAL              2 (uuid)
+               LOAD_ATTR                4 (uuid4)
+               PUSH_NULL
+               CALL                     0
+               CALL                     1
+               STORE_FAST               2 (card_id)
+
+ 105           LOAD_GLOBAL              6 (store)
+               LOAD_ATTR                9 (add_flashcard + NULL|self)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 32 (card_id, folder_id)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               10 (front)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               12 (back)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               14 (topic)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               16 (difficulty)
+               LOAD_FAST_BORROW         1 (req)
+               LOAD_ATTR               18 (tags)
+               CALL                     7
+               STORE_FAST               3 (success)
+
+ 106           LOAD_FAST_BORROW         3 (success)
+               TO_BOOL
+               POP_JUMP_IF_FALSE        7 (to L2)
+               NOT_TAKEN
+
+ 107           LOAD_CONST               0 ('id')
+               LOAD_FAST_BORROW         2 (card_id)
+               LOAD_CONST               1 ('message')
+               LOAD_CONST               2 ('Flashcard added successfully')
+               BUILD_MAP                2
+               RETURN_VALUE
+
+ 108   L2:     LOAD_GLOBAL             21 (HTTPException + NULL)
+               LOAD_CONST               3 (500)
+               LOAD_CONST               4 ('Failed to add flashcard')
+               LOAD_CONST               5 (('status_code', 'detail'))
+               CALL_KW                  2
+               RAISE_VARARGS            1
+
+  --   L3:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L3 -> L3 [0] lasti
+
+--- Function: __annotate__ ---
+111           RESUME                   0
+              LOAD_FAST_BORROW         0 (format)
+              LOAD_SMALL_INT           2
+              COMPARE_OP             132 (>)
+              POP_JUMP_IF_FALSE        3 (to L1)
+              NOT_TAKEN
+              LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+              RAISE_VARARGS            1
+      L1:     LOAD_CONST               1 ('folder_id')
+              LOAD_GLOBAL              0 (str)
+              LOAD_CONST               2 ('limit')
+              LOAD_GLOBAL              2 (int)
+              BUILD_MAP                2
+              RETURN_VALUE
+
+--- Function: get_due_cards ---
+ 110           RETURN_GENERATOR
+               POP_TOP
+       L1:     RESUME                   0
+
+ 112           LOAD_GLOBAL              0 (store)
+               LOAD_ATTR                3 (get_due_flashcards + NULL|self)
+               LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (folder_id, limit)
+               CALL                     2
+               STORE_FAST               2 (cards)
+
+ 113           LOAD_CONST               0 ('cards')
+               LOAD_FAST_BORROW         2 (cards)
+               BUILD_MAP                1
+               RETURN_VALUE
+
+  --   L2:     CALL_INTRINSIC_1         3 (INTRINSIC_STOPITERATION_ERROR)
+               RERAISE                  1
+ExceptionTable:
+  L1 to L2 -> L2 [0] lasti

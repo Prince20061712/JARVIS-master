@@ -44,3 +44,4 @@ humanize
 send2trash
 pyzipper
 mypy
+python-pptx

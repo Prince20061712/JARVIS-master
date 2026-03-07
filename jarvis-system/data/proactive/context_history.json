@@ -161,10 +161,17 @@
       "timestamp": "2026-03-06T22:03:20.112702",
       "priority": "medium",
       "confidence": 0.8
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Evening wind-down: Reflect on today's achievements.",
+      "timestamp": "2026-03-07T20:55:04.074212",
+      "priority": "info",
+      "confidence": 0.7
     }
   ],
   "stats": {
-    "total_events_generated": 23,
+    "total_events_generated": 24,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -173,5 +180,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-03-06T23:20:27.019378"
+  "last_updated": "2026-03-07T20:57:03.884973"
 }

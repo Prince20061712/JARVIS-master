@@ -1,0 +1,1 @@
+The OSI model consists of 7 layers: Physical, Data Link, Network, Transport, Session, Presentation, Application. Routers operate at the Network layer.

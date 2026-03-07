@@ -1137,12 +1137,18 @@ async def create_flashcard(request: Request):
         raise HTTPException(status_code=400, detail="Name is required")
         
     flashcards = load_flashcards()
-    if name in flashcards:
-        raise HTTPException(status_code=400, detail="Flashcard subject already exists")
+    # Case-insensitive check to prevent duplicates like "Operating System" and "operating system"
+    if any(f.lower() == name.lower() for f in flashcards):
+        raise HTTPException(status_code=400, detail=f"Flashcard subject '{name}' already exists.")
         
     flashcards.append(name)
     save_flashcards(flashcards)
-    return {"status": "success", "flashcards": flashcards}
+    return {
+        "status": "success", 
+        "message": f"Created subject '{name}'",
+        "flashcards": flashcards,
+        "count": len(flashcards)
+    }
 
 @app.post("/api/v1/flashcards/{subject}/upload")
 async def upload_flashcard_material(subject: str, file: UploadFile = File(...)):
