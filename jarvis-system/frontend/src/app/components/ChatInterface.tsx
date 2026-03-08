@@ -74,7 +74,7 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick
       try {
         const protocol = window.location.protocol;
         const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
-        const res = await fetch(`${protocol}//${host}/api/v1/flashcards`);
+        const res = await fetch(`${protocol}//${host}/api/local-flashcards`);
         if (res.ok) {
           const data = await res.json();
           setFlashcards(["General", ...(data.flashcards || [])]);

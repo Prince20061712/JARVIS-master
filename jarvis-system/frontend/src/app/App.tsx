@@ -10,7 +10,8 @@ import { isPraiseMessage, getComplimentResponse } from "./utils/complimentRespon
 import { speak } from "./utils/speak";
 import {
   Brain, BookOpen, Clock, BarChart2, ChevronLeft, ChevronRight,
-  Wifi, WifiOff, GraduationCap, FolderPlus, Upload, Loader2
+  Wifi, WifiOff, GraduationCap, FolderPlus, Upload, Loader2,
+  ChevronDown, FileText, Trash2
 } from "lucide-react";
 
 type SidebarTab = "dashboard" | "emotion" | "flashcards";
@@ -51,17 +52,18 @@ export default function App() {
   const [newFlashcardName, setNewFlashcardName] = useState("");
   const [isCreatingFlashcard, setIsCreatingFlashcard] = useState(false);
   const [uploadingToSubject, setUploadingToSubject] = useState<string | null>(null);
+  const [expandedSubjects, setExpandedSubjects] = useState<{ [key: string]: any[] }>({});
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const socketRef = useRef<WebSocket | null>(null);
   const sessionStartRef = useRef<Date>(new Date());
 
-  // Fetch flashcards on load
+  // Fetch flashcards on load and poll for updates
   useEffect(() => {
     const fetchFlashcards = async () => {
       try {
         const protocol = window.location.protocol;
         const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
-        const res = await fetch(`${protocol}//${host}/api/v1/flashcards`);
+        const res = await fetch(`${protocol}//${host}/api/local-flashcards`);
         if (res.ok) {
           const data = await res.json();
           setFlashcards(data.flashcards || []);
@@ -71,6 +73,9 @@ export default function App() {
       }
     };
     fetchFlashcards();
+    // Poll for updates every 5 seconds
+    const intervalId = setInterval(fetchFlashcards, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   // Update session duration every minute
@@ -288,7 +293,7 @@ export default function App() {
     try {
       const protocol = window.location.protocol;
       const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
-      const res = await fetch(`${protocol}//${host}/api/v1/flashcards`, {
+      const res = await fetch(`${protocol}//${host}/api/local-flashcards`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newFlashcardName.trim() }),
@@ -299,7 +304,9 @@ export default function App() {
         setNewFlashcardName("");
         addSystemMessage(`📁 Flashcard subject "${newFlashcardName}" created!`);
       } else {
-        alert("Failed to create flashcard subject. It might already exist.");
+        const errorData = await res.json().catch(() => ({}));
+        const errorMessage = errorData.detail || "Failed to create flashcard subject.";
+        alert(errorMessage);
       }
     } catch (e) {
       console.error(e);
@@ -316,12 +323,16 @@ export default function App() {
       formData.append("file", file);
       const protocol = window.location.protocol;
       const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
-      const res = await fetch(`${protocol}//${host}/api/v1/flashcards/${encodeURIComponent(subject)}/upload`, {
+      const res = await fetch(`${protocol}//${host}/api/local-flashcards/${encodeURIComponent(subject)}/upload`, {
         method: "POST",
         body: formData,
       });
       if (res.ok) {
         addSystemMessage(`📄 Material uploaded to ${subject}! You can now select this subject in chat.`);
+        // Refresh materials for this subject if expanded
+        if (expandedSubjects[subject]) {
+          await toggleSubjectExpansion(subject);
+        }
       } else {
         alert(`Failed to upload to ${subject}.`);
       }
@@ -331,6 +342,81 @@ export default function App() {
     } finally {
       setUploadingToSubject(null);
       if (fileInputRefs.current[subject]) fileInputRefs.current[subject]!.value = "";
+    }
+  };
+
+  const toggleSubjectExpansion = async (subject: string) => {
+    if (expandedSubjects[subject]) {
+      // Collapse
+      setExpandedSubjects(prev => {
+        const newState = { ...prev };
+        delete newState[subject];
+        return newState;
+      });
+    } else {
+      // Expand and fetch materials
+      try {
+        const protocol = window.location.protocol;
+        const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
+        const res = await fetch(`${protocol}//${host}/api/local-flashcards/${encodeURIComponent(subject)}/materials`);
+        if (res.ok) {
+          const data = await res.json();
+          setExpandedSubjects(prev => ({
+            ...prev,
+            [subject]: data.materials || []
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to fetch materials", e);
+      }
+    }
+  };
+
+  const handleDeleteFlashcard = async (subject: string) => {
+    if (!window.confirm(`Are you sure you want to delete the flashcard subject "${subject}" and all its materials?`)) return;
+    try {
+      const protocol = window.location.protocol;
+      const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
+      const res = await fetch(`${protocol}//${host}/api/local-flashcards/${encodeURIComponent(subject)}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        setFlashcards(prev => prev.filter(f => f !== subject));
+        setExpandedSubjects(prev => {
+          const newState = { ...prev };
+          delete newState[subject];
+          return newState;
+        });
+        addSystemMessage(`🗑️ Deleted subject "${subject}"`);
+      } else {
+        alert("Failed to delete subject.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error deleting subject.");
+    }
+  };
+
+  const handleDeleteMaterial = async (subject: string, filename: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${filename}"?`)) return;
+    try {
+      const protocol = window.location.protocol;
+      const host = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "localhost:8000" : window.location.host;
+      const res = await fetch(`${protocol}//${host}/api/local-flashcards/${encodeURIComponent(subject)}/materials/${encodeURIComponent(filename)}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        setExpandedSubjects(prev => ({
+          ...prev,
+          [subject]: prev[subject]?.filter((m: any) => m.name !== filename) || []
+        }));
+        addSystemMessage(`🗑️ Deleted material "${filename}" from ${subject}`);
+      } else {
+        alert("Failed to delete material.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error deleting material.");
     }
   };
 
@@ -445,26 +531,81 @@ export default function App() {
                       <div className="space-y-2">
                         {flashcards.length > 0 ? (
                           flashcards.map((subject) => (
-                            <div key={subject} className="flex justify-between items-center bg-white/5 border border-white/5 rounded-lg p-3">
-                              <span className="text-white/80 text-sm font-medium truncate flex-1 flex items-center gap-2">
-                                <BookOpen className="w-4 h-4 text-purple-400" />
-                                {subject}
-                              </span>
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png"
-                                ref={el => fileInputRefs.current[subject] = el}
-                                onChange={(e) => e.target.files?.[0] && handleUploadToSubject(subject, e.target.files[0])}
-                              />
-                              <button
-                                onClick={() => fileInputRefs.current[subject]?.click()}
-                                disabled={uploadingToSubject === subject}
-                                className="text-cyan-400 p-1.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 disabled:opacity-50"
-                                title="Upload Material"
-                              >
-                                {uploadingToSubject === subject ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                              </button>
+                            <div key={subject} className="border border-white/5 rounded-lg overflow-hidden">
+                              {/* Subject Header */}
+                              <div className="flex justify-between items-center bg-white/5 p-3">
+                                <button
+                                  onClick={() => toggleSubjectExpansion(subject)}
+                                  className="flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors flex-1 text-left"
+                                >
+                                  <ChevronDown className={`w-4 h-4 transition-transform ${expandedSubjects[subject] ? 'rotate-180' : ''}`} />
+                                  <BookOpen className="w-4 h-4 text-purple-400" />
+                                  {subject}
+                                  {expandedSubjects[subject] && (
+                                    <span className="text-xs text-cyan-400 ml-2">
+                                      ({expandedSubjects[subject].length} files)
+                                    </span>
+                                  )}
+                                </button>
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png"
+                                    ref={el => fileInputRefs.current[subject] = el}
+                                    onChange={(e) => e.target.files?.[0] && handleUploadToSubject(subject, e.target.files[0])}
+                                  />
+                                  <button
+                                    onClick={() => fileInputRefs.current[subject]?.click()}
+                                    disabled={uploadingToSubject === subject}
+                                    className="text-cyan-400 p-1.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 disabled:opacity-50"
+                                    title="Upload Material"
+                                  >
+                                    {uploadingToSubject === subject ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteFlashcard(subject)}
+                                    className="text-red-400 p-1.5 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                                    title="Delete Subject"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              {/* Materials List */}
+                              {expandedSubjects[subject] && (
+                                <div className="bg-black/20 border-t border-white/5">
+                                  {expandedSubjects[subject].length > 0 ? (
+                                    <div className="p-3 space-y-2">
+                                      {expandedSubjects[subject].map((material, idx) => (
+                                        <div key={idx} className="flex items-center justify-between text-xs text-white/60 bg-white/5 rounded p-2 group">
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <FileText className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+                                            <span className="truncate">{material.name}</span>
+                                          </div>
+                                          <div className="flex items-center gap-3">
+                                            <span className="text-white/40 flex-shrink-0">
+                                              {(material.size / 1024).toFixed(1)} KB
+                                            </span>
+                                            <button
+                                              onClick={() => handleDeleteMaterial(subject, material.name)}
+                                              className="opacity-0 group-hover:opacity-100 text-red-400 p-1 rounded hover:bg-red-500/20 transition-all"
+                                              title="Delete Material"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="p-3 text-center text-white/30 text-xs">
+                                      No materials uploaded yet
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ))
                         ) : (

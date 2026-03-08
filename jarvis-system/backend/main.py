@@ -192,6 +192,7 @@ class JarvisAI:
         self.is_processing_command = False # Track if JARVIS is thinking/speaking
         self.viva_mode = False
         self.viva_question = ""
+        self.viva_subject = None
         
         print(f"\n{Fore.CYAN}🤖 Loading Enhanced AI Brain (Modular)...")
         # Initialize AI Brain
@@ -518,51 +519,54 @@ class JarvisAI:
                 
         # ========== VIVA MODE COMMANDS ==========
         if "start viva" in command_lower or "begin viva" in command_lower:
-            self.viva_mode = True
-            self.speak("Starting Viva mode based on your uploaded document. I am analyzing the text.")
-            
-            if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'rag_engine') and self.ai_brain.rag_engine:
-                # Retrieve some generic context to generate a question
-                # We can query with a generic search just to get a chunk
-                context = self.ai_brain.rag_engine.retrieve_context("key definitions concepts", subject="viva_doc")
-                if not context or not context.strip():
-                    self.speak("I couldn't find any uploaded document. Please upload one first.")
-                    self.viva_mode = False
-                    return
+            # Check if a subject is selected
+            if subject and subject != "General":
+                self.viva_mode = True
+                self.viva_subject = subject
+                self.speak(f"Starting Viva session for {subject}. I will ask questions based on your uploaded materials.")
                 
-                prompt = f"Based on this academic context from the textbook, ask a single, concise viva question. Do not provide the answer.\nContext: {context}"
-                self.audio.play_beep("ai_processing")
-                # Wait, this is an async function calling synchronous code or is process_command async?
-                # Process command is async! Let's ensure we use run_in_executor for generate_response or if generate_response is synchronous, it will block. 
-                # generate_response in OllamaEnhancedManager is synchronous according to the signature. Let's just call it.
-                response = self.ai_brain.ollama.generate_response(prompt)
-                
-                if response:
-                    self.viva_question = response
-                    self.speak(response)
-                else:
-                    self.speak("Sorry, I could not generate a question right now.")
-            return
+                if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'rag_engine') and self.ai_brain.rag_engine:
+                    # Retrieve context from the specific subject
+                    context = self.ai_brain.rag_engine.retrieve_context("key concepts definitions", subject=subject)
+                    if not context or not context.strip():
+                        self.speak(f"I couldn't find any materials for {subject}. Please upload some documents first.")
+                        self.viva_mode = False
+                        return
+                    
+                    prompt = f"Based on this academic context from {subject}, ask a single, concise viva question. Do not provide the answer.\nContext: {context}"
+                    self.audio.play_beep("ai_processing")
+                    response = self.ai_brain.ollama.generate_response(prompt)
+                    
+                    if response:
+                        self.viva_question = response
+                        self.speak(response)
+                    else:
+                        self.speak("Sorry, I could not generate a question right now.")
+                return
+            else:
+                self.speak("Please select a flashcard subject first, then say 'start viva'.")
+                return
             
         elif "stop viva" in command_lower or "exit viva" in command_lower or "end viva" in command_lower:
             self.viva_mode = False
             self.viva_question = ""
-            self.speak("Viva mode ended.")
+            self.viva_subject = None
+            self.speak("Viva session ended.")
             return
             
         elif self.viva_mode:
             # We are evaluating the user's answer
             if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'rag_engine') and self.ai_brain.rag_engine:
-                context = self.ai_brain.rag_engine.retrieve_context(self.viva_question, subject="viva_doc")
-                evaluation_prompt = f"""You are an examiner in a viva. 
+                context = self.ai_brain.rag_engine.retrieve_context(self.viva_question, subject=self.viva_subject)
+                evaluation_prompt = f"""You are an examiner in a viva for {self.viva_subject}. 
 The question you asked was: "{self.viva_question}"
 The student answered: "{command}"
 
 Here is the textbook context for evaluation: 
 {context}
 
-1. Evaluate if the student's answer is correct. 
-2. If correct, praise the student and say it is correct. If incorrect, correct the user and explain briefly why.
+1. Evaluate if the student's answer is correct. Give a score out of 10.
+2. If correct, praise the student. If incorrect, correct the user and explain briefly why.
 3. Then, ask ONE new, different viva question based on the context. Do not answer it.
 Keep your response conversational and concise."""
 
@@ -1039,6 +1043,35 @@ async def startup_event():
     thread.daemon = True
     thread.start()
 
+    async def load_existing_flashcards():
+        if not hasattr(jarvis, 'ai_brain') or not getattr(jarvis.ai_brain, 'rag_engine', None):
+            return
+            
+        subjects_dir = Path("data/subjects")
+        if not subjects_dir.exists():
+            return
+            
+        print(f"📚 Auto-loading existing flashcard materials from disk into memory...")
+        for subject_dir in subjects_dir.iterdir():
+            if subject_dir.is_dir():
+                subject = subject_dir.name
+                for file_path in subject_dir.iterdir():
+                    if file_path.is_file() and file_path.name != ".DS_Store":
+                        try:
+                            print(f"   Ingesting {file_path.name} for subject '{subject}'...")
+                            exec_loop = asyncio.get_running_loop()
+                            await exec_loop.run_in_executor(
+                                None, 
+                                jarvis.ai_brain.rag_engine.ingest_document, 
+                                str(file_path), 
+                                subject
+                            )
+                        except Exception as e:
+                            print(f"⚠️ Failed to auto-ingest {file_path.name}: {e}")
+        print(f"✅ Finished auto-loading flashcards.")
+
+    asyncio.create_task(load_existing_flashcards())
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
@@ -1125,11 +1158,11 @@ def save_flashcards(flashcards):
     with open(FLASHCARDS_FILE, "w") as f:
         json.dump(flashcards, f)
 
-@app.get("/api/v1/flashcards")
+@app.get("/api/local-flashcards")
 async def get_flashcards():
     return {"flashcards": load_flashcards()}
 
-@app.post("/api/v1/flashcards")
+@app.post("/api/local-flashcards")
 async def create_flashcard(request: Request):
     data = await request.json()
     name = data.get("name")
@@ -1143,6 +1176,11 @@ async def create_flashcard(request: Request):
         
     flashcards.append(name)
     save_flashcards(flashcards)
+    
+    # Create subject folder for viva materials
+    subject_dir = Path("data/subjects") / name
+    subject_dir.mkdir(parents=True, exist_ok=True)
+    
     return {
         "status": "success", 
         "message": f"Created subject '{name}'",
@@ -1150,7 +1188,7 @@ async def create_flashcard(request: Request):
         "count": len(flashcards)
     }
 
-@app.post("/api/v1/flashcards/{subject}/upload")
+@app.post("/api/local-flashcards/{subject}/upload")
 async def upload_flashcard_material(subject: str, file: UploadFile = File(...)):
     global jarvis
     if not jarvis or not hasattr(jarvis, 'ai_brain') or not hasattr(jarvis.ai_brain, 'rag_engine'):
@@ -1160,9 +1198,12 @@ async def upload_flashcard_material(subject: str, file: UploadFile = File(...)):
     if subject not in flashcards:
         raise HTTPException(status_code=404, detail="Flashcard subject not found")
         
-    os.makedirs("temp_uploads", exist_ok=True)
-    file_path = f"temp_uploads/{file.filename}"
+    # Save to subject folder instead of temp_uploads
+    subject_dir = Path("data/subjects") / subject
+    subject_dir.mkdir(parents=True, exist_ok=True)
+    file_path = subject_dir / file.filename
     
+    e = None
     try:
         content = await file.read()
         with open(file_path, "wb") as buffer:
@@ -1174,17 +1215,87 @@ async def upload_flashcard_material(subject: str, file: UploadFile = File(...)):
         result = await loop.run_in_executor(
             None, 
             jarvis.ai_brain.rag_engine.ingest_document, 
-            file_path, 
+            str(file_path), 
             subject
         )
         return {"status": "success", "message": result}
-    except Exception as e:
+    except Exception as ex:
+        e = ex
+        import traceback
+        traceback.print_exc()
         print(f"❌ Error during flashcard material upload: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        if os.path.exists(file_path):
+        # Clean up if file was created but ingestion failed
+        if os.path.exists(file_path) and e is not None and "error" in str(e).lower():
             os.remove(file_path)
 
+@app.get("/api/local-flashcards/{subject}/materials")
+async def get_subject_materials(subject: str):
+    """Get list of materials uploaded to a flashcard subject."""
+    flashcards = load_flashcards()
+    if subject not in flashcards:
+        raise HTTPException(status_code=404, detail="Flashcard subject not found")
+    
+    subject_dir = Path("data/subjects") / subject
+    if not subject_dir.exists():
+        return {"materials": []}
+    
+    materials = []
+    for file_path in subject_dir.rglob("*"):
+        if file_path.is_file():
+            # Get relative path from subject directory
+            relative_path = file_path.relative_to(subject_dir)
+            materials.append({
+                "name": file_path.name,
+                "path": str(relative_path),
+                "size": file_path.stat().st_size,
+                "modified": file_path.stat().st_mtime
+            })
+    
+    return {"materials": materials}
+
+import shutil
+
+@app.delete("/api/local-flashcards/{subject}")
+async def delete_flashcard_subject(subject: str):
+    """Deletes an entire flashcard subject and its folder."""
+    flashcards = load_flashcards()
+    if subject not in flashcards:
+        raise HTTPException(status_code=404, detail="Flashcard subject not found")
+        
+    # 1. Remove from JSON tracker
+    flashcards.remove(subject)
+    save_flashcards(flashcards)
+    
+    # 2. Delete the directory and its contents
+    subject_dir = Path("data/subjects") / subject
+    if subject_dir.exists() and subject_dir.is_dir():
+        try:
+            shutil.rmtree(subject_dir)
+        except Exception as e:
+            print(f"⚠️ Failed to delete folder {subject_dir}: {e}")
+            
+    return {"status": "success", "message": f"Deleted subject '{subject}'"}
+
+@app.delete("/api/local-flashcards/{subject}/materials/{filename}")
+async def delete_flashcard_material(subject: str, filename: str):
+    """Deletes a specific material file from a flashcard subject."""
+    flashcards = load_flashcards()
+    if subject not in flashcards:
+        raise HTTPException(status_code=404, detail="Flashcard subject not found")
+        
+    file_path = Path("data/subjects") / subject / filename
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Material file not found")
+        
+    try:
+        os.remove(file_path)
+    except Exception as e:
+        print(f"❌ Error deleting material {filename}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    return {"status": "success", "message": f"Deleted material '{filename}'"}
 # Mount static files (React build output)
 # Resolve absolute path to frontend dist
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))

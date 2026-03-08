@@ -4,6 +4,9 @@ Enhanced Knowledge System Wrapper
 Re-exports EnhancedKnowledgeSystem for ai_brain.py
 """
 
-from .knowledge_system import EnhancedKnowledgeSystem
+try:
+    from .knowledge_system import EnhancedKnowledgeSystem
+except ImportError:
+    from knowledge_system import EnhancedKnowledgeSystem
 
 __all__ = ["EnhancedKnowledgeSystem"]
