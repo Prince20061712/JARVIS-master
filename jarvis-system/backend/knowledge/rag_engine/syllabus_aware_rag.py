@@ -123,6 +123,7 @@ class SyllabusAwareRAG:
             enhanced_query=enhanced_query,
             query_embedding=query_embedding,
             search_scope=search_scope,
+            subject=subject,
             **kwargs
         )
         
@@ -157,6 +158,7 @@ class SyllabusAwareRAG:
         enhanced_query: EnhancedQuery,
         query_embedding: np.ndarray,
         search_scope: Dict[str, Any],
+        subject: Optional[str] = None,
         **kwargs
     ) -> List[RetrievalResult]:
         """
@@ -168,7 +170,8 @@ class SyllabusAwareRAG:
         if self.embedding_manager.vector_store:
             dense_results = self._dense_retrieval(
                 query_embedding,
-                k=kwargs.get('dense_k', 10)
+                k=kwargs.get('dense_k', 10),
+                index_name=subject or 'default'
             )
             all_results.extend(dense_results)
         
@@ -211,7 +214,8 @@ class SyllabusAwareRAG:
     def _dense_retrieval(
         self,
         query_embedding: np.ndarray,
-        k: int = 10
+        k: int = 10,
+        index_name: str = 'default'
     ) -> List[RetrievalResult]:
         """Dense retrieval using vector similarity"""
         results = []
@@ -228,6 +232,7 @@ class SyllabusAwareRAG:
             similar_items, scores = self.embedding_manager.similarity_search(
                 query_emb,
                 k=k,
+                index_name=index_name,
                 return_scores=True
             )
             

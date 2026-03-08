@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 import logging
-from ..core.emotional_intelligence import EmotionalIntelligence, EmotionalState
+from ..emotional_intelligence import EmotionalIntelligence, EmotionalState
 
 logger = logging.getLogger("EmotionDetector")
 
