@@ -28,7 +28,6 @@ import pygame
 from colorama import Fore, Style
 from gtts import gTTS
 import azure.cognitiveservices.speech as speechsdk
-from elevenlabs import generate, play, set_api_key, Voice
 import edge_tts
 import pyttsx3
 from pydub import AudioSegment
@@ -40,6 +39,15 @@ import scipy.io.wavfile as wavfile
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+try:
+    from elevenlabs import generate, play, set_api_key, Voice
+except (ImportError, Exception):
+    logger.warning("elevenlabs API is incompatible or not installed. Using mock functions.")
+    def generate(*args, **kwargs): return None
+    def play(*args, **kwargs): pass
+    def set_api_key(*args, **kwargs): pass
+    class Voice: pass
 
 JARVIS_NAME = "Jarvis"
 

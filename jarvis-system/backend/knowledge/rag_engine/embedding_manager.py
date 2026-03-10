@@ -21,16 +21,8 @@ import hnswlib
 # has an incompatible hub version and hint at the required pin in requirements.
 try:
     from sentence_transformers import SentenceTransformer
-except ImportError as e:
-    msg = str(e)
-    if 'cached_download' in msg or 'huggingface_hub' in msg:
-        raise ImportError(
-            "Failed to import SentenceTransformer due to incompatible "
-            "huggingface_hub version.\n"
-            "Please install a compatible release (e.g. `huggingface_hub<0.17`). "
-            "Updating `requirements/rag.txt` and reinstalling the RAG dependencies "
-            "typically resolves this issue."
-        ) from e
+except ImportError:
+    logging.getLogger(__name__).error("Failed to import SentenceTransformer. Please check dependencies.")
     raise
 
 import torch

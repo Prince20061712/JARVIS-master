@@ -1,11 +1,24 @@
 chromadb==0.4.22
-sentence-transformers==2.2.2
+sentence-transformers==2.3.1
 # older sentence-transformers versions import `cached_download` from
 # huggingface_hub, so we add a runtime shim in main.py.  No strict pin is
 # required here; the broader <1.0 constraint is imposed by other packages.
 #huggingface_hub<0.17
 pypdf==3.17.4
-langchain==0.1.0
+langchain==0.3.28
+langchain-core==0.3.83
+langchain-community==0.3.31
+langsmith==0.4.37
 faiss-cpu==1.7.4
 tiktoken==0.5.1
 unstructured==0.11.5
+transformers==4.36.0
+torch==2.1.0
+torchaudio==2.1.0
+torchvision==0.16.0
+pdf2image==1.17.0
+pytesseract==0.3.10
+google-generativeai==0.3.1
+openai==1.61.1
+anthropic==0.48.1
+opencv-python-headless==4.9.0.80

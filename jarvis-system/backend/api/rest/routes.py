@@ -1,8 +1,9 @@
 from fastapi import FastAPI, APIRouter
 from api.rest.controllers import query_controller, study_controller, profile_controller, screen_controller
 from utils.logger import logger
-from adaptive_learning.api.flashcard_controller import router as flashcard_router
-from adaptive_learning.api.viva_controller import router as viva_router
+from flashcard_system.api.flashcard_controller import router as flashcard_router
+from flashcard_system.api.viva_controller import router as viva_router
+from flashcard_system.analytics.api_routes import router as analytics_router
 
 app = FastAPI(title="JARVIS Backend API", version="2.0.0")
 
@@ -15,6 +16,7 @@ app.include_router(screen_controller.router, prefix="/screen", tags=["Screen"])
 # Adaptive Learning Routers
 app.include_router(flashcard_router, prefix="/adaptive", tags=["Adaptive Learning"])
 app.include_router(viva_router, prefix="/adaptive", tags=["Adaptive Learning"])
+app.include_router(analytics_router, prefix="/analytics", tags=["Learning Analytics"])
 
 @app.get("/health")
 async def health_check():

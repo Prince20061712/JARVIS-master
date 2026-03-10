@@ -90,6 +90,8 @@ except ImportError:
     pass
 
 from brain.ai_brain import EnhancedAIBrain
+from flashcard_system.scanner.subject_scanner import SubjectScanner
+from flashcard_system.viva.adaptive_questioner import AdaptiveQuestioner
 
 # Initialize colorama
 init(autoreset=True)
@@ -526,12 +528,19 @@ class JarvisAI:
                 self.speak(f"Starting Viva session for {subject}. I will ask questions based on your uploaded materials.")
                 
                 if hasattr(self, 'ai_brain') and hasattr(self.ai_brain, 'rag_engine') and self.ai_brain.rag_engine:
-                    # Retrieve context from the specific subject
-                    context = self.ai_brain.rag_engine.retrieve_context("key concepts definitions", subject=subject)
-                    if not context or not context.strip():
+                    # Check if materials exist using SubjectScanner
+                    scanner = SubjectScanner()
+                    content = scanner.get_subject_content(subject)
+                    if not content or not content.strip():
                         self.speak(f"I couldn't find any materials for {subject}. Please upload some documents first.")
                         self.viva_mode = False
                         return
+                    
+                    # Retrieve context from the specific subject using RAG
+                    context = self.ai_brain.rag_engine.retrieve_context("key concepts definitions", subject=subject)
+                    if not context or not context.strip():
+                        # Fallback: use the scanned content directly
+                        context = content[:2000]  # Limit context length
                     
                     prompt = f"Based on this academic context from {subject}, ask a single, concise viva question. Do not provide the answer.\nContext: {context}"
                     self.audio.play_beep("ai_processing")
@@ -541,7 +550,28 @@ class JarvisAI:
                         self.viva_question = response
                         self.speak(response)
                     else:
-                        self.speak("Sorry, I could not generate a question right now.")
+                        # Fallback to hard-coded templates
+                        try:
+                            questioner = AdaptiveQuestioner()
+                            # Map subject names to template topic names
+                            topic_mapping = {
+                                "operating system": "Operating Systems",
+                                "Computer networks": "Computer Networks",
+                                "Computer Networks": "Computer Networks",
+                                "Operating Systems": "Operating Systems",
+                            }
+                            template_topic = topic_mapping.get(subject, subject)
+                            
+                            templates = questioner.get_templates(template_topic)
+                            if templates:
+                                template = random.choice(templates)
+                                self.viva_question = template.template_text
+                                self.speak(self.viva_question)
+                            else:
+                                self.speak("Sorry, I could not generate a question right now.")
+                        except Exception as e:
+                            print(f"Fallback question generation failed: {e}")
+                            self.speak("Sorry, I could not generate a question right now.")
                 return
             else:
                 self.speak("Please select a flashcard subject first, then say 'start viva'.")

@@ -4,3 +4,15 @@ pyaudio==0.2.13
 pyttsx3==2.90
 TTS==0.21.0
 webrtcvad==2.0.10
+gTTS==2.5.4
+edge-tts==6.1.16
+SpeechRecognition==3.14.1
+pynput==1.8.1
+pyperclip==1.9.0
+applescript==1.2.1
+rpa==1.50.0
+Unidecode==1.4.0
+Levenshtein==0.27.1
+rapidfuzz==3.12.2
+sounddevice==0.5.1
+pygame==2.6.1
