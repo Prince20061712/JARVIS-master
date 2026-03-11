@@ -650,19 +650,30 @@ class BrowserManager:
                 if tab_index is not None:
                     script = f'''
                         tell application "Safari"
-                            close tab {tab_index} of window 1
+                            try
+                                close tab {tab_index} of window 1
+                            on error
+                                return "error: tab not found"
+                            end try
                         end tell
                     '''
                 else:
                     script = '''
                         tell application "Safari"
-                            close current tab of window 1
+                            try
+                                close current tab of window 1
+                            on error
+                                return "error: no active tab"
+                            end try
                         end tell
                     '''
                 
-                subprocess.run(['osascript', '-e', script])
-                result["success"] = True
-                result["message"] = "Tab closed"
+                result_proc = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                if "error" in result_proc.stdout.lower() or result_proc.returncode != 0:
+                     result["message"] = f"Failed to close Safari tab: {result_proc.stdout.strip() or result_proc.stderr.strip()}"
+                else:
+                     result["success"] = True
+                     result["message"] = "Tab closed"
             
             elif browser in ["chrome", "brave", "edge"]:
                 # Chrome-based browsers - use AppleScript
@@ -670,19 +681,30 @@ class BrowserManager:
                 if tab_index is not None:
                     script = f'''
                         tell application "{app_name}"
-                            close tab {tab_index} of window 1
+                            try
+                                close tab {tab_index} of window 1
+                            on error
+                                return "error: tab not found"
+                            end try
                         end tell
                     '''
                 else:
                     script = f'''
                         tell application "{app_name}"
-                            close active tab of window 1
+                            try
+                                close active tab of window 1
+                            on error
+                                return "error: no active tab"
+                            end try
                         end tell
                     '''
                 
-                subprocess.run(['osascript', '-e', script])
-                result["success"] = True
-                result["message"] = "Tab closed"
+                result_proc = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                if "error" in result_proc.stdout.lower() or result_proc.returncode != 0:
+                     result["message"] = f"Failed to close {app_name} tab: {result_proc.stdout.strip() or result_proc.stderr.strip()}"
+                else:
+                     result["success"] = True
+                     result["message"] = "Tab closed"
             
             else:
                 result["message"] = f"Tab closing not supported for {browser}"

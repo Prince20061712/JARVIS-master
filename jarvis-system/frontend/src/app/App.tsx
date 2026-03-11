@@ -73,8 +73,8 @@ export default function App() {
       }
     };
     fetchFlashcards();
-    // Poll for updates every 5 seconds
-    const intervalId = setInterval(fetchFlashcards, 5000);
+    // Poll for updates every 1 minute instead of 5 seconds to reduce battery drain
+    const intervalId = setInterval(fetchFlashcards, 60000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -269,6 +269,15 @@ export default function App() {
       if (mood.mood !== "neutral") {
         setTimeout(() => addSystemMessage(`💭 ${mood.tip}`), 400);
       }
+    }
+  };
+
+  const handleSubjectChange = (subject: string) => {
+    if (isConnected && socketRef.current) {
+      socketRef.current.send(JSON.stringify({ 
+        type: "set_subject",
+        subject: subject !== "General" ? subject : null
+      }));
     }
   };
 
@@ -694,6 +703,7 @@ export default function App() {
               onSendMessage={handleSendMessage}
               onMicClick={handleMicClick}
               onStopClick={handleStopClick}
+              onSubjectChange={handleSubjectChange}
               isListening={isListening}
               isProcessing={robotState === "processing"}
               isSpeaking={robotState === "speaking"}

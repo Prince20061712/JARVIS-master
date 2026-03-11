@@ -16,6 +16,7 @@ interface ChatInterfaceProps {
   onSendMessage: (text: string, marks: number | null, subject: string) => void;
   onMicClick: () => void;
   onStopClick: () => void;
+  onSubjectChange?: (subject: string) => void;
   isListening: boolean;
   isProcessing?: boolean;
   isSpeaking?: boolean;
@@ -31,7 +32,7 @@ function formatMarkdownLike(text: string) {
     .replace(/\n/g, '<br/>');
 }
 
-export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick, isListening, isProcessing, isSpeaking }: ChatInterfaceProps) {
+export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick, onSubjectChange, isListening, isProcessing, isSpeaking }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [marks, setMarks] = useState<number>(0);
   const [subject, setSubject] = useState<string>("General");
@@ -85,8 +86,8 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick
       }
     };
     fetchFlashcards();
-    // Also poll occasionally in case new ones were added in the sidebar
-    const intervalId = setInterval(fetchFlashcards, 5000);
+    // Poll for updates every 1 minute instead of 5 seconds to reduce battery drain
+    const intervalId = setInterval(fetchFlashcards, 60000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -177,7 +178,11 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick
                   className="absolute bottom-9 left-0 z-50 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-xl min-w-[140px]"
                 >
                   {flashcards.map(s => (
-                    <button key={s} onClick={() => { setSubject(s); setShowSubject(false); }}
+                    <button key={s} onClick={() => { 
+                      setSubject(s); 
+                      setShowSubject(false); 
+                      onSubjectChange?.(s);
+                    }}
                       className={`w-full text-left px-3 py-2 text-[11px] hover:bg-white/10 transition-colors ${subject === s ? "text-cyan-400 bg-cyan-500/10" : "text-white/70"}`}
                     >
                       {s === "General" ? "General Conversation" : s}

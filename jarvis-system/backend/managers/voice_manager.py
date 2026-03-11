@@ -707,7 +707,7 @@ class VoiceTypingManager:
     
     def _type_text_with_context(self, text: str) -> None:
         """
-        Type text with context awareness
+        Type text with context awareness and error recovery fallbacks.
         
         Args:
             text: Text to type
@@ -719,27 +719,59 @@ class VoiceTypingManager:
                 return
             
             # Choose input method based on context
-            method = self.select_input_method()
+            initial_method = self.select_input_method()
             
-            # Type using selected method
-            if method == InputMethod.KEYBOARD:
-                self.type_with_keyboard(text)
-            elif method == InputMethod.CLIPBOARD:
-                self.type_with_clipboard(text)
-            elif method == InputMethod.PASTEBOARD:
-                self.type_with_pasteboard(text)
-            elif method == InputMethod.UI_ELEMENTS:
-                self.type_with_ui_element(text)
-            else:
-                # Fallback to keyboard
-                self.type_with_keyboard(text)
+            # Define fallback sequence based on the initial method
+            fallback_sequence = [initial_method]
+            
+            if initial_method == InputMethod.UI_ELEMENTS:
+                fallback_sequence.extend([InputMethod.PASTEBOARD, InputMethod.CLIPBOARD, InputMethod.KEYBOARD])
+            elif initial_method == InputMethod.PASTEBOARD:
+                fallback_sequence.extend([InputMethod.CLIPBOARD, InputMethod.KEYBOARD])
+            elif initial_method == InputMethod.CLIPBOARD:
+                fallback_sequence.extend([InputMethod.KEYBOARD])
+            elif initial_method != InputMethod.KEYBOARD:
+                fallback_sequence.append(InputMethod.KEYBOARD)
+                
+            # Remove duplicates while preserving order
+            sequence = []
+            for m in fallback_sequence:
+                if m not in sequence:
+                    sequence.append(m)
+                    
+            success = False
+            last_error = None
+            
+            for method in sequence:
+                try:
+                    logger.debug(f"Attempting to type text using {method.value}...")
+                    if method == InputMethod.KEYBOARD:
+                        self.type_with_keyboard(text)
+                    elif method == InputMethod.CLIPBOARD:
+                        self.type_with_clipboard(text)
+                    elif method == InputMethod.PASTEBOARD:
+                        self.type_with_pasteboard(text)
+                    elif method == InputMethod.UI_ELEMENTS:
+                        self.type_with_ui_element(text)
+                    else:
+                        # Fallback to keyboard
+                        self.type_with_keyboard(text)
+                        
+                    success = True
+                    break  # Success, exit the loop
+                except Exception as e:
+                    last_error = e
+                    logger.warning(f"Typing method {method.value} failed: {e}. Attempting fallback if available.")
+            
+            if not success:
+                raise RuntimeError(f"All typing fallbacks failed. Last error: {last_error}")
             
             # Update metrics
             self.metrics["total_characters"] += len(text)
             self.metrics["total_words"] += len(text.split())
             
         except Exception as e:
-            logger.error(f"Failed to type text: {e}")
+            logger.error(f"Failed to type text completely: {e}")
             self.metrics["errors"].append(str(e))
     
     def select_input_method(self) -> InputMethod:

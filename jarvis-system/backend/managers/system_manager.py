@@ -1788,6 +1788,81 @@ class SystemUtilitiesManager:
         except Exception as e:
             return [f"Error getting logs: {e}"]
     
+    def toggle_system_setting(self, setting: str, state: Optional[bool] = None) -> Dict[str, Union[bool, str]]:
+        """
+        Toggle or set a system setting (macOS specific)
+        
+        Args:
+            setting: The setting to change (wifi, bluetooth, dark_mode, mute, volume)
+            state: True to enable, False to disable, None to toggle (where applicable)
+            
+        Returns:
+            Dictionary with success and message
+        """
+        result = {"success": False, "message": ""}
+        if platform.system() != "Darwin":
+            result["message"] = "System settings toggle is currently only supported on macOS"
+            return result
+            
+        setting = setting.lower()
+        try:
+            if setting in ["wifi", "wi-fi"]:
+                if state is None:
+                    # Check current status
+                    status = subprocess.run(["networksetup", "-getairportpower", "en0"], capture_output=True, text=True)
+                    state = "Off" in status.stdout
+                
+                cmd = ["networksetup", "-setairportpower", "en0", "on" if state else "off"]
+                subprocess.run(cmd, check=True)
+                result["success"] = True
+                result["message"] = f"Wi-Fi turned {'on' if state else 'off'}"
+                
+            elif setting == "bluetooth":
+                # Note: Requires blueutil installed via brew for simple CLI toggle, 
+                # or complex AppleScript GUI scripting. Here we use a generic placeholder
+                # or assume `blueutil` is available.
+                result["message"] = "Bluetooth toggling requires 'blueutil' (brew install blueutil) or GUI scripting permissions."
+                try:
+                    cmd = ["blueutil", "-p", "1" if state else "0"]
+                    subprocess.run(cmd, check=True, capture_output=True)
+                    result["success"] = True
+                    result["message"] = f"Bluetooth turned {'on' if state else 'off'}"
+                except FileNotFoundError:
+                    pass
+                    
+            elif setting == "dark_mode" or setting == "dark mode":
+                script = f'''
+                tell application "System Events"
+                    tell appearance preferences
+                        if {str(state).lower()} is false then
+                            set dark mode to false
+                        else if {str(state).lower()} is true then
+                            set dark mode to true
+                        else
+                            set dark mode to not dark mode
+                        end if
+                    end tell
+                end tell
+                '''
+                subprocess.run(["osascript", "-e", script], check=True)
+                result["success"] = True
+                result["message"] = "Dark mode toggled"
+                
+            elif setting == "mute":
+                script = f"set volume {'with' if state else 'without'} output muted"
+                subprocess.run(["osascript", "-e", script], check=True)
+                result["success"] = True
+                result["message"] = f"System audio {'muted' if state else 'unmuted'}"
+                
+            else:
+                result["message"] = f"Unsupported setting: {setting}"
+                
+        except Exception as e:
+            result["message"] = f"Failed to toggle {setting}: {str(e)}"
+            logger.error(result["message"])
+            
+        return result
+    
     def get_metrics(self) -> Dict[str, Any]:
         """Get performance metrics"""
         return self.metrics.copy()

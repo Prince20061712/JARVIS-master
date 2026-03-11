@@ -251,7 +251,7 @@ class ApplicationManager:
     
     def find_application(self, query: str) -> Optional[ApplicationInfo]:
         """
-        Find an application by name, keyword, or bundle ID
+        Find an application by name, keyword, bundle ID, or fuzzy match
         
         Args:
             query: Search query (name, keyword, bundle ID)
@@ -259,6 +259,7 @@ class ApplicationManager:
         Returns:
             ApplicationInfo if found, None otherwise
         """
+        import difflib
         query_lower = query.lower()
         
         # Refresh cache if needed
@@ -275,6 +276,20 @@ class ApplicationManager:
                 any(query_lower in kw.lower() for kw in (app.keywords or [])) or
                 (app.bundle_id and query_lower in app.bundle_id.lower())):
                 return app
+                
+        # Fuzzy match
+        app_names = list(self._app_cache.keys())
+        matches = difflib.get_close_matches(query_lower, app_names, n=1, cutoff=0.6)
+        if matches:
+            logger.info(f"Fuzzy matched '{query}' to '{matches[0]}'")
+            return self._app_cache[matches[0]]
+            
+        # Fuzzy match display names
+        display_names = {app.display_name.lower(): app for app in self._app_cache.values()}
+        matches = difflib.get_close_matches(query_lower, list(display_names.keys()), n=1, cutoff=0.6)
+        if matches:
+            logger.info(f"Fuzzy matched '{query}' to display name '{matches[0]}'")
+            return display_names[matches[0]]
         
         return None
     

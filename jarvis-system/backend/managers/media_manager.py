@@ -711,7 +711,7 @@ class MediaManager:
                 
                 subprocess.run(['open', '-a', str(spotify_path), spotify_uri])
                 result["success"] = True
-                result["message"] = f"Searching Spotify for '{search_query}'"
+                result["message"] = f"I've opened Spotify search for {search_query}. Please press play manually, as auto-playback requires API configuration."
                 result["method"] = "app"
             else:
                 # Open web player
@@ -722,7 +722,7 @@ class MediaManager:
                 url = f"https://open.spotify.com/search/{urllib.parse.quote(search_query)}"
                 webbrowser.open(url)
                 result["success"] = True
-                result["message"] = f"Searching Spotify Web for '{search_query}'"
+                result["message"] = f"I've opened Spotify Web search for {search_query}. Please press play manually, as auto-playback requires API configuration."
                 result["method"] = "web"
                 result["url"] = url
         

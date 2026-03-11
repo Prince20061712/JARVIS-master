@@ -195,7 +195,8 @@ class JarvisAI:
         self.viva_mode = False
         self.viva_question = ""
         self.viva_subject = None
-        
+        self.active_subject = None
+
         print(f"\n{Fore.CYAN}🤖 Loading Enhanced AI Brain (Modular)...")
         # Initialize AI Brain
         try:
@@ -318,6 +319,11 @@ class JarvisAI:
 
     def speak(self, text, play_beep=False, rate=None):
         """Wrapper for audio system speak"""
+        if isinstance(text, dict):
+            text = text.get("message", text.get("title", str(text)))
+        elif not isinstance(text, str):
+            text = str(text)
+
         if play_beep:
             self.audio.play_beep("response")
         
@@ -773,6 +779,27 @@ Keep your response conversational and concise."""
             return
         
         # ========== SYSTEM COMMANDS ==========
+        settings_keywords = ["turn on ", "turn off ", "enable ", "disable ", "toggle "]
+        if any(keyword in command_lower for keyword in settings_keywords) and any(s in command_lower for s in ["wifi", "wi-fi", "bluetooth", "dark mode"]):
+            setting = None
+            if "wifi" in command_lower or "wi-fi" in command_lower:
+                setting = "wifi"
+            elif "bluetooth" in command_lower:
+                setting = "bluetooth"
+            elif "dark mode" in command_lower:
+                setting = "dark_mode"
+            
+            state = None
+            if "turn on" in command_lower or "enable" in command_lower:
+                state = True
+            elif "turn off" in command_lower or "disable" in command_lower:
+                state = False
+                
+            if setting:
+                result = self.system_utils.toggle_system_setting(setting, state)
+                self.speak(result.get("message", "Setting updated."))
+                return
+
         if "system info" in command_lower or "system information" in command_lower:
             info = self.system_utils.get_system_info()
             response = f"System information: OS: {info.get('OS')}, CPU: {info.get('CPU Usage')}, Memory: {info.get('Memory Percent')}"
@@ -1036,14 +1063,14 @@ Keep your response conversational and concise."""
                         if "exit" in command or "quit" in command or "goodbye" in command:
                             self.speak("Goodbye! Have a great day.")
                             break
-                        asyncio.run_coroutine_threadsafe(self.process_command_wrapper(command), self.loop)
+                        asyncio.run_coroutine_threadsafe(self.process_command_wrapper(command, subject=self.active_subject), self.loop)
                 else:
                     command = self.listen(timeout=1, phrase_time_limit=5)
                     if command and WAKE_WORD in command:
                         self.speak("Yes, I'm listening.")
                         command = self.listen(timeout=10, phrase_time_limit=15)
                         if command:
-                            asyncio.run_coroutine_threadsafe(self.process_command_wrapper(command), self.loop)
+                            asyncio.run_coroutine_threadsafe(self.process_command_wrapper(command, subject=self.active_subject), self.loop)
                 
                 time.sleep(0.1)
                 
@@ -1118,6 +1145,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     # Process command using threadsafe execution on the main loop
                     asyncio.run_coroutine_threadsafe(jarvis.process_command(content, subject=subject), jarvis.loop)
             
+            elif data.get("type") == "set_subject":
+                subject = data.get("subject")
+                if jarvis:
+                    jarvis.active_subject = subject
+
             elif data.get("type") == "toggle_voice":
                 # Handle voice toggle preference if needed
                 if jarvis:
