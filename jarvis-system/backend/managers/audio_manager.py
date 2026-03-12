@@ -154,6 +154,14 @@ class SpeechSegment:
     callback: Optional[Callable] = None
     timestamp: datetime = field(default_factory=datetime.now)
 
+    def __lt__(self, other):
+        if not isinstance(other, SpeechSegment):
+            return NotImplemented
+        # Lower priority number = higher priority first
+        if self.priority != other.priority:
+            return self.priority < other.priority
+        return self.timestamp < other.timestamp
+
 
 class SpeechSynthesisError(Exception):
     """Custom exception for speech synthesis errors"""
@@ -363,20 +371,22 @@ class AudioSystem:
         def process_queue():
             while True:
                 try:
-                    # Get next item from queue (blocking)
                     priority, segment = self.audio_queue.get()
                     
                     if segment is None:  # Poison pill
+                        self.audio_queue.task_done()
                         break
                     
-                    self.is_speaking = True
-                    
-                    # Process speech segment
-                    self._speak_sync(segment.text, segment.config, segment.callback)
-                    
-                    self.is_speaking = False
-                    self.audio_queue.task_done()
-                    
+                    try:
+                        self.is_speaking = True
+                        
+                        # Process speech segment
+                        self._speak_sync(segment.text, segment.config, segment.callback)
+                        
+                    finally:
+                        self.is_speaking = False
+                        self.audio_queue.task_done()
+                        
                 except queue.Empty:
                     time.sleep(0.1)
                 except Exception as e:
@@ -442,10 +452,17 @@ class AudioSystem:
             self.audio_queue.put((priority, segment))
             
             # Send to frontend
+            config_dict = {}
+            for k, v in voice_config.__dict__.items():
+                if isinstance(v, Enum):
+                    config_dict[k] = v.value
+                else:
+                    config_dict[k] = v
+
             self._broadcast_to_frontend({
                 "type": "speech",
                 "text": text,
-                "config": voice_config.__dict__,
+                "config": config_dict,
                 "timestamp": datetime.now().isoformat()
             })
             
@@ -1192,6 +1209,10 @@ class AudioSystem:
             elif direction == "max":
                 os.system("osascript -e 'set volume output volume 100'")
                 self.speak("System volume set to maximum")
+                
+            elif direction == "set":
+                os.system(f"osascript -e 'set volume output volume {amount}'")
+                new_volume = self.get_system_volume()
             
         except Exception as e:
             logger.error(f"System volume adjustment failed: {e}")

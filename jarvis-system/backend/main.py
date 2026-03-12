@@ -617,26 +617,38 @@ Keep your response conversational and concise."""
             return
         
         # ========== AUDIO/SPEECH COMMANDS ==========
-        if "volume up" in command_lower or "increase volume" in command_lower:
-            new_volume = self.audio.set_volume(min(1.0, self.audio.get_volume() + 0.2))
-            self.audio.adjust_system_volume("up")
+        if any(word in command_lower for word in ["volume up", "increase volume", "raise volume"]):
+            new_vol = int(min(100, self.audio.get_volume() * 100 + 20))
+            new_volume = self.audio.set_volume(new_vol)
+            self.audio.adjust_system_volume("up", 20)
             self.speak(f"Volume increased to {int(new_volume)} percent.")
             return
         
-        if "volume down" in command_lower or "decrease volume" in command_lower:
-            new_volume = self.audio.set_volume(max(0.0, self.audio.get_volume() - 0.2))
-            self.audio.adjust_system_volume("down")
+        if any(word in command_lower for word in ["volume down", "decrease volume", "low the volume", "lower the volume"]):
+            new_vol = int(max(0, self.audio.get_volume() * 100 - 20))
+            new_volume = self.audio.set_volume(new_vol)
+            self.audio.adjust_system_volume("down", 20)
             self.speak(f"Volume decreased to {int(new_volume)} percent.")
             return
+            
+        if "volume at " in command_lower or "set volume to " in command_lower:
+            import re
+            match = re.search(r'(\d+)', command_lower)
+            if match:
+                vol = int(match.group(1))
+                new_volume = self.audio.set_volume(vol)
+                self.audio.adjust_system_volume("set", vol)
+                self.speak(f"Volume set to {new_volume} percent.")
+            return
         
-        if "mute" in command_lower:
-            self.audio.set_volume(0.0)
+        if "mute" in command_lower and "unmute" not in command_lower:
+            self.audio.set_volume(0)
             self.audio.adjust_system_volume("mute")
             self.speak("Audio muted. Say 'unmute' to restore audio.")
             return
         
         if "unmute" in command_lower:
-            self.audio.set_volume(0.8)
+            self.audio.set_volume(80)
             self.audio.adjust_system_volume("unmute")
             self.speak("Audio unmuted. Volume restored to 80 percent.")
             return
@@ -676,7 +688,39 @@ Keep your response conversational and concise."""
             self.speak(result)
             return
         
-        # ========== BROWSER COMMANDS ==========
+        # ========== BROWSER / MEDIA COMMANDS ==========
+        # Specific search commands first
+        if "youtube" in command_lower:
+            if "search" in command_lower:
+                query = command_lower.replace("search youtube for ", "").replace("search youtube ", "").replace("search ", "").replace(" on youtube", "").strip()
+                result = self.browser_manager.open_youtube(query)
+            elif "play " in command_lower:
+                query = command_lower.replace("play ", "").replace("on youtube", "").strip()
+                result = self.media_manager.play_youtube_video(query)
+                msg = result.get("message", str(result)) if isinstance(result, dict) else str(result)
+                self.speak(msg)
+                return
+            else:
+                result = self.browser_manager.open_youtube()
+            self.speak(result)
+            return
+        
+        if "spotify" in command_lower:
+            if "play " in command_lower:
+                query = command_lower.replace("play ", "").replace("on spotify web", "").replace("on spotify", "").strip()
+                result = self.media_manager.play_spotify_song(query)
+                msg = result.get("message", str(result)) if isinstance(result, dict) else str(result)
+                self.speak(msg)
+                return
+            elif "search" in command_lower:
+                query = command_lower.replace("search spotify for ", "").replace("search spotify ", "").replace("search ", "").replace(" on spotify", "").strip()
+                result = self.browser_manager.open_spotify(query)
+            else:
+                result = self.browser_manager.open_spotify()
+            self.speak(result)
+            return
+
+        # General search fallback
         if "search for " in command_lower or "search " in command_lower:
             if "search for " in command_lower:
                 query = command_lower.replace("search for ", "").strip()
@@ -687,46 +731,13 @@ Keep your response conversational and concise."""
             self.speak(result)
             return
         
-        if "youtube" in command_lower:
-            if "search" in command_lower:
-                query = command_lower.replace("search youtube for ", "").replace("search youtube ", "").strip()
-                result = self.browser_manager.open_youtube(query)
-            else:
-                result = self.browser_manager.open_youtube()
-            self.speak(result)
-            return
-        
-        if "spotify" in command_lower:
-            if "search" in command_lower:
-                query = command_lower.replace("search spotify for ", "").replace("search spotify ", "").strip()
-                result = self.browser_manager.open_spotify(query)
-            else:
-                result = self.browser_manager.open_spotify()
-            self.speak(result)
-            return
-        
-        # ========== MEDIA COMMANDS ==========
-        if "play " in command_lower and ("youtube" in command_lower or "on youtube" in command_lower):
-            query = command_lower.replace("play ", "").replace("on youtube", "").strip()
-            result = self.media_manager.play_youtube_video(query)
-            msg = result.get("message", str(result)) if isinstance(result, dict) else str(result)
-            self.speak(msg)
-            return
-        
-        if "play " in command_lower and "spotify" in command_lower:
-            query = command_lower.replace("play ", "").replace("on spotify", "").strip()
-            result = self.media_manager.play_spotify_song(query)
-            msg = result.get("message", str(result)) if isinstance(result, dict) else str(result)
-            self.speak(msg)
-            return
-        
         # ========== SCREENSHOT COMMANDS ==========
         if "screenshot" in command_lower or "capture screen" in command_lower:
-            area = "full"
+            area = "full_screen"
             if "window" in command_lower:
-                area = "window"
+                area = "active_window"
             elif "region" in command_lower:
-                area = "region"
+                area = "selected_region"
             
             result = self.screen_capture.take_screenshot(area)
             self.speak(result)
@@ -767,10 +778,35 @@ Keep your response conversational and concise."""
             return
         
         # ========== CODE COMMANDS ==========
-        if "create file" in command_lower or "new file" in command_lower:
-            filename = command_lower.replace("create file ", "").replace("new file ", "").strip()
-            result = self.code_editor.create_code_file(filename)
-            self.speak(result)
+        if "create file" in command_lower or "new file" in command_lower or ("create " in command_lower and " file" in command_lower):
+            import re
+            
+            # Extract language (e.g., "using python")
+            language = "text" # default
+            lang_match = re.search(r'(?:using|in) ([a-zA-Z]+)', command_lower)
+            if lang_match:
+                language = lang_match.group(1).lower()
+                command_lower = command_lower.replace(lang_match.group(0), "")
+            
+            # Extract filename (e.g., "create a hello world txt file")
+            name_match = re.search(r'(?:create|make)(?: a | an | )?(.*?)(?: file)', command_lower)
+            if name_match:
+                filename = name_match.group(1).strip()
+                if " txt" in filename:
+                    filename = filename.replace(" txt", ".txt")
+                if " py" in filename:
+                    filename = filename.replace(" py", ".py")
+                filename = filename.replace(" ", "_")
+                if not filename:
+                    filename = "new_file"
+            else:
+                filename = command_lower.replace("create file ", "").replace("new file ", "").strip()
+                if not filename:
+                    filename = "new_file"
+                    
+            result = self.code_editor.create_code_file(filename, language=language)
+            msg = result.get("message", "File created.") if isinstance(result, dict) else str(result)
+            self.speak(msg)
             return
         
         if "open vs code" in command_lower or "open code" in command_lower:

@@ -408,6 +408,8 @@ class ApplicationManager:
     
     def _try_web_fallback(self, query: str, result: Dict, app: Optional[ApplicationInfo] = None) -> Dict:
         """Try to open web fallback version"""
+        import urllib.parse
+        
         web_urls = {
             "spotify": "https://open.spotify.com",
             "whatsapp": "https://web.whatsapp.com",
@@ -419,11 +421,27 @@ class ApplicationManager:
             "google drive": "https://drive.google.com",
             "docs": "https://docs.google.com",
             "sheets": "https://sheets.google.com",
+            "linkedin": "https://www.linkedin.com",
+            "instagram": "https://www.instagram.com",
+            "facebook": "https://www.facebook.com",
+            "twitter": "https://twitter.com",
+            "x": "https://twitter.com",
+            "github": "https://github.com",
+            "netflix": "https://www.netflix.com",
+            "amazon": "https://www.amazon.com",
+            "chatgpt": "https://chat.openai.com",
+            "claude": "https://claude.ai",
         }
         
-        url = web_urls.get(query.lower())
+        clean_query = query.lower().strip()
+        url = web_urls.get(clean_query)
+        
         if not url and app and app.web_fallback:
             url = app.web_fallback
+            
+        if not url and " " not in clean_query and "." not in clean_query:
+            # Guessing for common direct URLs
+            url = f"https://www.{clean_query}.com"
         
         if url:
             webbrowser.open(url)
@@ -432,10 +450,12 @@ class ApplicationManager:
             result["method_used"] = "web_fallback"
         else:
             # Try generic search
-            search_url = f"https://www.google.com/search?q={query}+web+app"
+            encoded_query = urllib.parse.quote(query)
+            # Use DuckDuckGo 'I'm Feeling Lucky' equivalent (!ducky) to go straight to the site if possible
+            search_url = f"https://duckduckgo.com/?q=!ducky+{encoded_query}"
             webbrowser.open(search_url)
             result["success"] = True
-            result["message"] = f"Searched for {query} web app"
+            result["message"] = f"Opened {query} via web search"
             result["method_used"] = "web_search"
         
         return result
