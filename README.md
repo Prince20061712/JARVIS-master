@@ -90,4 +90,4 @@ Watch the project in action using the demo videos included in the repository:
 
 ## 📝 License
 
-This project is open-source and available under the MIT License.
+This project is proprietary. You may download and view the code, but you may not post, distribute, or edit it without explicit permission from Prince Gupta. See the [LICENSE](LICENSE) file for more details.
