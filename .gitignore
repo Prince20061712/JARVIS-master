@@ -33,3 +33,6 @@ jarvis-system/backend/media/temp/
 # IDEs
 .vscode/
 .idea/
+
+# Large Files
+demo_video/
