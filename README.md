@@ -79,6 +79,15 @@ To stop JARVIS, simply press `Ctrl+C` in the terminal to gracefully exit both th
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## 🎬 Demo Videos
+
+Watch the project in action using the demo videos included in the repository:
+
+* [Sympathy Chat](./demo_video/Sympathy_chat.mp4)
+* [Viva Chat](./demo_video/viva_chat.mp4)
+
+> **Note:** Open these files with a media player that supports MP4 playback.
+
 ## 📝 License
 
 This project is open-source and available under the MIT License.
