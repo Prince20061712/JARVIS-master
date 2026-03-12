@@ -1,12 +1,62 @@
-Copyright (c) 2026 Prince Gupta
+# Proprietary License
 
-All rights reserved.
+Copyright © 2026 Prince Gupta. All Rights Reserved.
 
-Permission is hereby granted to any person obtaining a copy of this software and associated documentation files (the "Software") to download and view the Software for personal use.
+## Grant of Limited License
 
-However, you may NOT:
-1. Modify, alter, or edit the Software in any way.
-2. Publish, distribute, sublicense, and/or sell copies of the Software.
-3. Post the Software or any modified versions thereof on any public or private platform.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to download and view the Software **solely for personal, non-commercial learning purposes**.
 
-Any other use, including but not limited to reproduction, modification, distribution, display, or transmission of the content of this software is strictly prohibited without explicit prior written permission from Prince Gupta.
+This limited license is subject to the following conditions and restrictions:
+
+## Prohibited Actions
+
+You **MAY NOT**, under any circumstances, without explicit prior written permission from Prince Gupta:
+
+1. **Modify, adapt, or create derivative works** based on the Software, in whole or in part
+2. **Copy, reproduce, or duplicate** the Software beyond personal viewing
+3. **Publish, distribute, sublicense, or transfer** the Software to any third party
+4. **Sell, rent, lease, or commercially exploit** the Software or any portion thereof
+5. **Post, upload, or share** the Software on any public repositories, forums, websites, or platforms
+6. **Reverse engineer, decompile, or disassemble** the Software
+7. **Remove, alter, or obscure** any copyright, trademark, or other proprietary notices
+8. **Use the Software** for any commercial purposes or in any manner not expressly authorized
+
+## Permitted Uses
+
+The following actions are explicitly permitted:
+
+✓ Downloading the Software for personal viewing
+✓ Reading and studying the source code
+✓ Running the Software locally for personal testing
+✓ Reporting bugs or suggesting improvements to the author
+
+## Intellectual Property Rights
+
+The Software, including all intellectual property rights therein, is and shall remain the sole and exclusive property of Prince Gupta. The structure, organization, and code of the Software are valuable trade secrets and confidential information of Prince Gupta.
+
+## Term and Termination
+
+This license is effective until terminated. It will terminate automatically without notice if you fail to comply with any provision. Upon termination, you must cease all use of the Software and destroy all copies in your possession.
+
+## Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.
+
+## Limitation of Liability
+
+IN NO EVENT SHALL PRINCE GUPTA BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Governing Law
+
+This license shall be governed by and construed in accordance with the laws, without regard to its conflict of law provisions.
+
+## Contact Information
+
+For permissions beyond the scope of this license or for any inquiries, contact:
+
+**Prince Gupta**
+@princegupta09372@gmail.com
+---
+
+**© 2026 Prince Gupta. All Rights Reserved.** 
+*Unauthorized reproduction or distribution of this software, or any portion of it, may result in severe civil and criminal penalties, and will be prosecuted to the maximum extent possible under law.*
