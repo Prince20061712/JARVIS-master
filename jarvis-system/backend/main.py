@@ -178,7 +178,8 @@ class JarvisAI:
         self.audio.play_beep("response")
         
         self.recognizer = sr.Recognizer()
-        self.recognizer.pause_threshold = 1.2  # Allow longer pauses (1.2s)
+        self.recognizer.pause_threshold = 2.5  # Allow much longer pauses (2.5s) to avoid cutting off
+        self.recognizer.non_speaking_duration = 1.5
         self.recognizer.energy_threshold = 300  # distinct speech
         self.recognizer.dynamic_energy_threshold = True
         self.microphone = sr.Microphone()
@@ -294,6 +295,8 @@ class JarvisAI:
         # Abort any ongoing AI generation logic
         if hasattr(self, 'ai_brain'):
             self.ai_brain.cancel_current_request = True
+            if hasattr(self.ai_brain, 'ollama'):
+                self.ai_brain.ollama.cancel_current_request = True
             
         # Reset state flags
         self.is_processing_command = False
@@ -503,6 +506,13 @@ class JarvisAI:
     async def process_command_wrapper(self, command, subject=None):
         """Wrapper to prevent simultaneous listening and processing"""
         self.is_processing_command = True
+        
+        # Reset cancellation flags before starting new command
+        if hasattr(self, 'ai_brain'):
+            self.ai_brain.cancel_current_request = False
+            if hasattr(self.ai_brain, 'ollama'):
+                self.ai_brain.ollama.cancel_current_request = False
+                
         try:
             await self.process_command(command, subject=subject)
         finally:
@@ -552,6 +562,9 @@ class JarvisAI:
                     self.audio.play_beep("ai_processing")
                     response = self.ai_brain.ollama.generate_response(prompt)
                     
+                    if getattr(self.ai_brain, 'cancel_current_request', False):
+                        return
+                        
                     if response:
                         self.viva_question = response
                         self.speak(response)
@@ -609,6 +622,9 @@ Keep your response conversational and concise."""
                 self.audio.play_beep("ai_processing")
                 response = self.ai_brain.ollama.generate_response(evaluation_prompt)
                 
+                if getattr(self.ai_brain, 'cancel_current_request', False):
+                    return
+                    
                 if response:
                     self.viva_question = response
                     self.speak(response)
@@ -988,6 +1004,9 @@ Keep your response conversational and concise."""
             traceback.print_exc()
             response = None
         
+        if getattr(self.ai_brain, 'cancel_current_request', False):
+            return
+
         if response:
             self.speak(response)
         else:

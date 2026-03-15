@@ -345,13 +345,10 @@ class OllamaEnhancedManager:
             messages = self._prepare_messages(system_prompt, prompt, model)
             
             # Prepare request with model-specific options
-            payload = self._prepare_payload(model, messages, stream_callback is not None)
+            payload = self._prepare_payload(model, messages, True) # Always stream for cancellability
             
             # Make request
-            if stream_callback:
-                return self._stream_response(payload, stream_callback, start_time)
-            else:
-                return self._standard_response(payload, start_time)
+            return self._stream_response(payload, stream_callback, start_time)
                 
         except requests.exceptions.Timeout:
             print("⚠️  Ollama response timeout")
