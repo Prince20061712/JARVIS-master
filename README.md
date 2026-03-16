@@ -13,10 +13,28 @@ A comprehensive, multi-modal AI voice assistant designed to emulate the capabili
 
 ## 🛠 Tech Stack
 
-* **Backend:** Python 3.14, FastAPI
-* **Frontend:** React, TypeScript, Vite, TailwindCSS
-* **AI & NLP:** Ollama (Local LLM), SpeechRecognition, LangChain
-* **Services:** PyAudio, pynput, Edge-TTS, and more.
+### Core AI Intelligence
+* **Large Language Models:** Powered by **Ollama**
+  * **Primary:** `Llama 3.1` (8B/70B) for advanced reasoning.
+  * **Fallback:** `Mistral` for fast, efficient processing.
+* **Knowledge Retrieval:** Advanced Syllabus-Aware **RAG Engine** for academic context.
+* **Cognitive Architecture:** 5-Layer Intelligence (Reactive, Cognitive, Metacognitive, Proactive, Creative).
+
+### Voice & Audio
+* **Speech-to-Text (STT):** Multi-engine support:
+  * **OpenAI Whisper (Tiny):** High-accuracy local transcription.
+  * **Google Speech API:** Reliable cloud-based fallback.
+  * **Vosk & Sphinx:** Efficient offline alternatives.
+* **Text-to-Speech (TTS):** Human-like emotional speech synthesis:
+  * **Microsoft Edge Neural Voices:** High-quality, expressive voices.
+  * **ElevenLabs:** Premium AI cloning and emotional intonation.
+  * **pyttsx3:** Offline fallback engine.
+
+### Frameworks & Tools
+* **Backend:** Python 3.14, **FastAPI** (Asynchronous API layer).
+* **Frontend:** **React**, TypeScript, Vite, **TailwindCSS** (Futuristic dashboard).
+* **System Control:** `pynput` (Automation), `PyAudio` (Stream processing).
+* **AI Orchestration:** `LangChain`, `NumPy` (Vector math).
 
 ## ⚙️ Getting Started
 
