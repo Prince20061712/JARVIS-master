@@ -42,6 +42,7 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>("dashboard");
+  const [activeSubject, setActiveSubject] = useState<string>("General");
   const [robotSide, setRobotSide] = useState<"left" | "center" | "right">("center");
 
   const cycleRobotSide = () =>
@@ -56,6 +57,11 @@ export default function App() {
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const socketRef = useRef<WebSocket | null>(null);
   const sessionStartRef = useRef<Date>(new Date());
+  const activeSubjectRef = useRef(activeSubject);
+
+  useEffect(() => {
+    activeSubjectRef.current = activeSubject;
+  }, [activeSubject]);
 
   // Fetch flashcards on load and poll for updates
   useEffect(() => {
@@ -107,6 +113,12 @@ export default function App() {
         setIsConnected(true);
         addSystemMessage("🟢 Connected to JARVIS Academic Core");
         setRobotState("idle");
+        
+        // Sync the current subject with the backend immediately
+        socket.send(JSON.stringify({ 
+          type: "set_subject",
+          subject: activeSubjectRef.current !== "General" ? activeSubjectRef.current : null
+        }));
       };
 
       socket.onclose = () => {
@@ -273,6 +285,7 @@ export default function App() {
   };
 
   const handleSubjectChange = (subject: string) => {
+    setActiveSubject(subject);
     if (isConnected && socketRef.current) {
       socketRef.current.send(JSON.stringify({ 
         type: "set_subject",
@@ -355,6 +368,11 @@ export default function App() {
   };
 
   const toggleSubjectExpansion = async (subject: string) => {
+    // If they click on it, also make it the active subject to chat about
+    if (activeSubject !== subject) {
+      handleSubjectChange(subject);
+    }
+    
     if (expandedSubjects[subject]) {
       // Collapse
       setExpandedSubjects(prev => {
@@ -704,6 +722,7 @@ export default function App() {
               onMicClick={handleMicClick}
               onStopClick={handleStopClick}
               onSubjectChange={handleSubjectChange}
+              activeSubject={activeSubject}
               isListening={isListening}
               isProcessing={robotState === "processing"}
               isSpeaking={robotState === "speaking"}

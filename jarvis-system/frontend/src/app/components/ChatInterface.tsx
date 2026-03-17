@@ -17,6 +17,7 @@ interface ChatInterfaceProps {
   onMicClick: () => void;
   onStopClick: () => void;
   onSubjectChange?: (subject: string) => void;
+  activeSubject: string;
   isListening: boolean;
   isProcessing?: boolean;
   isSpeaking?: boolean;
@@ -32,10 +33,9 @@ function formatMarkdownLike(text: string) {
     .replace(/\n/g, '<br/>');
 }
 
-export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick, onSubjectChange, isListening, isProcessing, isSpeaking }: ChatInterfaceProps) {
+export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick, onSubjectChange, activeSubject, isListening, isProcessing, isSpeaking }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [marks, setMarks] = useState<number>(0);
-  const [subject, setSubject] = useState<string>("General");
   const [showMarks, setShowMarks] = useState(false);
   const [showSubject, setShowSubject] = useState(false);
   const [flashcards, setFlashcards] = useState<string[]>([]);
@@ -94,7 +94,7 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      onSendMessage(input, marks || null, subject);
+      onSendMessage(input, marks || null, activeSubject);
       setInput("");
     }
   };
@@ -169,7 +169,7 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick
               className="h-7 px-3 rounded-full text-[11px] font-medium border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/90 transition-all flex items-center gap-1"
               title="Select a Flashcard Subject"
             >
-              {subject} <ChevronDown className="w-3 h-3" />
+              {activeSubject} <ChevronDown className="w-3 h-3" />
             </button>
             <AnimatePresence>
               {showSubject && (
@@ -179,11 +179,10 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick
                 >
                   {flashcards.map(s => (
                     <button key={s} onClick={() => { 
-                      setSubject(s); 
                       setShowSubject(false); 
                       onSubjectChange?.(s);
                     }}
-                      className={`w-full text-left px-3 py-2 text-[11px] hover:bg-white/10 transition-colors ${subject === s ? "text-cyan-400 bg-cyan-500/10" : "text-white/70"}`}
+                      className={`w-full text-left px-3 py-2 text-[11px] hover:bg-white/10 transition-colors ${activeSubject === s ? "text-cyan-400 bg-cyan-500/10" : "text-white/70"}`}
                     >
                       {s === "General" ? "General Conversation" : s}
                     </button>
@@ -271,7 +270,7 @@ export function ChatInterface({ messages, onSendMessage, onMicClick, onStopClick
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Ask about ${subject !== "General" ? subject : "Engineering"}${marks > 0 ? ` (${marks} marks)` : ""}…`}
+            placeholder={`Ask about ${activeSubject !== "General" ? activeSubject : "Engineering"}${marks > 0 ? ` (${marks} marks)` : ""}…`}
             className="flex-1 h-9 px-4 bg-white/5 border border-white/10 rounded-full text-white/90 placeholder-white/30 text-sm focus:outline-none focus:bg-white/10 focus:border-white/20 transition-all"
           />
 

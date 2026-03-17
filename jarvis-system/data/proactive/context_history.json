@@ -196,10 +196,17 @@
       "timestamp": "2026-03-15T10:40:16.775970",
       "priority": "info",
       "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Commute time. Want the latest news headlines?",
+      "timestamp": "2026-03-17T18:24:20.358724",
+      "priority": "low",
+      "confidence": 0.8
     }
   ],
   "stats": {
-    "total_events_generated": 28,
+    "total_events_generated": 29,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -208,5 +215,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-03-15T10:52:17.429637"
+  "last_updated": "2026-03-17T18:26:20.008177"
 }
