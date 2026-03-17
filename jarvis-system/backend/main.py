@@ -178,8 +178,8 @@ class JarvisAI:
         self.audio.play_beep("response")
         
         self.recognizer = sr.Recognizer()
-        self.recognizer.pause_threshold = 2.5  # Allow much longer pauses (2.5s) to avoid cutting off
-        self.recognizer.non_speaking_duration = 1.5
+        self.recognizer.pause_threshold = 6.0  # Allow much longer pauses (6.0s) for natural speaking rhythm and thinking
+        self.recognizer.non_speaking_duration = 3.5
         self.recognizer.energy_threshold = 300  # distinct speech
         self.recognizer.dynamic_energy_threshold = True
         self.microphone = sr.Microphone()
@@ -456,8 +456,8 @@ class JarvisAI:
             # Calibrate for ambient noise (longer sample for better quality)
             self.recognizer.adjust_for_ambient_noise(source, duration=1.0)
             try:
-                # Increased phrase_time_limit to avoid cutting off long commands
-                rec_phrase_limit = None if phrase_time_limit is None else 30 
+                # Increased phrase_time_limit to avoid cutting off long conversational or viva answers
+                rec_phrase_limit = None if phrase_time_limit is None else 120 
                 audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=rec_phrase_limit)
                 text = self.recognizer.recognize_google(audio).lower()
                 print(f"{Fore.YELLOW}You: {text}")
