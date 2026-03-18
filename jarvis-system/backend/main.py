@@ -177,9 +177,18 @@ class JarvisAI:
         self.audio = AudioSystem(websocket_manager, loop)
         self.audio.play_beep("response")
         
+        # Enhanced Speech Engine (Optimized for speed & accuracy)
+        try:
+            from voice.speech_to_text import SpeechToText
+            self.stt_engine = SpeechToText()
+            print(f"{Fore.GREEN}✅ Enhanced Speech Engine Loaded")
+        except Exception as e:
+            print(f"{Fore.RED}❌ Failed to load Enhanced Speech Engine: {e}")
+            self.stt_engine = None
+
         self.recognizer = sr.Recognizer()
-        self.recognizer.pause_threshold = 6.0  # Allow much longer pauses (6.0s) for natural speaking rhythm and thinking
-        self.recognizer.non_speaking_duration = 3.5
+        self.recognizer.pause_threshold = 2.5  # Allow much longer pauses (2.5s) to avoid cutting off
+        self.recognizer.non_speaking_duration = 1.5
         self.recognizer.energy_threshold = 300  # distinct speech
         self.recognizer.dynamic_energy_threshold = True
         self.microphone = sr.Microphone()
@@ -453,44 +462,58 @@ class JarvisAI:
 
             self.audio.play_beep("listening")
             
-            # Calibrate for ambient noise (longer sample for better quality)
-            self.recognizer.adjust_for_ambient_noise(source, duration=1.0)
             try:
-                # Increased phrase_time_limit to avoid cutting off long conversational or viva answers
-                rec_phrase_limit = None if phrase_time_limit is None else 120 
-                audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=rec_phrase_limit)
-                text = self.recognizer.recognize_google(audio).lower()
-                print(f"{Fore.YELLOW}You: {text}")
-                
-                 # Send user text to frontend
-                if self.audio.websocket_manager and self.loop:
-                    asyncio.run_coroutine_threadsafe(
-                        self.audio.websocket_manager.broadcast({
-                            "type": "response",
-                            "content": text,
-                            "sender": "user"
-                        }),
-                        self.loop
-                    )
-                    
-                    # Switch UI to processing mode immediately
-                    asyncio.run_coroutine_threadsafe(
-                        self.audio.websocket_manager.broadcast({
-                            "type": "processing"
-                        }),
-                        self.loop
-                    )
+                text = ""
+                # Fast listen using Enhanced Engine if available
+                if hasattr(self, 'stt_engine') and self.stt_engine:
+                     try:
+                        # Use our optimized synchronous listener (Whisper/Vosk/Google)
+                        # Handles ambient noise internally with shorter delay
+                        result = self.stt_engine._listen_enhanced_sync(
+                            timeout=timeout,
+                            engine=None, 
+                            enable_preprocessing=True
+                        )
+                        text = result.text.lower() if result and result.text else ""
+                        if text:
+                            print(f"{Fore.YELLOW}You: {text}")
+                     except Exception as e:
+                        print(f"{Fore.RED}STT Error: {e}")
+                        text = ""
+                else:
+                    # Fallback to legacy method
+                    self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                    try:
+                        rec_phrase_limit = None if phrase_time_limit is None else 30 
+                        audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=rec_phrase_limit)
+                        text = self.recognizer.recognize_google(audio).lower()
+                        print(f"{Fore.YELLOW}You: {text}")
+                    except:
+                        text = ""
+
+                # Check if text is valid (common logic)
+                if text:
+                     # Send user text to frontend
+                    if self.audio.websocket_manager and self.loop:
+                        asyncio.run_coroutine_threadsafe(
+                            self.audio.websocket_manager.broadcast({
+                                "type": "response",
+                                "content": text,
+                                "sender": "user"
+                            }),
+                            self.loop
+                        )
+                        
+                        # Switch UI to processing mode immediately
+                        asyncio.run_coroutine_threadsafe(
+                            self.audio.websocket_manager.broadcast({
+                                "type": "processing"
+                            }),
+                            self.loop
+                        )
 
                 return text
-            except sr.WaitTimeoutError:
-                return ""
-            except sr.UnknownValueError:
-                return ""
-            except sr.RequestError:
-                self.speak("Network connectivity issue detected.")
-                return ""
-            except Exception as e:
-                print(f"{Fore.RED}Audio processing error: {e}")
+            except Exception:
                 return ""
             finally:
                 # Send status to frontend

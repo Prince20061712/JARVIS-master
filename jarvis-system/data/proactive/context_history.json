@@ -203,10 +203,24 @@
       "timestamp": "2026-03-17T18:24:20.358724",
       "priority": "low",
       "confidence": 0.8
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Morning energy high - perfect for creative work!",
+      "timestamp": "2026-03-18T08:14:48.474539",
+      "priority": "info",
+      "confidence": 0.7
+    },
+    {
+      "event_type": "suggestion",
+      "message": "Time to review morning progress and adjust plans.",
+      "timestamp": "2026-03-18T14:03:45.808523",
+      "priority": "info",
+      "confidence": 0.7
     }
   ],
   "stats": {
-    "total_events_generated": 29,
+    "total_events_generated": 31,
     "events_by_type": {},
     "events_by_priority": {},
     "user_feedback_positive": 0,
@@ -215,5 +229,5 @@
     "patterns_learned": 0,
     "average_response_time": 0.0
   },
-  "last_updated": "2026-03-17T18:26:20.008177"
+  "last_updated": "2026-03-18T14:05:37.274495"
 }

@@ -98,10 +98,10 @@ class SpeechToText:
             'wake_word_detection': False,
             'wake_words': ['jarvis', 'hey jarvis'],
             'timeout': 5,
-            'phrase_time_limit': 10,
+            'phrase_time_limit': 20,
             'silence_threshold': 0.5,
             'min_audio_length': 0.5,  # seconds
-            'max_audio_length': 30,    # seconds
+            'max_audio_length': 60,    # seconds
         }
         
         if config:
@@ -112,9 +112,9 @@ class SpeechToText:
         if self.recognizer:
             self.recognizer.energy_threshold = self.config['energy_threshold']
             self.recognizer.dynamic_energy_threshold = self.config['dynamic_energy']
-            self.recognizer.pause_threshold = 0.8
+            self.recognizer.pause_threshold = 1.2
             self.recognizer.phrase_threshold = 0.3
-            self.recognizer.non_speaking_duration = 0.5
+            self.recognizer.non_speaking_duration = 0.8
             
         # Initialize Whisper model if available
         self.whisper_model = None
@@ -204,7 +204,8 @@ class SpeechToText:
                 
                 # Quick ambient noise adjustment
                 if self.config['dynamic_energy']:
-                    self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                    # Reduced duration for faster response
+                    self.recognizer.adjust_for_ambient_noise(source, duration=0.1)
                 
                 try:
                     # Listen with voice activity detection
@@ -390,35 +391,31 @@ class SpeechToText:
                 )
                 
             elif engine == EngineType.WHISPER and WHISPER_AVAILABLE and self.whisper_model:
-                # Save audio temporarily
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                    f.write(audio.get_wav_data())
-                    temp_path = f.name
-                
                 try:
+                    # Convert audio to 16kHz float32 numpy array for direct processing (faster than writing to file)
+                    # Convert to 16kHz, 16-bit mono
+                    raw_data = audio.get_raw_data(convert_rate=16000, convert_width=2)
+                    audio_np = np.frombuffer(raw_data, dtype=np.int16).astype(np.float32) / 32768.0
+
                     result = self.whisper_model.transcribe(
-                        temp_path,
-                        language=self.config['language'].split('-')[0],
+                        audio_np,
+                        language=self.config.get('language', 'en-IN').split('-')[0],
                         task="transcribe",
                         fp16=False
                     )
                     
-                    os.unlink(temp_path)
-                    
                     if result and result.get('text'):
                         return TranscriptionResult(
                             text=result['text'].strip(),
-                            confidence=result.get('confidence', 0.9),
+                            confidence=0.9,  # Whisper confidence needs segment analysis, default for now
                             engine_used=EngineType.WHISPER,
                             language=result.get('language', self.config['language']),
-                            duration=result.get('duration', 0),
+                            duration=len(raw_data) / 32000,  # 16000 * 2 bytes/sample
                             alternatives=[seg['text'] for seg in result.get('segments', [])],
                             word_timings=result.get('segments')
                         )
                 except Exception as e:
                     logger.error(f"Whisper recognition failed: {e}")
-                    if os.path.exists(temp_path):
-                        os.unlink(temp_path)
                         
             elif engine == EngineType.SPHINX and SPHINX_AVAILABLE:
                 try:
