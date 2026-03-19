@@ -11,7 +11,7 @@ A comprehensive, multi-modal AI voice assistant designed to emulate the capabili
 * **Advanced Audio Management:** Priority-queued text-to-speech with localized sound caching and multiple TTS provider fallbacks (Edge, pyttsx3, ElevenLabs, Azure, etc.).
 * **Flashcard & Learning System:** Upload materials for an AI-guided viva and study environment.
 
-# 🛠 Tech Stack
+### 🛠 Tech Stack
 
 ### Core AI Intelligence
 * **Large Language Models:** Powered by **Ollama**
