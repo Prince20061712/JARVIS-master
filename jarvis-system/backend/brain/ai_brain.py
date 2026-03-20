@@ -58,16 +58,18 @@ class RAGAdapter:
         except Exception as e:
             return f"Error processing file: {e}"
 
-    def retrieve_context(self, query, subject=None, n_results=4):
+    def retrieve_context(self, query, subject=None, n_results=2):
+        # Reduced n_results to 2 and keyword_k=0 to speed up specific retrieval
         future = asyncio.run_coroutine_threadsafe(
-            self.advanced_rag.retrieve_context(query, subject=subject, dense_k=n_results), 
+            self.advanced_rag.retrieve_context(query, subject=subject, dense_k=n_results, keyword_k=0), 
             self.loop
         )
         try:
-            context_string, _ = future.result(timeout=30)
+            # Reduce timeout to 5 seconds to prevent backend blocking
+            context_string, _ = future.result(timeout=5)
             return context_string
         except Exception as e:
-            print(f"Error retrieving context: {e}")
+            print(f"Error retrieving context (or timeout): {e}")
             return ""
 
 class AIState(Enum):
@@ -828,6 +830,8 @@ class FullFledgedAIBrain:
         Returns complete analysis including thought process
         """
         start_time = time.time()
+        print(f"⏱️  [Started] Processing input at {datetime.datetime.now().strftime('%H:%M:%S')}")
+
         self.state = AIState.PROCESSING
         self.last_interaction = datetime.datetime.now()
         self.interaction_count += 1
@@ -856,6 +860,7 @@ class FullFledgedAIBrain:
             thought_process.processing_time = time.time() - start_time
             self.thought_processes.append(thought_process)
             self.state = AIState.RESPONDING
+            print(f"⏱️  [Finished] Command executed in {time.time() - start_time:.2f}s")
             return self._format_response(thought_process, layer1_result)
         
         # LAYER 2: COGNITIVE (Understanding, knowledge)
@@ -865,14 +870,20 @@ class FullFledgedAIBrain:
             
             # RAG Retrieval - Educational Context
             rag_context = None
-            if hasattr(self, 'rag_engine') and self.rag_engine:
+            # OPTIMIZATION: Skip RAG for conversational queries or very short inputs
+            is_conversational = any(w in user_input.lower() for w in ["hello", "hi", "hey", "who are you", "tell me about yourself", "thanks", "goodbye"])
+            should_skip_rag = len(user_input.split()) < 3 or is_conversational
+            
+            if hasattr(self, 'rag_engine') and self.rag_engine and not should_skip_rag:
                  print(f"📚 Querying RAG Engine for: {user_input[:50]}... (Subject: {subject})")
                  try:
+                     rag_start = time.time()
                      rag_context = self.rag_engine.retrieve_context(user_input, subject=subject)
-                     if rag_context:
-                         print(f"✅ RAG Context retrieved ({len(rag_context)} chars)")
+                     print(f"✅ RAG Context retrieved in {time.time() - rag_start:.2f}s ({len(rag_context) if rag_context else 0} chars)")
                  except Exception as e:
                      print(f"⚠️ RAG Retrieval error: {e}")
+            else:
+                 print("⏩ Skipping RAG for conversational/short query.")
                      
             layer2_result["rag_context"] = rag_context
         except Exception as e:
@@ -1038,16 +1049,27 @@ class FullFledgedAIBrain:
         # External knowledge check
         knowledge_result = None
         if self._needs_external_knowledge(user_input):
+            print("🌐 Triggering external knowledge search...")
             kr = self.knowledge.get_comprehensive_knowledge(user_input)
             if kr:
                 knowledge_result = asdict(kr)
         
-        # Memory recall
-        similar_memories = self.memory.recall_memories(
-            query=user_input,
-            limit=3,
-            similarity_threshold=0.3
-        )
+        # Memory recall (Enhanced with skip logic)
+        similar_memories = []
+        # Skip memory recall for very short or conversational inputs to speed up response
+        is_conversational_memory = any(w in user_input.lower() for w in ["hello", "hi", "hey", "who are you", "tell me about yourself", "thanks"])
+        if len(user_input.split()) > 3 and not is_conversational_memory:
+             print("🧠 Recalling memories...")
+             try:
+                 similar_memories = self.memory.recall_memories(
+                     query=user_input,
+                     limit=3,
+                     similarity_threshold=0.3
+                 )
+             except Exception as e:
+                 print(f"⚠️ Memory recall error: {e}")
+        else:
+             print("⏩ Skipping memory recall for conversational query.")
         
         # Study context check
         study_context = None
@@ -1465,7 +1487,9 @@ class FullFledgedAIBrain:
         return any(word in text.lower() for word in ["calculate", "math", "solve", "equation"])
     
     def _needs_external_knowledge(self, text):
-        triggers = ["what is", "who is", "define", "explain", "history", "how does", "why does"]
+        # Reduced triggers to avoid unnecessary web searches for general knowledge
+        # The LLM has internal knowledge for "what is", "explain", etc.
+        triggers = ["search", "find", "latest", "news", "current", "who is", "recent events", "lookup"]
         return any(t in text.lower() for t in triggers)
     
     def _requires_deep_processing(self, text):
