@@ -1104,7 +1104,20 @@ Keep your response conversational and concise."""
 - [Any question or conversation]
         """
         print(help_text)
-        self.speak("I've displayed all available commands in the terminal. You can ask me to do any of these things.")
+        
+        # Send to frontend
+        if hasattr(self, 'audio') and self.audio.websocket_manager and self.loop:
+            # Create cleaner markdown version
+            md_text = help_text.replace(Fore.CYAN, "# ").replace(Fore.YELLOW, "### ").replace(Fore.WHITE, "")
+            asyncio.run_coroutine_threadsafe(
+                self.audio.websocket_manager.broadcast({
+                    "type": "text",
+                    "text": md_text
+                }),
+                self.loop
+            )
+
+        self.speak("I've displayed all available commands. You can ask me to do any of these things.")
     
     def register_skills(self):
         """Register all available skills"""
