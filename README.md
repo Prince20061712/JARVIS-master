@@ -13,7 +13,7 @@ A comprehensive, enterprise-grade multi-modal AI voice assistant system designed
 - [Contributing](#contributing)
 - [License](#license)
 
-### 📖 Overview
+## 📖 Overview
 
 JARVIS is a sophisticated AI assistant system that combines state-of-the-art natural language processing, voice recognition, and system automation. The platform leverages a five-layer cognitive architecture to provide intelligent, context-aware responses and automated task execution across macOS environments.
 
