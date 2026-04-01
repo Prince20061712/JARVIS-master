@@ -36,3 +36,12 @@ jarvis-system/backend/media/temp/
 
 # Large Files
 demo_video/
+
+# Private Data and DB
+jarvis-system/data/
+jarvis-system/backend/chroma_db/
+jarvis-system/backend/ai_brain_data/
+*profile.json
+*.sqlite3
+jarvis-system/backend/proactive_data/*.json
+
