@@ -58,15 +58,23 @@ JARVIS is a sophisticated AI assistant system that combines state-of-the-art nat
 
 ## ⚡ Getting Started
 
+### 💻 Compatibility & Hardware Notes
+> **Built and Optimized for Apple Silicon (M-Series)**  
+> This project was developed, tested, and optimized on a **MacBook Air M4**. 
+
+* **macOS (Apple Silicon M1/M2/M3/M4):** Fully supported and highly recommended. Core inference (via Ollama), UI generation, and system-level automation run natively and smoothly on the unified memory architecture.
+* **macOS (Intel):** Supported. Application will run fine, but local language model inference times will be noticeably slower without the Neural Engine.
+* **Windows / Linux:** Partial support. The web frontend, NLP processing, and AI reasoning engine will work perfectly. However, **certain System Automation features** (like taking screenshots, opening specific apps, or controlling system volume) rely on macOS-specific commands (like AppleScript or native APIs). If you are using Windows or Linux, you will need to modify the system automation modules to use OS-specific equivalents (e.g., `pywin32` for Windows).
+
 ### System Requirements
 
 | Requirement | Version | Notes |
 |---|---|---|
-| **Operating System** | macOS 10.15+ | Intel or Apple Silicon compatible |
-| **Python** | 3.14+ | Verify with `python3 --version` |
-| **Node.js** | 16.0+ | Required for frontend development |
-| **Ollama** | Latest | [Installation Guide](https://ollama.ai/) |
-| **Available Memory** | 8GB minimum | 16GB+ recommended for optimal performance |
+| **Operating System** | macOS 10.15+ | M-Series Native (Tested on M4), Intel supported |
+| **Python** | 3.10+ | Recommend 3.10 to 3.12. (Tested on 3.14) |
+| **Node.js** | 18.0+ | Required for frontend development |
+| **Ollama** | Latest | [Installation Guide](https://ollama.com/) |
+| **Available Memory** | 8GB minimum | 16GB+ highly recommended for optimal performance with local LLMs |
 
 ### Installation
 
