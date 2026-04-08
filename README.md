@@ -133,6 +133,12 @@ Launch both backend and frontend services with the automated startup script:
 ./start_jarvis.sh
 ```
 
+If you want a shorter command from the repository root, you can also run:
+
+```bash
+make start
+```
+
 This will automatically:
 1. Activate the Python virtual environment
 2. Start the FastAPI backend server (`http://localhost:8000`)
