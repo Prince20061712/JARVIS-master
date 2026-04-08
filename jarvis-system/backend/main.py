@@ -102,7 +102,7 @@ JARVIS_NAME = "Jarvis"
 CONTINUOUS_MODE = True
 WAKE_WORD = "jarvis"
 ENABLE_LOCAL_AI = True
-OLLAMA_MODEL = "llama3.1:latest"
+OLLAMA_MODEL = "llama3.2:1b"
 ENABLE_TERMINAL_VOICE = False # Set to False to prevent backend from speaking (prevents feedback loop)
 
 # ========== FASTAPI & WEBSOCKET SETUP ==========
@@ -187,8 +187,8 @@ class JarvisAI:
             self.stt_engine = None
 
         self.recognizer = sr.Recognizer()
-        self.recognizer.pause_threshold = 2.5  # Allow much longer pauses (2.5s) to avoid cutting off
-        self.recognizer.non_speaking_duration = 1.5
+        self.recognizer.pause_threshold = 0.8  # Reduce end-of-speech delay for faster turn-taking
+        self.recognizer.non_speaking_duration = 0.4
         self.recognizer.energy_threshold = 300  # distinct speech
         self.recognizer.dynamic_energy_threshold = True
         self.microphone = sr.Microphone()

@@ -141,7 +141,7 @@ def sanitize_for_json(obj):
 class OllamaEnhancedManager:
     """Enhanced Ollama manager with multiple models, streaming, and better management"""
     
-    def __init__(self, primary_model="llama3.1", fallback_model="mistral"):
+    def __init__(self, primary_model="llama3.2:1b", fallback_model="gemma:2b"):
         self.primary_model = primary_model
         self.fallback_model = fallback_model
         self.base_url = "http://localhost:11434"
@@ -162,6 +162,7 @@ class OllamaEnhancedManager:
         # Model capabilities
         self.model_capabilities = {
             "llama3.2:1b": {"max_tokens": 2048, "context_size": 4096},
+            "llama3.2:latest": {"max_tokens": 2048, "context_size": 4096},
             "mistral:7b": {"max_tokens": 4096, "context_size": 8192},
             "llama2:7b": {"max_tokens": 4096, "context_size": 4096},
             "gemma:2b": {"max_tokens": 2048, "context_size": 2048}
@@ -392,24 +393,22 @@ class OllamaEnhancedManager:
             5. Provide detailed, accurate information
             6. Maintain context across conversations
             7. Adapt to user's knowledge level and preferences
+            8. Keep responses short and direct unless the user asks for detail
             """
         
         # Add context information
         if context:
-            if "user_profile" in context:
-                 # system_prompt += f"\n\nUser Profile & Preferences:\n{context['user_profile']}\n\nIMPORTANT: Use the above profile to tailor your response content, complexity, and tone to the user."
-                 # Remove user_profile from generic context dump to avoid duplication
-                 context_copy = context.copy()
-                 del context_copy['user_profile']
-                 system_prompt += f"\n\nCurrent Context:\n{json.dumps(sanitize_for_json(context_copy), indent=2)}"
-            else:
-                 system_prompt += f"\n\nCurrent Context:\n{json.dumps(sanitize_for_json(context), indent=2)}"
+            context_copy = context.copy()
+            context_copy.pop('user_profile', None)
+            compact_context = self._summarize_context(context_copy)
+            if compact_context:
+                system_prompt += f"\n\nCurrent Context:\n{compact_context}"
         
         # Add conversation history
         if self.conversation_history:
             history_text = "\n".join([
-                f"{msg['role'].title()}: {msg['content'][:100]}..."
-                for msg in list(self.conversation_history)[-3:]
+                f"{msg['role'].title()}: {msg['content'][:80].replace(chr(10), ' ')}..."
+                for msg in list(self.conversation_history)[-2:]
             ])
             system_prompt += f"\n\nRecent Conversation:\n{history_text}"
         
@@ -420,29 +419,37 @@ class OllamaEnhancedManager:
             system_prompt += "\n\nNote: You are running on Mistral. Provide concise, accurate responses."
         
         return system_prompt
+
+    def _summarize_context(self, context: Dict[str, Any], max_items: int = 8, max_value_chars: int = 120) -> str:
+        """Compress context into a compact, fast-to-read summary."""
+        if not context:
+            return ""
+
+        summary_lines = []
+        for key, value in list(context.items())[:max_items]:
+            try:
+                if isinstance(value, (dict, list, tuple)):
+                    rendered_value = json.dumps(sanitize_for_json(value), ensure_ascii=True)
+                else:
+                    rendered_value = str(value)
+            except Exception:
+                rendered_value = str(value)
+
+            rendered_value = rendered_value.replace("\n", " ").strip()
+            if len(rendered_value) > max_value_chars:
+                rendered_value = rendered_value[:max_value_chars] + "..."
+
+            summary_lines.append(f"- {key}: {rendered_value}")
+
+        return "\n".join(summary_lines)
     
     def _prepare_messages(self, system_prompt: str, user_prompt: str, model: str) -> List[Dict]:
         """Prepare messages with context window management"""
         messages = [{"role": "system", "content": system_prompt}]
-        
-        # Add conversation history (respecting model context limits)
+
+        # Keep the request compact; recent context already lives in the system prompt.
         context_size = self.model_capabilities.get(model, {}).get("context_size", 4096)
-        
-        # Estimate token count (rough approximation)
-        total_tokens = len(system_prompt.split()) + len(user_prompt.split())
-        
-        # Add recent messages that fit within context
-        # Skip the very last message in conversation_history because it's the current user prompt,
-        # which we append manually at the end.
-        history_to_add = list(self.conversation_history)[:-1] if self.conversation_history else []
-        for msg in reversed(history_to_add):
-            msg_tokens = len(msg["content"].split())
-            if total_tokens + msg_tokens < context_size * 0.7:  # 70% of context
-                messages.insert(1, msg)  # Insert after system prompt
-                total_tokens += msg_tokens
-            else:
-                break
-        
+
         # Add current user prompt
         messages.append({"role": "user", "content": user_prompt})
         
@@ -455,9 +462,9 @@ class OllamaEnhancedManager:
             "messages": messages,
             "stream": streaming,
             "options": {
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "num_predict": 256,
+                "temperature": 0.5,
+                "top_p": 0.85,
+                "num_predict": 128,
                 "repeat_penalty": 1.1,
                 "top_k": 40,
                 "seed": random.randint(1, 10000)
@@ -466,9 +473,9 @@ class OllamaEnhancedManager:
         
         # Model-specific optimizations
         if "llama" in model.lower():
-            base_payload["options"]["temperature"] = 0.8  # Slightly more creative
+            base_payload["options"]["temperature"] = 0.6  # Slightly more creative
         elif "mistral" in model.lower():
-            base_payload["options"]["temperature"] = 0.6  # Slightly more focused
+            base_payload["options"]["temperature"] = 0.45  # Slightly more focused
         
         return base_payload
     
