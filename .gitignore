@@ -8,6 +8,12 @@ ENV/
 env/
 test_env/
 .env
+.env.local
+.env.*.local
+.envrc
+.secrets*
+!.env.example
+!jarvis-system/backend/.env.example
 .mypy_cache/
 .pytest_cache/
 .pyre/
@@ -33,6 +39,29 @@ jarvis-system/backend/media/temp/
 # IDEs
 .vscode/
 .idea/
+
+# Security artifacts
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.cer
+id_rsa
+id_ed25519
+*.kubeconfig
+
+# Local tooling outputs
+.coverage
+coverage.xml
+htmlcov/
+.ruff_cache/
+.hypothesis/
+
+# Runtime/temp files
+tmp/
+temp/
+temp_uploads/
 
 # Large Files
 demo_video/
