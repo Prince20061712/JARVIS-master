@@ -68,10 +68,10 @@ import sqlite3
 import csv
 import xml.etree.ElementTree as ET
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, UploadFile, File, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, StreamingResponse
 
 import uvicorn
 
@@ -92,6 +92,7 @@ except ImportError:
 from brain.ai_brain import EnhancedAIBrain
 from flashcard_system.scanner.subject_scanner import SubjectScanner
 from flashcard_system.viva.adaptive_questioner import AdaptiveQuestioner
+from services.llm.hybrid_brain import HybridBrain
 
 # Initialize colorama
 init(autoreset=True)
@@ -1176,15 +1177,17 @@ from fastapi.staticfiles import StaticFiles
 
 # Global Jarvis instance
 jarvis = None
+hybrid_brain = None
 
 @app.on_event("startup")
 async def startup_event():
-    global jarvis
+    global jarvis, hybrid_brain
     # Get the running event loop
     loop = asyncio.get_running_loop()
     
     # Initialize Jarvis with the websocket manager and loop
     jarvis = JarvisAI(websocket_manager=manager, loop=loop)
+    hybrid_brain = HybridBrain()
     
     # Run Jarvis in a separate thread so it doesn't block FastAPI
     thread = threading.Thread(target=jarvis.run)
@@ -1219,6 +1222,33 @@ async def startup_event():
         print(f"✅ Finished auto-loading flashcards.")
 
     asyncio.create_task(load_existing_flashcards())
+
+
+async def _execute_chat_command(command: str) -> str:
+    """Route command queries through the existing Jarvis command pipeline."""
+    if not jarvis:
+        return f"Command received: {command}"
+
+    try:
+        await jarvis.process_command_wrapper(command, subject=jarvis.active_subject)
+        return f"Executing system command: {command}"
+    except Exception as exc:
+        return f"Command execution failed: {exc}"
+
+
+@app.post("/chat")
+async def chat(query: str = Body(..., embed=True)):
+    """Stream a hybrid response for the incoming query."""
+    if not hybrid_brain:
+        raise HTTPException(status_code=503, detail="Hybrid brain is not ready yet.")
+
+    async def stream_response():
+        async for token in hybrid_brain.generate_response(query, command_handler=_execute_chat_command):
+            if token:
+                yield f"data: {token}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(stream_response(), media_type="text/event-stream")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

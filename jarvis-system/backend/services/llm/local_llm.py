@@ -1,8 +1,9 @@
 """
-Local LLM Integration for Offline Operation
+Local LLM Integration for Offline Operation.
 """
 
 import asyncio
+import os
 from typing import Optional, Dict, Any, AsyncGenerator, List
 import json
 import aiohttp
@@ -11,7 +12,7 @@ from utils.logger import logger
 
 @dataclass
 class LLMConfig:
-    model_name: str = "llama3"
+    model_name: str = "phi3"
     api_base: str = "http://localhost:11434"
     temperature: float = 0.7
     max_tokens: int = 2048
@@ -138,3 +139,32 @@ class LocalLLM:
         if self.session:
             await self.session.close()
             self.session = None
+
+
+async def local_generate(prompt: str) -> AsyncGenerator[str, None]:
+    """Stream a completion from the local Ollama model."""
+    configured_model = os.getenv("LLM_MODEL", os.getenv("OLLAMA_MODEL", "phi3"))
+    api_base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    candidate_models = [configured_model]
+    if configured_model != "mistral":
+        candidate_models.append("mistral")
+
+    last_error: Exception | None = None
+
+    for model_name in candidate_models:
+        llm = LocalLLM(LLMConfig(model_name=model_name, api_base=api_base))
+        try:
+            stream = await llm.generate(prompt, stream=True)
+            async for chunk in stream:
+                if chunk:
+                    yield chunk
+            return
+        except Exception as exc:
+            last_error = exc
+            logger.warning(f"Local model {model_name} failed: {exc}")
+        finally:
+            await llm.close()
+
+    if last_error is not None:
+        logger.error(f"Local LLM streaming error: {last_error}")
+        yield f"Local model error: {last_error}"
