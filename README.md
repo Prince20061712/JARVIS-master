@@ -6,8 +6,11 @@ A comprehensive, enterprise-grade multi-modal AI voice assistant system designed
 
 - [Overview](#overview)
 - [Core Features](#core-features)
+- [Hybrid AI Routing](#hybrid-ai-routing)
 - [Technology Stack](#technology-stack)
 - [Getting Started](#getting-started)
+- [API Usage](#api-usage)
+- [Security Hardening](#security-hardening)
 - [Project Architecture](#project-architecture)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
@@ -26,12 +29,29 @@ JARVIS is a sophisticated AI assistant system that combines state-of-the-art nat
 - **Advanced Audio Processing:** Intelligent text-to-speech with emotional adaptation, priority queuing, and multi-provider fallback support
 - **Learning & Development Tools:** Integrated flashcard system and AI-guided study environment for educational purposes
 
+## ⚡ Hybrid AI Routing
+
+JARVIS now supports a hybrid model router for faster and smarter responses.
+
+- **COMMAND** queries route to system command execution (open, close, play, launch, search)
+- **SIMPLE** queries route to local Ollama for offline and cost-free responses
+- **FAST** queries route to Groq for low-latency output
+- **COMPLEX** queries route to Gemini for deeper reasoning
+
+Routing logic is implemented in:
+
+- `jarvis-system/backend/services/llm/router.py`
+- `jarvis-system/backend/services/llm/hybrid_brain.py`
+- `jarvis-system/backend/services/llm/local_llm.py`
+- `jarvis-system/backend/services/llm/groq_llm.py`
+- `jarvis-system/backend/services/llm/gemini_llm.py`
+
 ## 🏗️ Technology Stack
 
 ### AI & Machine Learning
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| **Language Models** | Ollama (Llama 3.1, Mistral) | Core intelligence and reasoning engine |
+| **Language Models** | Ollama (Phi3/Mistral), Groq (Llama/Mixtral), Gemini 1.5 Flash | Hybrid routing for latency and reasoning quality |
 | **Knowledge Retrieval** | RAG (Retrieval-Augmented Generation) | Context-aware academic and domain knowledge |
 | **Cognitive Architecture** | 5-Layer Intelligence Model | Reactive, Cognitive, Metacognitive, Proactive, Creative layers |
 
@@ -109,9 +129,14 @@ nano .env
 ```
 
 Configure the following if using premium services:
-- `ELEVENLABS_API_KEY` - Optional, for premium voice synthesis
-- `AZURE_TTS_KEY` - Optional, for Azure Text-to-Speech
-- `OPENAI_API_KEY` - Optional, for advanced features
+
+- `LLM_MODEL` - Local Ollama model (recommended: `phi3` or `mistral`)
+- `OLLAMA_BASE_URL` - Local Ollama endpoint (default: `http://localhost:11434`)
+- `GROQ_API_KEY` - Required for FAST route
+- `GEMINI_API_KEY` - Required for COMPLEX route
+- `GROQ_MODEL` - Optional override (default: `llama-3.1-8b-instant`)
+- `GEMINI_MODEL` - Optional override (default: `gemini-1.5-flash`)
+- `OPENAI_API_KEY` - Optional for other modules
 
 #### 5. Verify Installation
 ```bash
@@ -120,7 +145,7 @@ source jarvis-system/backend/venv/bin/activate
 python3 -c "import fastapi; print('Backend dependencies OK')"
 
 # Test Node.js installation
-cd jarvis-system/frontend
+cd frontend
 npm list | head -10
 ```
 
@@ -156,14 +181,83 @@ python main.py
 
 **Terminal 2 - Frontend:**
 ```bash
-cd jarvis-system/frontend
+cd frontend
 npm run dev
 ```
 
 ### Stopping the Application
 Press `Ctrl+C` in the terminal running `start_jarvis.sh` to gracefully shut down both services.
 
-## 📁 Project Architecture
+## 🌐 API Usage
+
+### Hybrid Chat Streaming Endpoint
+
+The root FastAPI app exposes a streaming endpoint:
+
+- `POST /chat`
+
+Request body:
+
+```json
+{
+	"query": "quick summary of Fourier transform"
+}
+```
+
+Response type:
+
+- `text/event-stream` (Server-Sent Events)
+- token chunks are streamed in real-time
+- final event emits `[DONE]`
+
+Example with curl:
+
+```bash
+curl -N -X POST http://localhost:8000/chat \
+	-H "Content-Type: application/json" \
+	-d '{"query":"latest AI news in 5 bullets"}'
+```
+
+### Route Selection Rules
+
+- Contains `open`, `close`, `play`, `launch`, `search` -> COMMAND
+- Fewer than 8 words -> SIMPLE
+- Contains `quick`, `fast`, `latest`, `current` -> FAST
+- Contains `explain`, `why`, `how`, `optimize`, `code`, `architecture` OR more than 15 words -> COMPLEX
+
+### Response Cache
+
+Hybrid responses are cached in-memory in the running backend process for repeated queries.
+
+## 🔐 Security Hardening
+
+### Pre-commit Secret Scan
+
+A repo-managed pre-commit hook now blocks likely secrets before commit.
+
+Enable it once per clone:
+
+```bash
+./scripts/setup-git-hooks.sh
+```
+
+This configures:
+
+- hooks path: `.githooks/pre-commit`
+- scanner: `scripts/security/check_secrets.py`
+
+### Git Ignore Hardening
+
+The repository now ignores:
+
+- local env variants (`.env.local`, `.env.*.local`, `.envrc`)
+- key and cert artifacts (`*.pem`, `*.key`, `*.p12`, `id_rsa`, `id_ed25519`)
+- local runtime temp folders (`tmp/`, `temp/`, `temp_uploads/`)
+
+Environment templates remain tracked:
+
+- `.env.example`
+- `jarvis-system/backend/.env.example`
 
 ## 📁 Project Architecture
 
@@ -172,6 +266,7 @@ JARVIS-master/
 ├── jarvis-system/
 │   ├── backend/                    # Python FastAPI backend server
 │   │   ├── ai/                     # AI & ML modules
+│   │   ├── services/llm/           # Hybrid LLM routing and providers
 │   │   ├── api/                    # REST & WebSocket endpoints
 │   │   ├── brain/                  # Core AI brain logic
 │   │   ├── context/                # Context awareness engine
@@ -246,7 +341,7 @@ pip install --upgrade -r requirements.txt
 **Issue:** Frontend won't start
 ```bash
 # Solution: Clear npm cache and reinstall
-cd jarvis-system/frontend
+cd frontend
 rm -rf node_modules package-lock.json
 npm install
 npm run dev
@@ -255,7 +350,7 @@ npm run dev
 **Issue:** Ollama models not found
 ```bash
 # Solution: Pull required models
-ollama pull llama3
+ollama pull phi3
 ollama pull mistral
 ```
 
@@ -308,5 +403,5 @@ For full license terms, see the [LICENSE](LICENSE) file.
 
 ---
 
-**Last Updated:** March 27, 2026
-**Version:** 1.0.0
+**Last Updated:** April 10, 2026
+**Version:** 1.1.0
