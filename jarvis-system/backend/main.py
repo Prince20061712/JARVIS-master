@@ -68,6 +68,7 @@ import sqlite3
 import csv
 import xml.etree.ElementTree as ET
 import asyncio
+from typing import Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, UploadFile, File, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -202,6 +203,8 @@ class JarvisAI:
         self.voice_enabled = False # Start with voice disabled
         self.is_client_speaking = False # Track if client is speaking
         self.is_jarvis_speaking = False # Track if JARVIS is speaking
+        self.last_tts_end_time = 0.0 # Short guard window to avoid mic picking up speaker output
+        self.mic_resume_delay = 1.2
         self.is_processing_command = False # Track if JARVIS is thinking/speaking
         self.viva_mode = False
         self.viva_question = ""
@@ -330,6 +333,33 @@ class JarvisAI:
         else:
             print(f"{Fore.MAGENTA}👂 Client finished speaking - Resuming listening...")
 
+    def _audio_output_active(self) -> bool:
+        """Return True while output audio is active or just finished."""
+        if self.is_jarvis_speaking:
+            return True
+
+        if hasattr(self, 'audio') and getattr(self.audio, 'is_speaking', False):
+            return True
+
+        return (time.time() - self.last_tts_end_time) < self.mic_resume_delay
+
+    def _extract_prefixed_command_target(self, text: str, verbs: list[str]) -> Optional[str]:
+        """Extract command target only when the verb appears in command position."""
+        escaped_verbs = "|".join(re.escape(v) for v in verbs)
+        pattern = (
+            r"^(?:hey\s+jarvis\s+|jarvis\s+)?"
+            r"(?:please\s+)?"
+            r"(?:(?:can|could|would)\s+you\s+)?"
+            r"(?:please\s+)?"
+            rf"(?:{escaped_verbs})\s+(.+)$"
+        )
+        match = re.match(pattern, text.strip(), flags=re.IGNORECASE)
+        if not match:
+            return None
+
+        target = match.group(1).strip(" .!?")
+        return target or None
+
     def speak(self, text, play_beep=False, rate=None):
         """Wrapper for audio system speak"""
         if isinstance(text, dict):
@@ -388,6 +418,7 @@ class JarvisAI:
 
         def on_speech_complete():
             self.is_jarvis_speaking = False
+            self.last_tts_end_time = time.time()
             # Stop lip sync on frontend
             if self.audio.websocket_manager and self.loop:
                 asyncio.run_coroutine_threadsafe(
@@ -408,6 +439,7 @@ class JarvisAI:
         except Exception as e:
             print(f"Error in speech: {e}")
             self.is_jarvis_speaking = False # Reset on error
+            self.last_tts_end_time = time.time()
     
     def toggle_voice_input(self):
         """Toggle voice input on/off"""
@@ -437,13 +469,13 @@ class JarvisAI:
             return ""
 
         # Check if JARVIS is speaking to prevent feedback loop
-        if self.is_jarvis_speaking:
+        if self._audio_output_active():
             time.sleep(0.1)
             return ""
 
         with self.microphone as source:
             # Wait if client is speaking to avoid feedback loop
-            while self.is_client_speaking or self.is_jarvis_speaking:
+            while self.is_client_speaking or self._audio_output_active():
                 time.sleep(0.1)
                 
             if timeout is None:
@@ -709,21 +741,14 @@ Keep your response conversational and concise."""
             return
         
         # ========== APPLICATION COMMANDS ==========
-        if "open " in command_lower or "start " in command_lower or "launch " in command_lower:
-            # Extract app name
-            app_keywords = ["open ", "start ", "launch "]
-            app_name = command_lower
-            for keyword in app_keywords:
-                if keyword in app_name:
-                    app_name = app_name.replace(keyword, "").strip()
-                    break
-            
+        app_name = self._extract_prefixed_command_target(command, ["open", "start", "launch"])
+        if app_name:
             result = self.app_manager.open_application(app_name)
             self.speak(result)
             return
         
-        if "close " in command_lower or "quit " in command_lower:
-            app_name = command_lower.replace("close ", "").replace("quit ", "").strip()
+        app_name = self._extract_prefixed_command_target(command, ["close", "quit"])
+        if app_name:
             result = self.app_manager.close_application(app_name)
             self.speak(result)
             return

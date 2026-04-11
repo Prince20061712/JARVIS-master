@@ -23,12 +23,24 @@ def _contains_any(tokens: Iterable[str], keywords: set[str]) -> bool:
     return any(token in keywords for token in tokens)
 
 
+def _is_command_query(query: str) -> bool:
+    """Match actionable command phrasing, not incidental keyword mentions."""
+    pattern = (
+        r"^(?:hey\s+jarvis\s+|jarvis\s+)?"
+        r"(?:please\s+)?"
+        r"(?:(?:can|could|would)\s+you\s+)?"
+        r"(?:please\s+)?"
+        r"(?:open|close|play|launch|search)\b"
+    )
+    return re.match(pattern, query.strip(), flags=re.IGNORECASE) is not None
+
+
 def classify_query(query: str) -> str:
     """Classify a query into COMMAND, SIMPLE, FAST, or COMPLEX."""
     tokens = _tokenize(query)
     word_count = len(tokens)
 
-    if _contains_any(tokens, COMMAND_KEYWORDS):
+    if _is_command_query(query):
         return COMMAND
     if word_count < 8:
         return SIMPLE
