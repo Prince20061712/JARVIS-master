@@ -50,6 +50,7 @@ except (ImportError, Exception):
     class Voice: pass
 
 JARVIS_NAME = "Jarvis"
+ELEVENLABS_DEFAULT_VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "gfRt6Z3Z8aTbpLfexQ7N")
 
 
 class TTSProvider(Enum):
@@ -666,14 +667,8 @@ class AudioSystem:
     def _synthesize_elevenlabs(self, text: str, config: VoiceConfig) -> bool:
         """Synthesize with ElevenLabs"""
         try:
-            # Map to ElevenLabs voices
-            voice_map = {
-                "en-US-ChristopherNeural": "Adam",
-                "en-US-JennyNeural": "Bella",
-                "en-GB-RyanNeural": "Elliott"
-            }
-            
-            voice_name = voice_map.get(config.voice_name, "Adam")
+            # Prefer configured voice ID (or env/default) for consistent JARVIS identity.
+            voice_name = ELEVENLABS_DEFAULT_VOICE_ID
             
             # Generate audio
             audio = generate(

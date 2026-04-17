@@ -140,6 +140,7 @@ class TextToSpeech:
             'backup_engines': [TTSEngine.EDGE_TTS, TTSEngine.PYTTSX3, TTSEngine.GTTS],
             'default_voice_profile': None,
             'elevenlabs_api_key': os.environ.get('ELEVENLABS_API_KEY'),
+            'elevenlabs_voice_id': os.environ.get('ELEVENLABS_VOICE_ID', 'gfRt6Z3Z8aTbpLfexQ7N'),
             'cache_enabled': True,
             'cache_dir': os.path.join(tempfile.gettempdir(), 'jarvis_tts_cache'),
             'auto_detect_language': True,
@@ -479,13 +480,13 @@ class TextToSpeech:
             stability, similarity = 0.8, 0.7
         
         # Select voice
-        voice_id = options.voice_profile.voice_id if options.voice_profile else None
+        voice_id = options.voice_profile.voice_id if options.voice_profile else self.config.get('elevenlabs_voice_id')
         
         try:
             # Generate audio
             audio = eleven.generate(
                 text=options.text,
-                voice=voice_id or "Adam",  # Default voice
+                voice=voice_id or self.config.get('elevenlabs_voice_id'),
                 model="eleven_monolingual_v1",
                 voice_settings=VoiceSettings(
                     stability=stability,
