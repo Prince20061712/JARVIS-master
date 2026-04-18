@@ -8,6 +8,15 @@
 // ──────────────────────────────────────────────
 //  Detection
 // ──────────────────────────────────────────────
+const DIRECT_PRAISE_PATTERNS = [
+    /\byou('re| are) (the best|great|amazing|awesome|incredible)\b/i,
+    /\b(you('re| are)?) ?(so )?smart\b/i,
+    /\bprou?d of you\b/i,
+    /\bi love (you|jarvis)\b/i,
+    /\bthank you(,?\s*jarvis)?\b/i,
+    /\bthanks?(,?\s*jarvis|\s+a lot|\s+so much)?\b/i,
+];
+
 const PRAISE_PATTERNS = [
     /\bgood\s+(job|work|one|going|boy|man|lad|jab)\b/i,
     /\bgreat(!\s*|ly\s+done)?\b/i,
@@ -19,23 +28,32 @@ const PRAISE_PATTERNS = [
     /\bwow\b/i,
     /\bperfect\b/i,
     /\bexcellent\b/i,
-    /\byou('re| are) (the best|great|amazing|awesome|incredible)\b/i,
-    /\bi love (you|this|jarvis)\b/i,
-    /\bthanks?( a lot| so much| jarvis)?\b/i,
-    /\bthank you\b/i,
     /\bimpressive\b/i,
     /\bincredible\b/i,
     /\bfantastic\b/i,
     /\bsuperb\b/i,
-    /\b(you('re| are)?) ?(so )?smart\b/i,
     /\blove (it|this|that|you)\b/i,
     /\b(keep it up|keep going)\b/i,
-    /\bprou?d of you\b/i,
     /\brespect\b/i,
 ];
 
+const ASSISTANT_TARGET_PATTERNS = [
+    /\bjarvis\b/i,
+    /\bassistant\b/i,
+    /\bcopilot\b/i,
+    /\byou\b/i,
+    /\byour\b/i,
+    /\bu\b/i,
+];
+
 export function isPraiseMessage(text: string): boolean {
-    return PRAISE_PATTERNS.some(p => p.test(text));
+    const hasDirectPraise = DIRECT_PRAISE_PATTERNS.some(p => p.test(text));
+    if (hasDirectPraise) return true;
+
+    const hasPraise = PRAISE_PATTERNS.some(p => p.test(text));
+    if (!hasPraise) return false;
+
+    return ASSISTANT_TARGET_PATTERNS.some(p => p.test(text));
 }
 
 // ──────────────────────────────────────────────
