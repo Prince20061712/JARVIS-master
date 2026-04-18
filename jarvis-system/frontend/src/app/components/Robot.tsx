@@ -1,6 +1,13 @@
 import Spline from '@splinetool/react-spline';
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { RobotFace } from './RobotFace';
+
+type RobotFaceProps = {
+  state: RobotState;
+  emotion?: 'neutral' | 'shy';
+  mouseOffset?: { x: number; y: number };
+};
+
+const RobotFace = (_props: RobotFaceProps) => null;
 
 export type RobotState =
   | "idle"

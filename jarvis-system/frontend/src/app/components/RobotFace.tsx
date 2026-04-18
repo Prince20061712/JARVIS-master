@@ -1,520 +1,823 @@
-import { motion, AnimatePresence } from "motion/react";
-import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence, useSpring, useTransform } from "motion/react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { RobotState } from "./Robot";
 
+/* -------------------------------------------------
+   Public API - backward compatible, no changes
+   ------------------------------------------------- */
 interface RobotFaceProps {
     state: RobotState;
     emotion?: "neutral" | "shy" | "curious" | "excited" | "confused";
     mouseOffset?: { x: number; y: number };
-    intensity?: number; // 0-1 scale for expression intensity
+    intensity?: number;
 }
 
-/* ──────────────── Terminator-Inspired Color Palette ──────────────── */
-interface ColorPalette {
-    primary: string;
-    secondary: string;
-    dim: string;
+/* -------------------------------------------------
+   Design tokens - centralised tunables
+   ------------------------------------------------- */
+const T = {
+    /** Eye geometry */
+    EYE: {
+        outerR: 17,
+        lensR: 13.5,
+        irisR: 9,
+        pupilR: 5,
+        glintR: 2.2,
+        glintOffset: { x: -3.5, y: -3.5 },
+        bladeCount: 6,
+    },
+    /** Frequency bar analyzer */
+    BARS: { count: 13, width: 2.5, gap: 2.5 },
+    /** Motion spring presets */
+    SPRING: {
+        lazy: { stiffness: 60, damping: 18 },
+        snappy: { stiffness: 200, damping: 28 },
+        micro: { stiffness: 400, damping: 40 },
+    },
+    /** Per-state animation timing (seconds) */
+    TIMING: {
+        idle: { blink: 3.8, drift: 4.5, pulse: 2.8 },
+        speaking: { blink: 2.6, drift: 1.8, pulse: 0.35 },
+        listening: { blink: 4.5, drift: 2.8, pulse: 1.2 },
+        processing: { blink: 0, drift: 0.8, pulse: 0.22 },
+        error: { blink: 0.4, drift: 0.4, pulse: 0.18 },
+        scanning: { blink: 5, drift: 1.2, pulse: 0.9 },
+        loading: { blink: 6, drift: 3.5, pulse: 1.6 },
+        analyzing: { blink: 5, drift: 1.6, pulse: 0.7 },
+        rebooting: { blink: 0, drift: 5, pulse: 2 },
+        dancing: { blink: 1.8, drift: 0.6, pulse: 0.25 },
+    },
+} as const;
+
+/* -------------------------------------------------
+   Colour palette - state-keyed, physically motivated
+   ------------------------------------------------- */
+interface Palette {
+    iris: string;
+    irisAlt: string;
+    pupil: string;
+    glint: string;
     glow: string;
-    accent: string;
+    glowSoft: string;
+    bar: string;
+    barDim: string;
     hud: string;
+    hudDim: string;
+    shell: string;
+    lensReflect: string;
     scanline: string;
-    gradient: {
-        start: string;
-        end: string;
-    };
+    /** CSS filter string applied to the outer container */
+    dropShadow: string;
 }
 
-const PALETTE: Record<string, ColorPalette> = {
+const PALETTE: Record<string, Palette> = {
     idle: {
-        primary: "#00ffff",
-        secondary: "#0088ff",
-        dim: "rgba(0, 255, 255, 0.15)",
-        glow: "rgba(0, 255, 255, 0.4)",
-        accent: "#ffffff",
-        hud: "#00ccff",
-        scanline: "#00ffff",
-        gradient: { start: "#00ffff", end: "#0066ff" }
+        iris: "#00e8ff", irisAlt: "#0077cc",
+        pupil: "#001830", glint: "#ffffff",
+        glow: "rgba(0,232,255,0.55)", glowSoft: "rgba(0,200,240,0.18)",
+        bar: "#00d8f0", barDim: "rgba(0,200,220,0.3)",
+        hud: "#00bcd4", hudDim: "rgba(0,188,212,0.25)",
+        shell: "#0d2a38", lensReflect: "rgba(160,240,255,0.25)",
+        scanline: "#00e8ff",
+        dropShadow: "drop-shadow(0 0 12px rgba(0,232,255,0.5))",
     },
     speaking: {
-        primary: "#00ffaa",
-        secondary: "#00cc88",
-        dim: "rgba(0, 255, 170, 0.15)",
-        glow: "rgba(0, 255, 170, 0.4)",
-        accent: "#aaffff",
-        hud: "#00ffaa",
-        scanline: "#00ffaa",
-        gradient: { start: "#00ffaa", end: "#00aa66" }
+        iris: "#00ffb0", irisAlt: "#009966",
+        pupil: "#001a12", glint: "#ffffff",
+        glow: "rgba(0,255,160,0.55)", glowSoft: "rgba(0,220,140,0.18)",
+        bar: "#00ee99", barDim: "rgba(0,200,130,0.3)",
+        hud: "#00cc88", hudDim: "rgba(0,180,120,0.25)",
+        shell: "#0a2218", lensReflect: "rgba(160,255,210,0.25)",
+        scanline: "#00ffb0",
+        dropShadow: "drop-shadow(0 0 14px rgba(0,255,160,0.6))",
     },
     processing: {
-        primary: "#bb44ff",
-        secondary: "#9922dd",
-        dim: "rgba(187, 68, 255, 0.18)",
-        glow: "rgba(160, 32, 240, 0.5)",
-        accent: "#dd99ff",
-        hud: "#aa33ee",
+        iris: "#c060ff", irisAlt: "#8800dd",
+        pupil: "#150028", glint: "#f0d0ff",
+        glow: "rgba(192,80,255,0.6)", glowSoft: "rgba(170,60,230,0.2)",
+        bar: "#bb44ff", barDim: "rgba(160,50,220,0.3)",
+        hud: "#aa33ee", hudDim: "rgba(140,40,200,0.25)",
+        shell: "#1a0030", lensReflect: "rgba(230,180,255,0.2)",
         scanline: "#cc55ff",
-        gradient: { start: "#bb44ff", end: "#7700cc" }
+        dropShadow: "drop-shadow(0 0 16px rgba(192,80,255,0.65))",
     },
     listening: {
-        primary: "#ffaa00",
-        secondary: "#ff8800",
-        dim: "rgba(255, 170, 0, 0.15)",
-        glow: "rgba(255, 170, 0, 0.4)",
-        accent: "#ffffaa",
-        hud: "#ffaa00",
-        scanline: "#ffaa00",
-        gradient: { start: "#ffaa00", end: "#cc6600" }
+        iris: "#ffb300", irisAlt: "#cc7700",
+        pupil: "#1a0e00", glint: "#fffbe0",
+        glow: "rgba(255,179,0,0.55)", glowSoft: "rgba(240,160,0,0.18)",
+        bar: "#ffaa00", barDim: "rgba(220,150,0,0.3)",
+        hud: "#ee9900", hudDim: "rgba(200,130,0,0.25)",
+        shell: "#211400", lensReflect: "rgba(255,240,160,0.22)",
+        scanline: "#ffb300",
+        dropShadow: "drop-shadow(0 0 12px rgba(255,179,0,0.55))",
     },
     error: {
-        primary: "#ff3333",
-        secondary: "#cc0000",
-        dim: "rgba(255, 51, 51, 0.2)",
-        glow: "rgba(255, 51, 51, 0.6)",
-        accent: "#ffaaaa",
-        hud: "#ff3333",
-        scanline: "#ff3333",
-        gradient: { start: "#ff3333", end: "#990000" }
+        iris: "#ff3030", irisAlt: "#aa0000",
+        pupil: "#200000", glint: "#ffdddd",
+        glow: "rgba(255,48,48,0.7)", glowSoft: "rgba(220,20,20,0.22)",
+        bar: "#ff2222", barDim: "rgba(200,20,20,0.3)",
+        hud: "#dd1111", hudDim: "rgba(180,10,10,0.25)",
+        shell: "#220000", lensReflect: "rgba(255,180,180,0.2)",
+        scanline: "#ff3030",
+        dropShadow: "drop-shadow(0 0 18px rgba(255,48,48,0.75))",
     },
     scanning: {
-        primary: "#00ff88",
-        secondary: "#00cc66",
-        dim: "rgba(0, 255, 136, 0.15)",
-        glow: "rgba(0, 255, 136, 0.4)",
-        accent: "#aaffaa",
-        hud: "#00ff88",
+        iris: "#00ff88", irisAlt: "#009944",
+        pupil: "#001a0e", glint: "#ffffff",
+        glow: "rgba(0,255,136,0.55)", glowSoft: "rgba(0,220,110,0.18)",
+        bar: "#00ee77", barDim: "rgba(0,200,100,0.3)",
+        hud: "#00cc66", hudDim: "rgba(0,160,80,0.25)",
+        shell: "#001f10", lensReflect: "rgba(160,255,200,0.22)",
         scanline: "#00ff88",
-        gradient: { start: "#00ff88", end: "#009944" }
+        dropShadow: "drop-shadow(0 0 12px rgba(0,255,136,0.55))",
     },
     loading: {
-        primary: "#aa88ff",
-        secondary: "#7755cc",
-        dim: "rgba(170, 136, 255, 0.12)",
-        glow: "rgba(170, 136, 255, 0.35)",
-        accent: "#ccbbff",
-        hud: "#9977ee",
+        iris: "#aa88ff", irisAlt: "#6644cc",
+        pupil: "#0e0020", glint: "#e8dfff",
+        glow: "rgba(170,136,255,0.45)", glowSoft: "rgba(150,110,240,0.15)",
+        bar: "#9977ee", barDim: "rgba(130,90,210,0.28)",
+        hud: "#8866dd", hudDim: "rgba(110,70,190,0.22)",
+        shell: "#0f0520", lensReflect: "rgba(200,180,255,0.2)",
         scanline: "#aa88ff",
-        gradient: { start: "#aa88ff", end: "#7755cc" }
+        dropShadow: "drop-shadow(0 0 10px rgba(170,136,255,0.45))",
     },
     analyzing: {
-        primary: "#00ccff",
-        secondary: "#0099cc",
-        dim: "rgba(0, 204, 255, 0.12)",
-        glow: "rgba(0, 204, 255, 0.35)",
-        accent: "#88eeff",
-        hud: "#00bbee",
+        iris: "#00ccff", irisAlt: "#0077aa",
+        pupil: "#001520", glint: "#ddf8ff",
+        glow: "rgba(0,204,255,0.5)", glowSoft: "rgba(0,180,230,0.17)",
+        bar: "#00bbee", barDim: "rgba(0,160,200,0.28)",
+        hud: "#009fcc", hudDim: "rgba(0,140,180,0.22)",
+        shell: "#001b28", lensReflect: "rgba(160,240,255,0.22)",
         scanline: "#00ccff",
-        gradient: { start: "#00ccff", end: "#0077aa" }
+        dropShadow: "drop-shadow(0 0 12px rgba(0,204,255,0.5))",
     },
     rebooting: {
-        primary: "#ffaa00",
-        secondary: "#cc8800",
-        dim: "rgba(255, 170, 0, 0.12)",
-        glow: "rgba(255, 170, 0, 0.35)",
-        accent: "#ffdd88",
-        hud: "#ee9900",
+        iris: "#ffaa00", irisAlt: "#995500",
+        pupil: "#1a0e00", glint: "#fff0c0",
+        glow: "rgba(255,170,0,0.45)", glowSoft: "rgba(220,140,0,0.15)",
+        bar: "#ee9900", barDim: "rgba(200,120,0,0.25)",
+        hud: "#cc8800", hudDim: "rgba(170,100,0,0.2)",
+        shell: "#1a1000", lensReflect: "rgba(255,230,140,0.2)",
         scanline: "#ffaa00",
-        gradient: { start: "#ffaa00", end: "#cc6600" }
+        dropShadow: "drop-shadow(0 0 8px rgba(255,170,0,0.4))",
     },
     dancing: {
-        primary: "#ff44ff",
-        secondary: "#cc22cc",
-        dim: "rgba(255, 68, 255, 0.12)",
-        glow: "rgba(255, 68, 255, 0.4)",
-        accent: "#ffaaff",
-        hud: "#ee33ee",
+        iris: "#ff44ff", irisAlt: "#cc00cc",
+        pupil: "#1a001a", glint: "#ffddff",
+        glow: "rgba(255,68,255,0.6)", glowSoft: "rgba(220,40,220,0.2)",
+        bar: "#ee33ee", barDim: "rgba(200,20,200,0.28)",
+        hud: "#dd22dd", hudDim: "rgba(180,10,180,0.22)",
+        shell: "#200020", lensReflect: "rgba(255,200,255,0.22)",
         scanline: "#ff44ff",
-        gradient: { start: "#ff44ff", end: "#aa00aa" }
+        dropShadow: "drop-shadow(0 0 16px rgba(255,68,255,0.65))",
     },
 };
 
-/* ──────────────── Terminator-Style Aperture Eye ──────────────── */
-function TerminatorEye({
-    cx, palette, state, intensity = 1, isLeft: _isLeft = true,
-}: {
-    cx: number; palette: ColorPalette; state: RobotState; intensity?: number; isLeft?: boolean;
-}) {
-    const [scanAngle, setScanAngle] = useState(0);
-    const [irisPulse, setIrisPulse] = useState(0);
+/* -------------------------------------------------
+   Utility - stable pseudo-random per eye slot
+   ------------------------------------------------- */
+function seededRand(seed: number) {
+    return ((Math.sin(seed) * 43758.5453) % 1 + 1) % 1;
+}
 
-    // Scanning effect for certain states
+/* -------------------------------------------------
+   Aperture blade helper - generates a single iris blade path
+   ------------------------------------------------- */
+function bladeD(cx: number, cy: number, outerR: number, innerR: number, angleDeg: number): string {
+    const r = (angleDeg * Math.PI) / 180;
+    const spread = Math.PI / T.EYE.bladeCount;
+    const ox1 = cx + outerR * Math.cos(r - spread * 0.6);
+    const oy1 = cy + outerR * Math.sin(r - spread * 0.6);
+    const ox2 = cx + outerR * Math.cos(r + spread * 0.6);
+    const oy2 = cy + outerR * Math.sin(r + spread * 0.6);
+    const ix = cx + innerR * Math.cos(r);
+    const iy = cy + innerR * Math.sin(r);
+    return `M${cx},${cy} Q${ox1},${oy1} ${ix},${iy} Q${ox2},${oy2} Z`;
+}
+
+/* -------------------------------------------------
+   Micro-saccade hook - tiny random jitter imitating biological eye movement
+   ------------------------------------------------- */
+function useMicroSaccade(state: RobotState) {
+    const [offset, setOffset] = useState({ x: 0, y: 0 });
+
     useEffect(() => {
-        if (state === "scanning" || state === "processing") {
-            const interval = setInterval(() => {
-                setScanAngle(prev => (prev + 15) % 360);
-            }, 50);
-            return () => clearInterval(interval);
+        if (state === "rebooting" || state === "error") {
+            setOffset({ x: 0, y: 0 });
+            return;
         }
+        const amplitude = state === "listening" ? 0.6 : state === "scanning" ? 1.2 : 0.4;
+        const intervalMs = state === "processing" ? 180 : state === "scanning" ? 350 : 600;
+
+        const tick = () => {
+            // 85% chance of tiny drift, 15% chance of a micro-saccade
+            if (Math.random() < 0.15) {
+                setOffset({
+                    x: (Math.random() - 0.5) * amplitude * 2.5,
+                    y: (Math.random() - 0.5) * amplitude * 1.5,
+                });
+                // Snap back after a saccade
+                setTimeout(() => setOffset({ x: 0, y: 0 }), 80);
+            } else {
+                setOffset({
+                    x: (Math.random() - 0.5) * amplitude,
+                    y: (Math.random() - 0.5) * amplitude * 0.6,
+                });
+            }
+        };
+
+        const id = setInterval(tick, intervalMs);
+        return () => clearInterval(id);
     }, [state]);
 
-    // Iris pulse effect
+    return offset;
+}
+
+/* -------------------------------------------------
+   Blink hook - produces 0 (open) or 1 (closed) scale values
+   ------------------------------------------------- */
+function useBlink(state: RobotState): number {
+    const [blink, setBlink] = useState(0);
+    const timeout = useRef<ReturnType<typeof setTimeout>>();
+
+    const scheduleNext = useCallback((delay: number) => {
+        timeout.current = setTimeout(() => {
+            if (state === "processing" || state === "rebooting") return;
+            // Rapid double-blink for error
+            if (state === "error") {
+                setBlink(1);
+                setTimeout(() => {
+                    setBlink(0);
+                    setTimeout(() => {
+                        setBlink(1);
+                        setTimeout(() => setBlink(0), 80);
+                    }, 100);
+                }, 60);
+                scheduleNext(700 + Math.random() * 400);
+                return;
+            }
+            setBlink(1);
+            setTimeout(() => setBlink(0), state === "dancing" ? 100 : 130);
+            const base = T.TIMING[state]?.blink ?? 3.5;
+            scheduleNext((base + (Math.random() - 0.5) * base * 0.6) * 1000);
+        }, delay);
+    }, [state]);
+
     useEffect(() => {
-        const interval = setInterval(() => {
-            setIrisPulse(prev => (prev + 0.1) % (Math.PI * 2));
-        }, 50);
-        return () => clearInterval(interval);
-    }, []);
+        const base = T.TIMING[state]?.blink ?? 3.5;
+        scheduleNext((base * 0.5 + Math.random() * base * 0.5) * 1000);
+        return () => {
+            if (timeout.current) clearTimeout(timeout.current);
+        };
+    }, [state, scheduleNext]);
 
-    const getEyeState = () => {
-        switch (state) {
-            case "error":
-                return {
-                    slitHeight: 4 + Math.sin(Date.now() * 0.02) * 2,
-                    irisScale: 0.8 + Math.sin(Date.now() * 0.03) * 0.1,
-                };
-            case "processing":
-                return {
-                    slitHeight: 8 + Math.sin(Date.now() * 0.01) * 3,
-                    irisScale: 1.2 + Math.sin(Date.now() * 0.02) * 0.2,
-                };
-            case "scanning":
-                return {
-                    slitHeight: 6 + Math.abs(Math.sin(Date.now() * 0.005)) * 4,
-                    irisScale: 1.0 + Math.sin(Date.now() * 0.015) * 0.3,
-                };
-            default:
-                return {
-                    slitHeight: 10,
-                    irisScale: 1.0,
-                };
-        }
-    };
+    return blink;
+}
 
-    const eyeState = getEyeState();
+/* -------------------------------------------------
+   Frequency bar heights hook - animated per-state
+   ------------------------------------------------- */
+function useBarHeights(state: RobotState, intensity: number): number[] {
+    const [heights, setHeights] = useState<number[]>(
+        Array.from({ length: T.BARS.count }, () => 2)
+    );
+    const raf = useRef<number>();
+    const t = useRef(0);
 
+    useEffect(() => {
+        const animate = () => {
+            t.current += 0.04;
+            const time = t.current;
+
+            setHeights(Array.from({ length: T.BARS.count }, (_, i) => {
+                const phase = i * 0.62 + seededRand(i) * Math.PI;
+                switch (state) {
+                    case "speaking":
+                        return (3 + Math.sin(time * 5.5 + phase) * 7 + Math.cos(time * 8 + phase * 1.3) * 3.5) * intensity;
+                    case "listening":
+                        return (2 + Math.abs(Math.sin(time * 2.2 + phase)) * 10 + Math.sin(time * 0.9 + phase) * 2) * intensity;
+                    case "processing":
+                        return (3 + Math.sin(time * 9 + phase) * 5 + Math.cos(time * 6 + phase) * 3) * intensity;
+                    case "scanning":
+                        return (2 + Math.sin(time * 3.5 + phase) * 6 + Math.abs(Math.cos(time * 2 + phase)) * 3) * intensity;
+                    case "error":
+                        return (5 + seededRand(i + Math.floor(time * 20)) * 8) * intensity;
+                    case "dancing":
+                        return (2 + Math.abs(Math.sin(time * 7 + phase)) * 9 + Math.cos(time * 11 + phase * 2) * 3) * intensity;
+                    case "analyzing":
+                        return (2 + Math.sin(time * 4 + phase) * 5 + Math.cos(time * 2.5 + phase * 1.5) * 3.5) * intensity;
+                    case "loading":
+                        // Sweeping wave
+                        return (2 + Math.abs(Math.sin(time * 2 - i * 0.4)) * 8) * intensity;
+                    case "rebooting":
+                        // Slow fade-in
+                        return (1 + Math.sin(time * 0.8 + phase) * (1 + Math.min(time * 0.2, 4))) * intensity;
+                    default:
+                        // idle
+                        return (1.5 + Math.sin(time * 1.2 + phase) * 1.2) * intensity;
+                }
+            }));
+
+            raf.current = requestAnimationFrame(animate);
+        };
+        raf.current = requestAnimationFrame(animate);
+        return () => {
+            if (raf.current) cancelAnimationFrame(raf.current);
+        };
+    }, [state, intensity]);
+
+    return heights;
+}
+
+/* -------------------------------------------------
+   Lens flare / glint component
+   ------------------------------------------------- */
+function LensGlint({ cx, cy, palette, blink }: {
+    cx: number; cy: number; palette: Palette; blink: number;
+}) {
     return (
-        <g>
-            {/* Outer protective casing */}
-            <circle
-                cx={cx}
-                cy={28}
-                r={18}
-                fill="none"
-                stroke={palette.hud}
-                strokeWidth={1.2}
-                strokeOpacity={0.4}
-                strokeDasharray="4 4"
+        <motion.g
+            animate={{ opacity: blink > 0.5 ? 0 : 1 }}
+            transition={{ duration: 0.04 }}
+        >
+            {/* Primary specular highlight - physically positioned upper-left */}
+            <ellipse
+                cx={cx + T.EYE.glintOffset.x}
+                cy={cy + T.EYE.glintOffset.y}
+                rx={T.EYE.glintR}
+                ry={T.EYE.glintR * 0.65}
+                fill={palette.glint}
+                opacity={0.88}
+                transform={`rotate(-35 ${cx + T.EYE.glintOffset.x} ${cy + T.EYE.glintOffset.y})`}
             />
-
-            {/* Rotating scan ring */}
-            <motion.g
-                animate={{ rotate: scanAngle }}
-                style={{ transformOrigin: `${cx}px 28px` }}
-            >
-                <ellipse
-                    cx={cx}
-                    cy={28}
-                    rx={16}
-                    ry={14}
-                    fill="none"
-                    stroke={palette.primary}
-                    strokeWidth={1}
-                    strokeOpacity={0.3}
-                    strokeDasharray="6 12"
-                />
-            </motion.g>
-
-            {/* Iris mechanism */}
-            <g>
-                {/* Main iris aperture */}
-                <motion.ellipse
-                    cx={cx}
-                    cy={28}
-                    rx={14 * eyeState.irisScale}
-                    ry={12 * eyeState.irisScale}
-                    fill="none"
-                    stroke={palette.primary}
-                    strokeWidth={1.5}
-                    strokeOpacity={0.8}
-                />
-
-                {/* Crosshair aiming reticle */}
-                <line
-                    x1={cx - 20}
-                    y1={28}
-                    x2={cx - 14}
-                    y2={28}
-                    stroke={palette.primary}
-                    strokeWidth={1}
-                    strokeOpacity={0.4}
-                />
-                <line
-                    x1={cx + 14}
-                    y1={28}
-                    x2={cx + 20}
-                    y2={28}
-                    stroke={palette.primary}
-                    strokeWidth={1}
-                    strokeOpacity={0.4}
-                />
-                <line
-                    x1={cx}
-                    y1={14}
-                    x2={cx}
-                    y2={20}
-                    stroke={palette.primary}
-                    strokeWidth={1}
-                    strokeOpacity={0.4}
-                />
-                <line
-                    x1={cx}
-                    y1={36}
-                    x2={cx}
-                    y2={42}
-                    stroke={palette.primary}
-                    strokeWidth={1}
-                    strokeOpacity={0.4}
-                />
-            </g>
-
-            {/* Active aperture slit */}
-            <motion.rect
-                x={cx - 12}
-                y={28 - eyeState.slitHeight / 2}
-                width={24}
-                height={eyeState.slitHeight}
-                fill={palette.primary}
-                style={{
-                    filter: `drop-shadow(0 0 ${8 * intensity}px ${palette.glow})`,
-                }}
-                animate={{
-                    opacity: [0.8, 1, 0.8],
-                }}
-                transition={{
-                    duration: 1,
-                    repeat: Infinity,
-                }}
+            {/* Secondary soft fill-light lower-right */}
+            <ellipse
+                cx={cx + 4.5}
+                cy={cy + 4}
+                rx={1.2}
+                ry={0.8}
+                fill={palette.glint}
+                opacity={0.35}
             />
-
-            {/* Data stream overlay */}
-            {state === "processing" && (
-                <motion.path
-                    d={`M${cx - 15},${28} L${cx - 8},${28 - irisPulse * 2} L${cx},${28 + irisPulse} L${cx + 8},${28 - irisPulse} L${cx + 15},${28}`}
-                    stroke={palette.secondary}
-                    strokeWidth={1}
-                    fill="none"
-                    animate={{
-                        d: [
-                            `M${cx - 15},${28} L${cx - 8},${20} L${cx},${36} L${cx + 8},${20} L${cx + 15},${28}`,
-                            `M${cx - 15},${28} L${cx - 8},${36} L${cx},${20} L${cx + 8},${36} L${cx + 15},${28}`,
-                        ],
-                    }}
-                    transition={{ duration: 0.5, repeat: Infinity }}
-                />
-            )}
-        </g>
+        </motion.g>
     );
 }
 
-/* ──────────────── Terminator-Style Frequency Analyzer ──────────────── */
-function TerminatorFrequencyBar({
-    palette, state, intensity = 1,
+/* -------------------------------------------------
+   Single cinematic eye
+   ------------------------------------------------- */
+function Eye({
+    cx, cy, palette, state, intensity, blink, saccade, parallaxLayer,
 }: {
-    palette: ColorPalette; state: RobotState; intensity?: number;
+    cx: number; cy: number; palette: Palette; state: RobotState;
+    intensity: number; blink: number; saccade: { x: number; y: number };
+    parallaxLayer: number; // 0-1, larger = more parallax
 }) {
-    const NUM_BARS = 15;
-    const BAR_W = 2;
-    const GAP = 2;
-    const TOTAL = NUM_BARS * (BAR_W + GAP) - GAP;
-    const startX = (104 - TOTAL) / 2;
+    const { outerR, lensR, irisR, pupilR, bladeCount } = T.EYE;
+    const uniqueId = `eye-${cx}`;
 
-    const frequencies = useMemo(() => {
-        return Array.from({ length: NUM_BARS }, (_, i) => ({
-            base: 2 + Math.sin(i * 1.5) * 3 + Math.cos(i * 0.8) * 2,
-            phase: i * 0.7,
-        }));
-    }, []);
+    // Pupil dilation by state
+    const pupilScale = state === "error" ? 1.3 + Math.random() * 0.2
+        : state === "processing" ? 0.75
+            : state === "listening" ? 0.85
+                : state === "scanning" ? 0.7
+                    : state === "dancing" ? 1.25
+                        : 1.0;
 
-    const getBarAnimations = (index: number) => {
-        const time = Date.now() * 0.003;
-        const phase = frequencies[index].phase;
+    // Iris contraction - pupils dilate while iris ring narrows
+    const irisScale = state === "scanning" ? 0.82
+        : state === "processing" ? 1.1
+            : state === "error" ? 1.15
+                : 1.0;
 
-        switch (state) {
-            case "speaking":
-                return {
-                    height: 3 + Math.sin(time * 2 + phase) * 8 + Math.cos(time * 3 + phase) * 4,
-                };
-            case "listening":
-                return {
-                    height: 2 + Math.abs(Math.sin(time * 0.8 + phase)) * 12,
-                };
-            case "processing":
-            case "scanning":
-                return {
-                    height: 4 + Math.sin(time * 3 + phase) * 6 + Math.cos(time * 2 + phase) * 4,
-                };
-            case "error":
-                return {
-                    height: 6 + Math.random() * 8,
-                };
-            default:
-                return { height: 3 };
-        }
-    };
-
-    if (state === "error") {
-        return (
-            <motion.path
-                d={`M${startX} 56 Q${startX + TOTAL / 2} ${48 + Math.sin(Date.now() * 0.02) * 8} ${startX + TOTAL} 56`}
-                fill="none"
-                stroke={palette.primary}
-                strokeWidth={2}
-                strokeLinecap="round"
-                animate={{
-                    d: [
-                        `M${startX} 56 Q${startX + TOTAL / 2} 48 ${startX + TOTAL} 56`,
-                        `M${startX} 56 Q${startX + TOTAL / 2} 64 ${startX + TOTAL} 56`,
-                    ],
-                }}
-                transition={{ duration: 0.2, repeat: Infinity }}
-                style={{ filter: `drop-shadow(0 0 6px ${palette.primary})` }}
-            />
-        );
-    }
+    // Aperture blade rotation - closes/opens like a real lens
+    const bladeRotation = state === "processing" ? 18
+        : state === "scanning" ? 45
+            : state === "error" ? -22
+                : 0;
 
     return (
         <g>
-            {/* Digital grid background */}
-            <rect
-                x={startX - 2}
-                y={44}
-                width={TOTAL + 4}
-                height={20}
-                fill="none"
-                stroke={palette.hud}
-                strokeWidth={0.5}
-                strokeOpacity={0.2}
-            />
+            <defs>
+                {/* Radial gradient: ambient occlusion inside the lens cup */}
+                <radialGradient id={`aocup-${uniqueId}`} cx="45%" cy="40%" r="55%">
+                    <stop offset="0%" stopColor={palette.iris} stopOpacity="0" />
+                    <stop offset="100%" stopColor="#000000" stopOpacity="0.65" />
+                </radialGradient>
+                {/* Lens surface reflection gradient */}
+                <radialGradient id={`lensrefl-${uniqueId}`} cx="35%" cy="30%" r="60%">
+                    <stop offset="0%" stopColor={palette.lensReflect} />
+                    <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+                </radialGradient>
+                <clipPath id={`clip-${uniqueId}`}>
+                    <circle cx={cx} cy={cy} r={lensR} />
+                </clipPath>
+            </defs>
 
-            {/* Frequency bars */}
-            {frequencies.map((_freq, i) => {
-                const anim = getBarAnimations(i);
+            {/* Layer 0: Outer shell ring - brushed metal casing */}
+            <circle cx={cx} cy={cy} r={outerR} fill={palette.shell} opacity={0.9} />
+            <circle cx={cx} cy={cy} r={outerR} fill="none" stroke={palette.hud} strokeWidth={1.2} opacity={0.5} />
+            {/* Micro-notch details at 12/3/6/9 o'clock - machined look */}
+            {[0, 90, 180, 270].map((a) => {
+                const rad = (a * Math.PI) / 180;
                 return (
-                    <motion.rect
-                        key={i}
-                        x={startX + i * (BAR_W + GAP)}
-                        width={BAR_W}
-                        fill={palette.primary}
-                        animate={{
-                            height: anim.height * intensity,
-                            y: 56 - anim.height * intensity,
-                            opacity: [0.6, 1, 0.6],
-                        }}
-                        transition={{
-                            height: {
-                                duration: (state as string) === "error" ? 0.03 : 0.1,
-                                repeat: Infinity,
-                                repeatType: "mirror",
-                            },
-                        }}
-                        style={{ filter: `drop-shadow(0 0 2px ${palette.glow})` }}
+                    <line
+                        key={a}
+                        x1={cx + (outerR - 2) * Math.cos(rad)}
+                        y1={cy + (outerR - 2) * Math.sin(rad)}
+                        x2={cx + (outerR + 1.5) * Math.cos(rad)}
+                        y2={cy + (outerR + 1.5) * Math.sin(rad)}
+                        stroke={palette.hud}
+                        strokeWidth={1}
+                        opacity={0.5}
                     />
                 );
             })}
 
-            {/* Scanning line */}
-            {(state === "scanning" || state === "processing") && (
+            {/* Layer 1: Lens body - emissive fill */}
+            <motion.circle
+                cx={cx} cy={cy} r={lensR}
+                fill={palette.iris}
+                animate={{ opacity: [0.15, 0.22, 0.15] }}
+                transition={{ duration: T.TIMING[state]?.pulse ?? 2.2, repeat: Infinity, ease: "easeInOut" }}
+            />
+
+            {/* Layer 2: Iris mechanism - aperture blades (clipped) */}
+            <g clipPath={`url(#clip-${uniqueId})`}>
+                <motion.g
+                    style={{ transformOrigin: `${cx}px ${cy}px` }}
+                    animate={{ rotate: bladeRotation }}
+                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    {Array.from({ length: bladeCount }, (_, i) => {
+                        const angle = (i / bladeCount) * 360;
+                        return (
+                            <motion.path
+                                key={i}
+                                d={bladeD(cx, cy, lensR * irisScale, irisR * irisScale * 0.6, angle)}
+                                fill={palette.irisAlt}
+                                animate={{ opacity: [0.55, 0.7, 0.55] }}
+                                transition={{
+                                    duration: T.TIMING[state]?.pulse ?? 2.2,
+                                    repeat: Infinity,
+                                    delay: i * 0.06,
+                                    ease: "easeInOut",
+                                }}
+                            />
+                        );
+                    })}
+                </motion.g>
+            </g>
+
+            {/* Layer 3: Iris ring */}
+            <motion.circle
+                cx={cx} cy={cy}
+                r={irisR * irisScale}
+                fill="none"
+                stroke={palette.iris}
+                strokeWidth={1.5}
+                animate={{
+                    r: [irisR * irisScale, irisR * irisScale * 1.04, irisR * irisScale],
+                    opacity: [0.8, 1, 0.8],
+                }}
+                transition={{ duration: T.TIMING[state]?.pulse ?? 2.2, repeat: Infinity, ease: "easeInOut" }}
+            />
+
+            {/* Layer 4: Pupil - moves with saccade + parallax */}
+            <motion.g
+                animate={{
+                    x: saccade.x * (1 + parallaxLayer),
+                    y: saccade.y * (1 + parallaxLayer * 0.6),
+                }}
+                transition={{ type: "spring", ...T.SPRING.lazy }}
+            >
+                <motion.circle
+                    cx={cx} cy={cy} r={pupilR}
+                    fill={palette.pupil}
+                    animate={{ r: pupilR * pupilScale }}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    style={{
+                        filter: `drop-shadow(0 0 ${4 * intensity}px ${palette.glow})`,
+                    }}
+                />
+                {/* Hot emissive core */}
+                <motion.circle
+                    cx={cx} cy={cy} r={pupilR * 0.45}
+                    fill={palette.iris}
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: T.TIMING[state]?.pulse ?? 2.2, repeat: Infinity }}
+                    style={{ filter: "blur(1px)" }}
+                />
+            </motion.g>
+
+            {/* Layer 5: Ambient occlusion cup */}
+            <circle cx={cx} cy={cy} r={lensR} fill={`url(#aocup-${uniqueId})`} />
+
+            {/* Layer 6: Blink eyelid */}
+            <motion.rect
+                x={cx - outerR}
+                y={cy - outerR}
+                width={outerR * 2}
+                height={outerR * 2}
+                fill={palette.shell}
+                style={{ scaleY: blink, originY: "center", transformOrigin: `${cx}px ${cy}px` }}
+                animate={{ scaleY: blink }}
+                transition={{ duration: 0.06, ease: "easeIn" }}
+            />
+
+            {/* Layer 7: Glass lens surface - top-level reflection */}
+            <circle
+                cx={cx}
+                cy={cy}
+                r={lensR}
+                fill={`url(#lensrefl-${uniqueId})`}
+                opacity={0.6}
+                style={{ pointerEvents: "none" }}
+            />
+
+            {/* Specular glint */}
+            <LensGlint cx={cx} cy={cy} palette={palette} blink={blink} />
+
+            {/* Processing: data-stream wavelet overlay */}
+            {state === "processing" && (
+                <motion.circle
+                    cx={cx} cy={cy}
+                    r={lensR}
+                    fill="none"
+                    stroke={palette.iris}
+                    strokeWidth={1}
+                    strokeDasharray="3 5"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                    style={{ transformOrigin: `${cx}px ${cy}px` }}
+                    opacity={0.35}
+                />
+            )}
+
+            {/* Scanning: precision target arcs */}
+            {state === "scanning" && (
+                <motion.g
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 0.9, repeat: Infinity }}
+                >
+                    <circle
+                        cx={cx}
+                        cy={cy}
+                        r={outerR + 3}
+                        fill="none"
+                        stroke={palette.iris}
+                        strokeWidth={0.5}
+                        strokeDasharray="3 7"
+                        opacity={0.4}
+                    />
+                    <circle
+                        cx={cx}
+                        cy={cy}
+                        r={outerR + 6}
+                        fill="none"
+                        stroke={palette.irisAlt}
+                        strokeWidth={0.4}
+                        strokeDasharray="5 9"
+                        opacity={0.25}
+                    />
+                </motion.g>
+            )}
+        </g>
+    );
+}
+
+/* -------------------------------------------------
+   Frequency analyser - "mouth/expression" strip
+   ------------------------------------------------- */
+function FrequencyAnalyzer({ palette, state, intensity }: {
+    palette: Palette; state: RobotState; intensity: number;
+}) {
+    const { count, width, gap } = T.BARS;
+    const totalWidth = count * (width + gap) - gap;
+    const startX = (104 - totalWidth) / 2;
+    const baseY = 68; // bottom of bar area
+    const heights = useBarHeights(state, intensity);
+
+    return (
+        <g>
+            {/* Subtle grid substrate */}
+            <rect x={startX - 1} y={baseY - 16} width={totalWidth + 2} height={16}
+                fill={palette.hudDim} rx={2} />
+
+            {heights.map((h, i) => {
+                const clampedH = Math.max(1.5, Math.min(h, 14));
+                return (
+                    <motion.rect
+                        key={i}
+                        x={startX + i * (width + gap)}
+                        width={width}
+                        rx={1}
+                        fill={palette.bar}
+                        animate={{ height: clampedH, y: baseY - clampedH }}
+                        transition={{
+                            duration: state === "error" ? 0.04 : 0.09,
+                            ease: "easeOut",
+                        }}
+                        style={{ filter: `drop-shadow(0 0 2px ${palette.glowSoft})` }}
+                    />
+                );
+            })}
+
+            {/* Scanning sweep line for scanning/processing */}
+            {(state === "scanning" || state === "processing" || state === "analyzing") && (
                 <motion.rect
                     x={startX}
-                    y={52}
+                    y={baseY - 16}
                     width={2}
-                    height={8}
+                    height={16}
                     rx={1}
                     fill={palette.scanline}
-                    animate={{ x: [startX, startX + TOTAL - 2, startX] }}
-                    transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "linear",
-                    }}
-                    style={{ filter: `blur(1px)` }}
+                    animate={{ x: [startX, startX + totalWidth - 2, startX] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+                    opacity={0.7}
+                    style={{ filter: "blur(0.5px)" }}
                 />
             )}
         </g>
     );
 }
 
-/* ──────────────── Terminator HUD Frame ──────────────── */
-function TerminatorHUDFrame({ palette, state }: { palette: ColorPalette; state: RobotState }) {
+/* -------------------------------------------------
+   HUD chrome - corner markers, scanlines, status text
+   ------------------------------------------------- */
+function HUDChrome({ palette, state }: { palette: Palette; state: RobotState }) {
+    const corners: [number, number][] = [[4, 4], [80, 4], [4, 58], [80, 58]];
+
     return (
         <g>
-            {/* Main frame with bolt pattern */}
-            <rect
-                x="2" y="2" width="100" height="72" rx="8"
-                fill="none"
-                stroke={palette.hud}
-                strokeWidth={1.5}
-                strokeOpacity={0.3}
-                strokeDasharray="6 6"
+            {/* Corner bracket markers - L-shaped, not circles */}
+            {corners.map(([x, y], i) => {
+                const sx = i % 2 === 0 ? 1 : -1; // horizontal direction
+                const sy = i < 2 ? 1 : -1; // vertical direction
+                return (
+                    <g key={i} opacity={0.6}>
+                        <line x1={x} y1={y} x2={x + sx * 6} y2={y} stroke={palette.hud} strokeWidth={1.2} />
+                        <line x1={x} y1={y} x2={x} y2={y + sy * 6} stroke={palette.hud} strokeWidth={1.2} />
+                    </g>
+                );
+            })}
+
+            {/* Animated scanline pair - horizontal sweep */}
+            <motion.line
+                x1="6" y1="37" x2="98" y2="37"
+                stroke={palette.scanline} strokeWidth={0.4}
+                strokeDasharray="6 10"
+                animate={{ strokeDashoffset: [0, -16] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
+                opacity={0.25}
+            />
+            <motion.line
+                x1="6" y1="39.5" x2="98" y2="39.5"
+                stroke={palette.scanline} strokeWidth={0.3}
+                strokeDasharray="10 6"
+                animate={{ strokeDashoffset: [0, 16] }}
+                transition={{ duration: 3.1, repeat: Infinity, ease: "linear" }}
+                opacity={0.15}
             />
 
-            {/* Corner reinforcements */}
-            {[
-                [2, 2], [92, 2], [2, 64], [92, 64]
-            ].map(([x, y], i) => (
-                <g key={i}>
-                    <circle
-                        cx={x + 6}
-                        cy={y + 6}
-                        r={4}
-                        fill="none"
-                        stroke={palette.primary}
-                        strokeWidth={1}
-                        strokeOpacity={0.6}
-                    />
-                    <circle
-                        cx={x + 6}
-                        cy={y + 6}
-                        r={1.5}
-                        fill={palette.primary}
-                        opacity={0.8}
-                    />
-                </g>
-            ))}
-
-            {/* Status indicators */}
+            {/* Status tag top-right - small HUD readout */}
             <text
-                x="12" y="18"
-                fill={palette.primary}
-                fontSize="6"
-                fontFamily="monospace"
-                opacity="0.6"
-            >
-                SYS:ONLINE
-            </text>
-            <text
-                x="72" y="18"
-                fill={palette.primary}
-                fontSize="6"
-                fontFamily="monospace"
-                opacity="0.6"
+                x={96} y={11}
+                fill={palette.hud} fontSize={5.5}
+                fontFamily="monospace" textAnchor="end"
+                opacity={0.55}
             >
                 {state.toUpperCase()}
             </text>
 
-            {/* Scan lines */}
-            <motion.line
-                x1="4" y1="38" x2="100" y2="38"
-                stroke={palette.scanline}
-                strokeWidth={0.5}
-                strokeDasharray="4 8"
-                animate={{ strokeDashoffset: [0, -12] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                opacity={0.3}
-            />
-            <motion.line
-                x1="4" y1="40" x2="100" y2="40"
-                stroke={palette.scanline}
-                strokeWidth={0.5}
-                strokeDasharray="8 4"
-                animate={{ strokeDashoffset: [0, -12] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                opacity={0.3}
+            {/* Subtle outer bezel */}
+            <rect x="2" y="2" width="100" height="72" rx="7"
+                fill="none" stroke={palette.hudDim} strokeWidth={1}
             />
         </g>
     );
 }
 
-/* ──────────────── Main Component ──────────────── */
+/* -------------------------------------------------
+   State-specific overlays (target lock, data rain, etc.)
+   ------------------------------------------------- */
+function StateOverlay({ palette, state, intensity }: {
+    palette: Palette; state: RobotState; intensity: number;
+}) {
+    if (state === "scanning") {
+        return (
+            <motion.g
+                animate={{ opacity: [0.3, 0.9, 0.3] }}
+                transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+            >
+                <circle cx={52} cy={36} r={10} fill="none"
+                    stroke={palette.iris} strokeWidth={0.8} strokeDasharray="3 4" />
+                <circle cx={52} cy={36} r={14} fill="none"
+                    stroke={palette.irisAlt} strokeWidth={0.5} strokeDasharray="5 6" />
+                {/* Cross-hair */}
+                <line x1={48} y1={36} x2={44} y2={36} stroke={palette.iris} strokeWidth={0.7} opacity={0.6} />
+                <line x1={56} y1={36} x2={60} y2={36} stroke={palette.iris} strokeWidth={0.7} opacity={0.6} />
+                <line x1={52} y1={32} x2={52} y2={28} stroke={palette.iris} strokeWidth={0.7} opacity={0.6} />
+                <line x1={52} y1={40} x2={52} y2={44} stroke={palette.iris} strokeWidth={0.7} opacity={0.6} />
+            </motion.g>
+        );
+    }
+
+    if (state === "error") {
+        return (
+            <motion.g>
+                {/* Warning chevron - minimal, readable */}
+                <motion.path
+                    d="M52,22 L58,32 L46,32 Z"
+                    fill="none"
+                    stroke={palette.iris}
+                    strokeWidth={1.2}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity, times: [0, 0.1, 0.7, 1] }}
+                />
+                <motion.line
+                    x1={52} y1={25.5} x2={52} y2={29}
+                    stroke={palette.iris} strokeWidth={1}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity, times: [0, 0.1, 0.7, 1] }}
+                />
+            </motion.g>
+        );
+    }
+
+    if (state === "rebooting") {
+        return (
+            <motion.g
+                animate={{ opacity: [0.2, 0.6, 0.2] }}
+                transition={{ duration: 2.2, repeat: Infinity }}
+            >
+                {/* Circular progress arc */}
+                <motion.circle
+                    cx={52} cy={36} r={8}
+                    fill="none"
+                    stroke={palette.iris}
+                    strokeWidth={1.5}
+                    strokeDasharray="20 30"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+                    style={{ transformOrigin: "52px 36px" }}
+                />
+            </motion.g>
+        );
+    }
+
+    if (state === "dancing") {
+        return (
+            <motion.g>
+                {[0, 1, 2].map((i) => (
+                    <motion.circle
+                        key={i}
+                        cx={52} cy={36}
+                        r={6 + i * 5}
+                        fill="none"
+                        stroke={palette.iris}
+                        strokeWidth={0.5}
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                        transition={{
+                            duration: 0.5,
+                            repeat: Infinity,
+                            delay: i * 0.15,
+                            ease: "easeOut",
+                        }}
+                        style={{ transformOrigin: "52px 36px" }}
+                        opacity={0.4 * intensity}
+                    />
+                ))}
+            </motion.g>
+        );
+    }
+
+    if (state === "loading") {
+        return (
+            <motion.g>
+                {/* Sweeping arc progress indicator */}
+                <motion.circle
+                    cx={52} cy={36} r={12}
+                    fill="none"
+                    stroke={palette.iris}
+                    strokeWidth={1}
+                    strokeDasharray="8 30"
+                    strokeDashoffset={0}
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    style={{ transformOrigin: "52px 36px" }}
+                    opacity={0.4}
+                />
+            </motion.g>
+        );
+    }
+
+    return null;
+}
+
+/* -------------------------------------------------
+   Main exported component
+   ------------------------------------------------- */
 export function RobotFace({
     state,
     emotion: _emotion = "neutral",
@@ -523,33 +826,35 @@ export function RobotFace({
 }: RobotFaceProps) {
     const palette = PALETTE[state] ?? PALETTE.idle;
 
-    // Particle system for digital rain effect
-    const [digitalRain, setDigitalRain] = useState<Array<{ x: number; y: number; char: string; delay: number }>>([]);
+    // Spring-smoothed mouse parallax for each depth layer
+    const springX = useSpring(mouseOffset.x, T.SPRING.lazy);
 
+    // Subtle idle breathing rhythm - low-amplitude vertical float
+    const [breathY, setBreathY] = useState(0);
     useEffect(() => {
-        const chars = "01アイウエオカキクケコサシスセソタチツテト";
-        setDigitalRain(
-            Array.from({ length: 15 }, (_, i) => ({
-                x: Math.random() * 104,
-                y: Math.random() * 76,
-                char: chars[Math.floor(Math.random() * chars.length)],
-                delay: i * 0.1,
-            }))
-        );
-    }, []);
+        let frame: number;
+        let t = 0;
+        const tick = () => {
+            t += 0.012;
+            const amp = state === "idle" ? 1.2 : state === "speaking" ? 0.4 : 0.6;
+            setBreathY(Math.sin(t) * amp);
+            frame = requestAnimationFrame(tick);
+        };
+        frame = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(frame);
+    }, [state]);
+
+    const blink = useBlink(state);
+    const saccadeLeft = useMicroSaccade(state);
+    const saccadeRight = useMicroSaccade(state); // independent micro-saccades
+
+    // Per-layer parallax offsets - deeper layers move less
+    const parallaxShallow = useTransform(springX, (v) => v * 0.12);
+    const parallaxMid = useTransform(springX, (v) => v * 0.06);
 
     return (
         <motion.div
             className="absolute pointer-events-none select-none"
-            animate={{
-                x: mouseOffset.x,
-                y: mouseOffset.y,
-            }}
-            transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 25,
-            }}
             style={{
                 top: "16%",
                 left: "50%",
@@ -557,105 +862,72 @@ export function RobotFace({
                 width: "104px",
                 height: "76px",
                 zIndex: 20,
-                filter: `drop-shadow(0 0 ${15 * intensity}px ${palette.glow})`,
+                y: breathY,
+                filter: palette.dropShadow,
             }}
+            animate={{ x: mouseOffset.x * 0.08, y: mouseOffset.y * 0.06 + breathY }}
+            transition={{ type: "spring", ...T.SPRING.lazy }}
         >
-            <svg viewBox="0 0 104 76" width="104" height="76">
+            <svg viewBox="0 0 104 76" width="104" height="76" overflow="visible">
                 <defs>
-                    <linearGradient id={`grad-${state}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor={palette.gradient.start} stopOpacity="0.6" />
-                        <stop offset="100%" stopColor={palette.gradient.end} stopOpacity="0.6" />
-                    </linearGradient>
-                    <filter id={`glow-${state}`}>
-                        <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-                        <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
+                    {/* Ambient emissive glow behind whole face */}
+                    <radialGradient id={`face-glow-${state}`} cx="50%" cy="45%" r="55%">
+                        <stop offset="0%" stopColor={palette.glowSoft} />
+                        <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+                    </radialGradient>
                 </defs>
 
                 <AnimatePresence mode="wait">
-                    {/* Background digital rain effect */}
-                    {state === "processing" && (
-                        <motion.g
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.3 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            {digitalRain.map((drop, i) => (
-                                <motion.text
-                                    key={i}
-                                    x={drop.x}
-                                    y={drop.y}
-                                    fill={palette.primary}
-                                    fontSize="6"
-                                    fontFamily="monospace"
-                                    initial={{ opacity: 0 }}
-                                    animate={{
-                                        opacity: [0, 0.8, 0],
-                                        y: [drop.y, drop.y + 50],
-                                    }}
-                                    transition={{
-                                        duration: 2,
-                                        delay: drop.delay,
-                                        repeat: Infinity,
-                                    }}
-                                >
-                                    {drop.char}
-                                </motion.text>
-                            ))}
-                        </motion.g>
-                    )}
-
-                    {/* Main HUD */}
                     <motion.g
-                        key="hud"
+                        key={state}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
                     >
-                        {/* Background with subtle gradient */}
-                        <rect
-                            x="0" y="0" width="104" height="76" rx="8"
-                            fill={`url(#grad-${state})`}
-                            opacity={0.1}
+                        {/* Background emissive ambient */}
+                        <rect x="0" y="0" width="104" height="76" rx="8"
+                            fill={`url(#face-glow-${state})`} opacity={0.8 * intensity}
                         />
 
-                        <TerminatorHUDFrame palette={palette} state={state} />
+                        {/* HUD chrome layer */}
+                        <HUDChrome palette={palette} state={state} />
 
-                        <TerminatorEye
-                            cx={30}
+                        {/* State overlay (scanning crosshair, error warn, etc.) */}
+                        <StateOverlay palette={palette} state={state} intensity={intensity} />
+
+                        {/* Left eye - slightly more parallax (foreground feel) */}
+                        <motion.g style={{ x: parallaxShallow }}>
+                            <Eye
+                                cx={30} cy={28}
+                                palette={palette}
+                                state={state}
+                                intensity={intensity}
+                                blink={blink}
+                                saccade={saccadeLeft}
+                                parallaxLayer={0.4}
+                            />
+                        </motion.g>
+
+                        {/* Right eye - slightly less parallax */}
+                        <motion.g style={{ x: parallaxMid }}>
+                            <Eye
+                                cx={74} cy={28}
+                                palette={palette}
+                                state={state}
+                                intensity={intensity}
+                                blink={blink}
+                                saccade={saccadeRight}
+                                parallaxLayer={0.25}
+                            />
+                        </motion.g>
+
+                        {/* Frequency analyser strip */}
+                        <FrequencyAnalyzer
                             palette={palette}
                             state={state}
                             intensity={intensity}
-                            isLeft={true}
                         />
-                        <TerminatorEye
-                            cx={74}
-                            palette={palette}
-                            state={state}
-                            intensity={intensity}
-                            isLeft={false}
-                        />
-
-                        <TerminatorFrequencyBar
-                            palette={palette}
-                            state={state}
-                            intensity={intensity}
-                        />
-
-                        {/* Target lock indicators for scanning state */}
-                        {state === "scanning" && (
-                            <motion.g
-                                animate={{ opacity: [0.4, 1, 0.4] }}
-                                transition={{ duration: 1, repeat: Infinity }}
-                            >
-                                <circle cx="52" cy="38" r="12" fill="none" stroke={palette.primary} strokeWidth="1" strokeDasharray="4 4" />
-                                <circle cx="52" cy="38" r="18" fill="none" stroke={palette.secondary} strokeWidth="0.5" strokeDasharray="6 6" />
-                            </motion.g>
-                        )}
                     </motion.g>
                 </AnimatePresence>
             </svg>
