@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Robot, RobotState } from "./components/Robot";
+import { Robot, RobotState, EmotionPanel, EmotionData } from "./components/Robot.tsx";
 import { ChatInterface, Message } from "./components/ChatInterface";
 import { StatusLED } from "./components/StatusLED";
-import { EmotionPanel, EmotionData } from "./components/EmotionPanel";
 import { StudyDashboard, SessionData } from "./components/StudyDashboard";
 import { analyzeTextMood } from "./utils/textMoodAnalyzer";
 import { isPraiseMessage, getComplimentResponse } from "./utils/complimentResponder";
