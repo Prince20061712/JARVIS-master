@@ -1290,7 +1290,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     print(f"Received command from Web UI: {content} (Subject: {subject})")
                     # Process command using threadsafe execution on the main loop
                     asyncio.run_coroutine_threadsafe(jarvis.process_command(content, subject=subject), jarvis.loop)
-            
+
             elif data.get("type") == "set_subject":
                 subject = data.get("subject")
                 if jarvis:
