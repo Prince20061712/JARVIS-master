@@ -1,6 +1,6 @@
 # JARVIS - Enterprise AI Voice Assistant
 
-A comprehensive, enterprise-grade multi-modal AI voice assistant system designed for intelligent task automation and conversational intelligence. Built with Python and React, JARVIS delivers advanced conversational AI, system automation, media management, and context-aware processing with seamless macOS integration..
+A comprehensive, enterprise-grade multi-modal AI voice assistant system designed for intelligent task automation and conversational intelligence. Built with Python and React, JARVIS delivers advanced conversational AI, system automation, media management, and context-aware processing with seamless macOS integration.
 
 ## 📋 Table of Contents
 
