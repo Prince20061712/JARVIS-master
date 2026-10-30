@@ -12,10 +12,16 @@ class DatabaseConfig(BaseSettings):
     url: str = Field(default="sqlite:///jarvis.db")
     pool_size: int = Field(default=5)
 
+    class Config:
+        extra = "ignore"
+
 class ServerConfig(BaseSettings):
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8000)
     debug: bool = Field(default=False)
+
+    class Config:
+        extra = "ignore"
 
 class AppConfig(BaseSettings):
     """
@@ -25,6 +31,9 @@ class AppConfig(BaseSettings):
     app_name: str = Field(default="JARVIS")
     server: ServerConfig = ServerConfig()
     database: DatabaseConfig = DatabaseConfig()
+
+    class Config:
+        extra = "ignore"
 
 class ConfigLoader:
     """

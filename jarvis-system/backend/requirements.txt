@@ -32,9 +32,9 @@ langchain==0.3.28
 langchain-core==0.3.83
 langchain-community==0.3.31
 langsmith==0.4.37
-torch==2.1.0
-torchaudio==2.1.0
-torchvision==0.16.0
+torch>=2.2.0
+torchaudio>=2.2.0
+torchvision>=0.17.0
 PyPDF2
 python-docx
 markdown

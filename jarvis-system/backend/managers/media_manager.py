@@ -25,7 +25,10 @@ from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import yt_dlp
-import vlc
+try:
+    import vlc
+except (ImportError, OSError):
+    vlc = None
 import pygame
 
 # Configure logging
@@ -160,8 +163,16 @@ class MediaManager:
         self.recently_played: List[MediaItem] = []
         
         # Media players
-        self.vlc_instance = vlc.Instance()
-        self.vlc_player = self.vlc_instance.media_player_new()
+        if vlc:
+            try:
+                self.vlc_instance = vlc.Instance()
+                self.vlc_player = self.vlc_instance.media_player_new()
+            except Exception:
+                self.vlc_instance = None
+                self.vlc_player = None
+        else:
+            self.vlc_instance = None
+            self.vlc_player = None
         
         # Initialize pygame for audio
         pygame.mixer.init()
