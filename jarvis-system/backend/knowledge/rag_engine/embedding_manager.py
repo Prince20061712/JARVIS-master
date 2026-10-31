@@ -48,7 +48,13 @@ class EmbeddingManager:
         
         # Model configuration
         self.model_name = self.config.get('model_name', 'all-MiniLM-L6-v2')
-        self.device = self.config.get('device', 'cuda' if torch.cuda.is_available() else 'cpu')
+        if torch.backends.mps.is_available():
+            default_device = 'mps'
+        elif torch.cuda.is_available():
+            default_device = 'cuda'
+        else:
+            default_device = 'cpu'
+        self.device = self.config.get('device', default_device)
         self.batch_size = self.config.get('batch_size', 32)
         self.max_length = self.config.get('max_length', 512)
         self.normalize_embeddings = self.config.get('normalize_embeddings', True)
@@ -232,23 +238,24 @@ class EmbeddingManager:
                 cached[text] = self.embedding_cache[text]
                 continue
             
-            # Check disk cache
+            # Check disk cache safely (npz format, allow_pickle=False)
             cache_key = self._get_cache_key(text)
-            cache_path = self.cache_dir / f"{cache_key}.pkl"
+            cache_path = self.cache_dir / f"{cache_key}.npz"
             
             if cache_path.exists():
                 try:
-                    with open(cache_path, 'rb') as f:
-                        data = pickle.load(f)
+                    with np.load(cache_path, allow_pickle=False) as data:
+                        ts = float(data['timestamp'])
                         # Check if cache is still valid
-                        if datetime.now().timestamp() - data['timestamp'] < self.cache_ttl:
-                            cached[text] = data['embedding']
+                        if datetime.now().timestamp() - ts < self.cache_ttl:
+                            emb = data['embedding']
+                            cached[text] = emb
                             # Update memory cache
-                            self._update_memory_cache(text, data['embedding'])
+                            self._update_memory_cache(text, emb)
                         else:
                             cache_path.unlink()  # Remove expired cache
                             to_process.append(text)
-                except:
+                except Exception:
                     to_process.append(text)
             else:
                 to_process.append(text)
@@ -256,22 +263,17 @@ class EmbeddingManager:
         return cached, to_process
     
     def _update_cache(self, texts: List[str], embeddings: np.ndarray):
-        """Update cache with new embeddings"""
+        """Update cache with new embeddings safely without pickle"""
         for text, embedding in zip(texts, embeddings):
             # Update memory cache
             self._update_memory_cache(text, embedding)
             
-            # Update disk cache
+            # Update disk cache using safe numpy format
             cache_key = self._get_cache_key(text)
-            cache_path = self.cache_dir / f"{cache_key}.pkl"
+            cache_path = self.cache_dir / f"{cache_key}.npz"
             
             try:
-                with open(cache_path, 'wb') as f:
-                    pickle.dump({
-                        'text': text,
-                        'embedding': embedding,
-                        'timestamp': datetime.now().timestamp()
-                    }, f)
+                np.savez(cache_path, embedding=embedding, timestamp=datetime.now().timestamp())
             except Exception as e:
                 self.logger.error(f"Error writing cache: {e}")
     
