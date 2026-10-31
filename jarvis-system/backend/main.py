@@ -112,7 +112,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -195,8 +200,15 @@ class JarvisAI:
         self.recognizer.dynamic_energy_threshold = True
         self.microphone = sr.Microphone()
         
-        self.command_queue = queue.Queue()
-        self.is_listening = CONTINUOUS_MODE
+        # Calibrate ambient noise once at startup rather than on every turn
+        try:
+            with self.microphone as source:
+                print(f"{Fore.CYAN}🎤 Calibrating microphone for ambient noise...")
+                self.recognizer.adjust_for_ambient_noise(source, duration=0.8)
+                print(f"{Fore.GREEN}✅ Microphone calibrated (energy threshold: {self.recognizer.energy_threshold:.1f})")
+        except Exception as e:
+            print(f"{Fore.YELLOW}⚠️ Microphone initial calibration skipped: {e}")
+
         self.command_queue = queue.Queue()
         self.is_listening = CONTINUOUS_MODE
         self.is_running = True
@@ -514,14 +526,13 @@ class JarvisAI:
                         print(f"{Fore.RED}STT Error: {e}")
                         text = ""
                 else:
-                    # Fallback to legacy method
-                    self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                    # Fallback to legacy method (per-turn ambient noise calibration removed to eliminate 500ms lag)
                     try:
-                        rec_phrase_limit = None if phrase_time_limit is None else 30 
+                        rec_phrase_limit = phrase_time_limit if phrase_time_limit is not None else 8
                         audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=rec_phrase_limit)
                         text = self.recognizer.recognize_google(audio).lower()
                         print(f"{Fore.YELLOW}You: {text}")
-                    except:
+                    except Exception:
                         text = ""
 
                 # Check if text is valid (common logic)
@@ -1227,14 +1238,29 @@ async def startup_event():
         if not subjects_dir.exists():
             return
             
-        print(f"📚 Auto-loading existing flashcard materials from disk into memory...")
+        manifest_path = Path("data/ingested_manifest.json")
+        ingested_manifest = {}
+        if manifest_path.exists():
+            try:
+                with open(manifest_path, "r") as mf:
+                    ingested_manifest = json.load(mf)
+            except Exception:
+                ingested_manifest = {}
+                
+        manifest_dirty = False
+        print(f"📚 Verifying flashcard materials in {subjects_dir}...")
         for subject_dir in subjects_dir.iterdir():
             if subject_dir.is_dir():
                 subject = subject_dir.name
                 for file_path in subject_dir.iterdir():
                     if file_path.is_file() and file_path.name != ".DS_Store":
+                        file_key = f"{subject}/{file_path.name}"
+                        mtime = file_path.stat().st_mtime
+                        if ingested_manifest.get(file_key) == mtime:
+                            continue  # Already ingested and unmodified
+
                         try:
-                            print(f"   Ingesting {file_path.name} for subject '{subject}'...")
+                            print(f"   Ingesting new/updated {file_path.name} for subject '{subject}'...")
                             exec_loop = asyncio.get_running_loop()
                             await exec_loop.run_in_executor(
                                 None, 
@@ -1242,9 +1268,19 @@ async def startup_event():
                                 str(file_path), 
                                 subject
                             )
+                            ingested_manifest[file_key] = mtime
+                            manifest_dirty = True
                         except Exception as e:
                             print(f"⚠️ Failed to auto-ingest {file_path.name}: {e}")
-        print(f"✅ Finished auto-loading flashcards.")
+                            
+        if manifest_dirty:
+            try:
+                manifest_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(manifest_path, "w") as mf:
+                    json.dump(ingested_manifest, mf, indent=2)
+            except Exception as e:
+                print(f"⚠️ Failed to write ingested manifest: {e}")
+        print(f"✅ Finished checking flashcard materials.")
 
     asyncio.create_task(load_existing_flashcards())
 
@@ -1323,31 +1359,45 @@ async def upload_document(file: UploadFile = File(...)):
     if not jarvis or not hasattr(jarvis, 'ai_brain') or not hasattr(jarvis.ai_brain, 'rag_engine'):
         raise HTTPException(status_code=503, detail="JARVIS AI Brain not initialized. Please wait for startup.")
     
-    os.makedirs("temp_uploads", exist_ok=True)
-    file_path = f"temp_uploads/{file.filename}"
+    safe_filename = Path(file.filename or "upload.tmp").name
+    if not safe_filename or safe_filename in (".", ".."):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    upload_dir = Path("temp_uploads").resolve()
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    file_path = upload_dir / safe_filename
     
+    MAX_FILE_SIZE = 50 * 1024 * 1024
+    total_size = 0
     try:
-        content = await file.read()
         with open(file_path, "wb") as buffer:
-            buffer.write(content)
+            while chunk := await file.read(1024 * 1024):
+                total_size += len(chunk)
+                if total_size > MAX_FILE_SIZE:
+                    buffer.close()
+                    if file_path.exists():
+                        file_path.unlink()
+                    raise HTTPException(status_code=413, detail="File too large (max 50 MB)")
+                buffer.write(chunk)
             
-        print(f"📄 Processing uploaded document: {file.filename}")
+        print(f"📄 Processing uploaded document: {safe_filename} ({total_size / 1024:.1f} KB)")
         
-        # Run the CPU-heavy ingestion in a separate thread so we don't block the event loop
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None, 
             jarvis.ai_brain.rag_engine.ingest_document, 
-            file_path, 
+            str(file_path), 
             "viva_doc"
         )
         return {"status": "success", "message": result}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Error during document upload: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        if file_path.exists():
+            file_path.unlink()
 
 # ========== FLASHCARD SYSTEM API ==========
 FLASHCARDS_FILE = "ai_brain_data/flashcards.json"
@@ -1373,25 +1423,32 @@ async def get_flashcards():
 @app.post("/api/local-flashcards")
 async def create_flashcard(request: Request):
     data = await request.json()
-    name = data.get("name")
+    name = (data.get("name") or "").strip()
     if not name:
         raise HTTPException(status_code=400, detail="Name is required")
+
+    safe_name = Path(name).name
+    if not safe_name or safe_name in (".", "..") or "/" in name or "\\" in name:
+        raise HTTPException(status_code=400, detail="Invalid subject name")
         
     flashcards = load_flashcards()
-    # Case-insensitive check to prevent duplicates like "Operating System" and "operating system"
-    if any(f.lower() == name.lower() for f in flashcards):
-        raise HTTPException(status_code=400, detail=f"Flashcard subject '{name}' already exists.")
+    # Case-insensitive check to prevent duplicates
+    if any(f.lower() == safe_name.lower() for f in flashcards):
+        raise HTTPException(status_code=400, detail=f"Flashcard subject '{safe_name}' already exists.")
         
-    flashcards.append(name)
+    flashcards.append(safe_name)
     save_flashcards(flashcards)
     
     # Create subject folder for viva materials
-    subject_dir = Path("data/subjects") / name
+    base_subjects = Path("data/subjects").resolve()
+    subject_dir = (base_subjects / safe_name).resolve()
+    if not subject_dir.is_relative_to(base_subjects):
+        raise HTTPException(status_code=400, detail="Invalid subject path")
     subject_dir.mkdir(parents=True, exist_ok=True)
     
     return {
         "status": "success", 
-        "message": f"Created subject '{name}'",
+        "message": f"Created subject '{safe_name}'",
         "flashcards": flashcards,
         "count": len(flashcards)
     }
@@ -1405,28 +1462,48 @@ async def upload_flashcard_material(subject: str, file: UploadFile = File(...)):
     flashcards = load_flashcards()
     if subject not in flashcards:
         raise HTTPException(status_code=404, detail="Flashcard subject not found")
+
+    safe_subject = Path(subject).name
+    safe_filename = Path(file.filename or "material.tmp").name
+    if not safe_subject or not safe_filename or safe_filename in (".", ".."):
+        raise HTTPException(status_code=400, detail="Invalid subject or filename")
+
+    base_subjects = Path("data/subjects").resolve()
+    subject_dir = (base_subjects / safe_subject).resolve()
+    if not subject_dir.is_relative_to(base_subjects):
+        raise HTTPException(status_code=400, detail="Invalid subject path")
         
-    # Save to subject folder instead of temp_uploads
-    subject_dir = Path("data/subjects") / subject
     subject_dir.mkdir(parents=True, exist_ok=True)
-    file_path = subject_dir / file.filename
+    file_path = (subject_dir / safe_filename).resolve()
+    if not file_path.is_relative_to(subject_dir):
+        raise HTTPException(status_code=400, detail="Invalid destination path")
     
+    MAX_FILE_SIZE = 50 * 1024 * 1024
+    total_size = 0
     e = None
     try:
-        content = await file.read()
         with open(file_path, "wb") as buffer:
-            buffer.write(content)
+            while chunk := await file.read(1024 * 1024):
+                total_size += len(chunk)
+                if total_size > MAX_FILE_SIZE:
+                    buffer.close()
+                    if file_path.exists():
+                        file_path.unlink()
+                    raise HTTPException(status_code=413, detail="File too large (max 50 MB)")
+                buffer.write(chunk)
             
-        print(f"📄 Processing flashcard material for {subject}: {file.filename}")
+        print(f"📄 Processing flashcard material for {safe_subject}: {safe_filename} ({total_size / 1024:.1f} KB)")
         
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None, 
             jarvis.ai_brain.rag_engine.ingest_document, 
             str(file_path), 
-            subject
+            safe_subject
         )
         return {"status": "success", "message": result}
+    except HTTPException:
+        raise
     except Exception as ex:
         e = ex
         import traceback
@@ -1435,8 +1512,8 @@ async def upload_flashcard_material(subject: str, file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         # Clean up if file was created but ingestion failed
-        if os.path.exists(file_path) and e is not None and "error" in str(e).lower():
-            os.remove(file_path)
+        if file_path.exists() and e is not None and "error" in str(e).lower():
+            file_path.unlink()
 
 @app.get("/api/local-flashcards/{subject}/materials")
 async def get_subject_materials(subject: str):
@@ -1445,14 +1522,15 @@ async def get_subject_materials(subject: str):
     if subject not in flashcards:
         raise HTTPException(status_code=404, detail="Flashcard subject not found")
     
-    subject_dir = Path("data/subjects") / subject
-    if not subject_dir.exists():
+    safe_subject = Path(subject).name
+    base_subjects = Path("data/subjects").resolve()
+    subject_dir = (base_subjects / safe_subject).resolve()
+    if not subject_dir.is_relative_to(base_subjects) or not subject_dir.exists():
         return {"materials": []}
     
     materials = []
     for file_path in subject_dir.rglob("*"):
         if file_path.is_file():
-            # Get relative path from subject directory
             relative_path = file_path.relative_to(subject_dir)
             materials.append({
                 "name": file_path.name,
@@ -1472,12 +1550,17 @@ async def delete_flashcard_subject(subject: str):
     if subject not in flashcards:
         raise HTTPException(status_code=404, detail="Flashcard subject not found")
         
+    safe_subject = Path(subject).name
+    base_subjects = Path("data/subjects").resolve()
+    subject_dir = (base_subjects / safe_subject).resolve()
+    if not subject_dir.is_relative_to(base_subjects):
+        raise HTTPException(status_code=400, detail="Invalid subject path")
+
     # 1. Remove from JSON tracker
     flashcards.remove(subject)
     save_flashcards(flashcards)
     
     # 2. Delete the directory and its contents
-    subject_dir = Path("data/subjects") / subject
     if subject_dir.exists() and subject_dir.is_dir():
         try:
             shutil.rmtree(subject_dir)
@@ -1493,17 +1576,25 @@ async def delete_flashcard_material(subject: str, filename: str):
     if subject not in flashcards:
         raise HTTPException(status_code=404, detail="Flashcard subject not found")
         
-    file_path = Path("data/subjects") / subject / filename
+    safe_subject = Path(subject).name
+    safe_filename = Path(filename).name
+    base_subjects = Path("data/subjects").resolve()
+    subject_dir = (base_subjects / safe_subject).resolve()
+    file_path = (subject_dir / safe_filename).resolve()
+    
+    if not file_path.is_relative_to(subject_dir):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+        
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="Material file not found")
         
     try:
-        os.remove(file_path)
+        file_path.unlink()
     except Exception as e:
-        print(f"❌ Error deleting material {filename}: {e}")
+        print(f"❌ Error deleting material {safe_filename}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
         
-    return {"status": "success", "message": f"Deleted material '{filename}'"}
+    return {"status": "success", "message": f"Deleted material '{safe_filename}'"}
 # Mount static files (React build output)
 # Resolve absolute path to frontend dist
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -1530,21 +1621,27 @@ async def read_root():
 # Serve other static assets if needed (e.g. manifest, etc)
 @app.get("/{full_path:path}")
 async def serve_static(full_path: str):
-    file_path = os.path.join(FRONTEND_DIST, full_path)
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
+    base_dir = os.path.abspath(FRONTEND_DIST)
+    safe_path = os.path.abspath(os.path.join(base_dir, full_path))
     
-    index_path = os.path.join(FRONTEND_DIST, "index.html")
-    if os.path.exists(index_path):
+    # Strictly ensure the path stays inside FRONTEND_DIST to prevent traversal
+    if not safe_path.startswith(base_dir):
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    if os.path.isfile(safe_path):
+        return FileResponse(safe_path)
+    
+    index_path = os.path.join(base_dir, "index.html")
+    if os.path.isfile(index_path):
         return FileResponse(index_path)
-    return HTMLResponse("Not Found")
+    return HTMLResponse("Not Found", status_code=404)
 
 
 # ========== MAIN EXECUTION ==========
 if __name__ == "__main__":
     try:
-        # Run uvicorn server
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        # Run uvicorn server bound to localhost only (prevents unauthorized LAN exposure)
+        uvicorn.run(app, host="127.0.0.1", port=8000)
     except Exception as e:
         print(f"{Fore.RED}Fatal error: {e}")
         print(f"{Fore.YELLOW}Please make sure you have all required packages installed:")
