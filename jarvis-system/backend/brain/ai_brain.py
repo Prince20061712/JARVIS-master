@@ -239,17 +239,17 @@ class OllamaEnhancedManager:
         return False
     
     def _start_server(self):
-        """Start Ollama server with enhanced options"""
+        """Start Ollama server with enhanced options without blocking pipe buffers"""
         try:
-            # Start with specific options
+            # Start with DEVNULL so OS pipe buffers never fill up and deadlock
             subprocess.Popen(
                 ["ollama", "serve"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
                 start_new_session=True,
                 text=True
             )
-            print("🚀 Starting Ollama server...")
+            print("🚀 Starting Ollama server (DEVNULL pipe)...")
             return True
         except Exception as e:
             print(f"❌ Failed to start Ollama: {e}")

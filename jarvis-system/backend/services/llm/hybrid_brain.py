@@ -23,7 +23,7 @@ class HybridBrain:
 
     def __init__(self) -> None:
         self._cache: dict[str, str] = {}
-        self.local_model = os.getenv("LLM_MODEL", os.getenv("OLLAMA_MODEL", "phi3"))
+        self.local_model = os.getenv("OLLAMA_MODEL", os.getenv("LLM_MODEL", "llama3.2:1b"))
         self.groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
         self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 

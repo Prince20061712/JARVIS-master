@@ -12,8 +12,8 @@ from utils.logger import logger
 
 @dataclass
 class LLMConfig:
-    model_name: str = "phi3"
-    api_base: str = "http://localhost:11434"
+    model_name: str = os.getenv("OLLAMA_MODEL", os.getenv("LLM_MODEL", "llama3.2:1b"))
+    api_base: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     temperature: float = 0.7
     max_tokens: int = 2048
     top_p: float = 0.95
@@ -31,28 +31,30 @@ class LocalLLM:
         self.model_loaded = False
         
     async def initialize(self):
-        """Initialize connection to LLM server"""
+        """Initialize connection to LLM server with timeout"""
         if self.session is None:
             self.session = aiohttp.ClientSession()
         
         try:
-            # Check if model is available
-            async with self.session.get(f"{self.config.api_base}/api/tags") as response:
+            # Check if model is available with a 3s timeout to prevent request hangs
+            async with self.session.get(
+                f"{self.config.api_base}/api/tags",
+                timeout=aiohttp.ClientTimeout(total=3)
+            ) as response:
                 if response.status == 200:
                     models = await response.json()
                     self.model_loaded = any(
-                        m['name'].split(':')[0] == self.config.model_name.split(':')[0] 
+                        m.get('name', '').split(':')[0] == self.config.model_name.split(':')[0] 
                         for m in models.get('models', [])
                     )
             
             if not self.model_loaded:
-                logger.warning(f"Model {self.config.model_name} not found locally. Attempting to pull...")
-                await self._pull_model()
+                logger.warning(f"Model {self.config.model_name} is not installed locally in Ollama.")
         except Exception as e:
             logger.error(f"Failed to connect to local LLM server at {self.config.api_base}: {e}")
     
     async def _pull_model(self):
-        """Pull model if not available"""
+        """Pull model if explicitly requested"""
         try:
             async with self.session.post(
                 f"{self.config.api_base}/api/pull",
@@ -72,7 +74,16 @@ class LocalLLM:
                       stream: bool = False,
                       **kwargs) -> AsyncGenerator[str, None] | str:
         """Generate text from prompt"""
-        if not self.session: await self.initialize()
+        if not self.session: 
+            await self.initialize()
+            
+        if not self.model_loaded:
+            msg = f"Local model '{self.config.model_name}' is not installed in Ollama. Please run 'ollama pull {self.config.model_name}' in your terminal to enable offline responses."
+            if stream:
+                async def not_loaded_stream():
+                    yield msg
+                return not_loaded_stream()
+            return msg
         
         payload = {
             "model": self.config.model_name,
@@ -143,11 +154,9 @@ class LocalLLM:
 
 async def local_generate(prompt: str) -> AsyncGenerator[str, None]:
     """Stream a completion from the local Ollama model."""
-    configured_model = os.getenv("LLM_MODEL", os.getenv("OLLAMA_MODEL", "phi3"))
+    configured_model = os.getenv("OLLAMA_MODEL", os.getenv("LLM_MODEL", "llama3.2:1b"))
     api_base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     candidate_models = [configured_model]
-    if configured_model != "mistral":
-        candidate_models.append("mistral")
 
     last_error: Exception | None = None
 
