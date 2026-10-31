@@ -2,7 +2,7 @@
 Screen Controller for ScreenCaptureManager
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Header, Depends
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 import os
@@ -17,7 +17,20 @@ except ImportError:
     sys.path.append(str(Path(__file__).parent.parent.parent.parent))
     from managers.screen_manager import ScreenCaptureManager, CaptureMode, ImageFormat
 
-router = APIRouter()
+def verify_screen_access(request: Request, x_jarvis_token: Optional[str] = Header(None)):
+    """Security guard ensuring screen surveillance is strictly authorized and local."""
+    client_host = request.client.host if request.client else ""
+    if client_host not in ("127.0.0.1", "::1", "localhost"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Forbidden: Screen capture endpoints can only be accessed from localhost"
+        )
+    
+    configured_token = os.getenv("API_SECRET_TOKEN") or os.getenv("JARVIS_SCREEN_TOKEN")
+    if configured_token and x_jarvis_token != configured_token:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid screen access token")
+
+router = APIRouter(dependencies=[Depends(verify_screen_access)])
 
 # Initialize manager
 screen_manager = ScreenCaptureManager()
