@@ -26,25 +26,41 @@ export function Robot({ state, emotion = 'neutral' }: RobotProps) {
   const splineRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const animFrameRef = useRef<number | null>(null);
 
-  // Mirror the Spline cursor-tracking so the face overlay stays aligned
+  // Mirror the Spline cursor-tracking throttled via requestAnimationFrame (avoids 120-240Hz re-renders)
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    // Scale factor ≈ how far the Spline head shifts in screen pixels per unit offset
-    const scale = 0.08;
-    setMouseOffset({
-      x: (e.clientX - cx) * scale,
-      y: (e.clientY - cy) * scale,
+    if (animFrameRef.current !== null) {
+      return;
+    }
+
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+
+    animFrameRef.current = requestAnimationFrame(() => {
+      animFrameRef.current = null;
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      // Scale factor ≈ how far the Spline head shifts in screen pixels per unit offset
+      const scale = 0.08;
+      setMouseOffset({
+        x: (clientX - cx) * scale,
+        y: (clientY - cy) * scale,
+      });
     });
   }, []);
 
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (animFrameRef.current !== null) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
   }, [handleMouseMove]);
 
   function onLoad(splineApp: any) {
