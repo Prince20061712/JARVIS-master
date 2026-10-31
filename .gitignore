@@ -72,5 +72,7 @@ jarvis-system/backend/chroma_db/
 jarvis-system/backend/ai_brain_data/
 *profile.json
 *.sqlite3
+jarvis-system/backend/data/*.db
+!jarvis-system/backend/data/memory.db
 jarvis-system/backend/proactive_data/*.json
 

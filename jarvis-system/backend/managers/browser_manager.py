@@ -253,6 +253,13 @@ class BrowserManager:
             },
         }
     
+    @staticmethod
+    def _escape_applescript(text: str) -> str:
+        """Escape text safely for inclusion inside AppleScript string literals."""
+        if not text:
+            return ""
+        return str(text).replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ').replace('\r', ' ')
+
     def _load_config(self):
         """Load configuration from file"""
         if self.config_path and self.config_path.exists():
@@ -398,9 +405,10 @@ class BrowserManager:
                 elif profile.browser_type == BrowserType.SAFARI:
                     if privacy_mode == PrivacyMode.PRIVATE:
                         # Safari private mode via AppleScript
+                        safe_search_url = self._escape_applescript(search_url)
                         script = f'''
                             tell application "Safari"
-                                make new document with properties {{URL:"{search_url}"}}
+                                make new document with properties {{URL:"{safe_search_url}"}}
                                 set private browsing of first document to true
                             end tell
                         '''
@@ -884,10 +892,13 @@ class BrowserManager:
         try:
             browser = browser or self.default_profile
             
+            safe_url = self._escape_applescript(url)
+            safe_title = self._escape_applescript(title)
+
             if browser == "safari":
                 script = f'''
                     tell application "Safari"
-                        make new bookmark item at end of bookmarks bar with properties {{URL:"{url}", name:"{title}"}}
+                        make new bookmark item at end of bookmarks bar with properties {{URL:"{safe_url}", name:"{safe_title}"}}
                     end tell
                 '''
                 subprocess.run(['osascript', '-e', script])
@@ -898,7 +909,7 @@ class BrowserManager:
                 app_name = self.profiles[browser].path.stem
                 script = f'''
                     tell application "{app_name}"
-                        make new bookmark at end of bookmarks bar with properties {{URL:"{url}", title:"{title}"}}
+                        make new bookmark at end of bookmarks bar with properties {{URL:"{safe_url}", title:"{safe_title}"}}
                     end tell
                 '''
                 subprocess.run(['osascript', '-e', script])

@@ -224,19 +224,33 @@ class LearningPatterns:
         logger.info(f"LearningPatterns initialized with data directory: {self.data_dir}")
     
     def _load_data(self) -> None:
-        """Load historical data from disk."""
+        """Load historical data from disk safely."""
         try:
-            # Load flashcard history
-            flashcard_file = self.data_dir / 'flashcard_history.pkl'
-            if flashcard_file.exists():
-                with open(flashcard_file, 'rb') as f:
-                    self.flashcard_history = defaultdict(list, pickle.load(f))
+            # Load flashcard history (prefer safe JSON format)
+            flashcard_json = self.data_dir / 'flashcard_history.json'
+            flashcard_pkl = self.data_dir / 'flashcard_history.pkl'
+            if flashcard_json.exists():
+                with open(flashcard_json, 'r') as f:
+                    self.flashcard_history = defaultdict(list, json.load(f))
+            elif flashcard_pkl.exists():
+                try:
+                    with open(flashcard_pkl, 'rb') as f:
+                        self.flashcard_history = defaultdict(list, pickle.load(f))
+                except Exception:
+                    self.flashcard_history = defaultdict(list)
             
-            # Load viva history
-            viva_file = self.data_dir / 'viva_history.pkl'
-            if viva_file.exists():
-                with open(viva_file, 'rb') as f:
-                    self.viva_history = defaultdict(list, pickle.load(f))
+            # Load viva history (prefer safe JSON format)
+            viva_json = self.data_dir / 'viva_history.json'
+            viva_pkl = self.data_dir / 'viva_history.pkl'
+            if viva_json.exists():
+                with open(viva_json, 'r') as f:
+                    self.viva_history = defaultdict(list, json.load(f))
+            elif viva_pkl.exists():
+                try:
+                    with open(viva_pkl, 'rb') as f:
+                        self.viva_history = defaultdict(list, pickle.load(f))
+                except Exception:
+                    self.viva_history = defaultdict(list)
             
             # Load emotional history
             emotional_file = self.data_dir / 'emotional_history.json'
@@ -250,19 +264,19 @@ class LearningPatterns:
             logger.error(f"Error loading historical data: {e}")
     
     def _save_data(self) -> None:
-        """Save data to disk."""
+        """Save data to disk safely in JSON format."""
         try:
-            # Save flashcard history
-            with open(self.data_dir / 'flashcard_history.pkl', 'wb') as f:
-                pickle.dump(dict(self.flashcard_history), f)
+            # Save flashcard history as safe JSON
+            with open(self.data_dir / 'flashcard_history.json', 'w') as f:
+                json.dump(dict(self.flashcard_history), f, indent=2, default=str)
             
-            # Save viva history
-            with open(self.data_dir / 'viva_history.pkl', 'wb') as f:
-                pickle.dump(dict(self.viva_history), f)
+            # Save viva history as safe JSON
+            with open(self.data_dir / 'viva_history.json', 'w') as f:
+                json.dump(dict(self.viva_history), f, indent=2, default=str)
             
             # Save emotional history
             with open(self.data_dir / 'emotional_history.json', 'w') as f:
-                json.dump(self.emotional_history, f, indent=2)
+                json.dump(self.emotional_history, f, indent=2, default=str)
             
             logger.info("Data saved successfully")
             
